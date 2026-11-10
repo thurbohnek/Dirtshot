@@ -147,6 +147,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
     <button class="tog" id="tQ">Graphics <span></span></button>
     <button class="tog" id="tCave">Cave-ins <span></span></button>
     <button class="tog" id="tFps">Show FPS <span></span></button>
+    <button class="tog" id="tPock">Gas &amp; water pockets <span></span></button>
   </div>
   <button class="btn" id="bResume">RESUME</button>
   <button class="link" id="bQuit">Quit to menu</button>
@@ -616,14 +617,14 @@ function moveWat(p, dt) { p.vy = Math.min(p.vy + G * 0.55 * dt, 700); const nx =
   if (cellOpen(nx, p.y) || p.y < surf(nx)) p.x = nx; else p.vx *= -0.6; p.vx *= Math.exp(-0.6 * dt);
   if (D && !D.dead && Math.abs(p.x - D.x) < 26 && Math.abs(p.y - D.y) < 26) { D.heat = Math.max(0, D.heat - 0.6 * dt); } }
 const blobR = (e, a) => 0.9 + 0.07 * Math.sin(a * 3 + e.ph) + 0.04 * Math.sin(a * 5 + e.ph * 2.3);
-function pocketSprite(e, kind) { if (e._sp) return e._sp; if (e._spFail > T) return null; const W = Math.ceil(e.rx * 2 + 16), H = Math.ceil(e.ry * 2 + 16), c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'); if (!x) { e._spFail = T + 2; evictTiles(cam.x, cam.y, true); return null; } x.translate(W / 2, H / 2);
+const PSPR = {}; function pocketSprite(e0, kind) { const v = Math.floor(Math.abs(e0.ph || 0) * 3) % 4, key = kind + v; if (PSPR[key]) return PSPR[key]; const e = { rx: 60, ry: 40, ph: v * 1.7 }; if (e0._spFail > T) return null; const W = Math.ceil(e.rx * 2 + 16), H = Math.ceil(e.ry * 2 + 16), c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'); if (!x) { e0._spFail = T + 2; evictTiles(cam.x, cam.y, true); return null; } x.translate(W / 2, H / 2);
   const path = (k) => { x.beginPath(); for (let i = 0; i <= 48; i++) { const a = i / 48 * TAU, r = blobR(e, a) * k; i ? x.lineTo(Math.cos(a) * e.rx * r, Math.sin(a) * e.ry * r) : x.moveTo(Math.cos(a) * e.rx * r, Math.sin(a) * e.ry * r); } x.closePath(); };
   // cavity rim, darker where rock was pushed aside
   path(1.06); x.fillStyle = 'rgba(30,18,12,0.35)'; x.fill(); path(1); x.save(); x.clip();
   if (kind === 'g') { const g = x.createRadialGradient(-e.rx * 0.2, -e.ry * 0.25, 2, 0, 0, Math.max(e.rx, e.ry)); g.addColorStop(0, 'rgba(214,255,150,0.8)'); g.addColorStop(0.6, 'rgba(150,215,90,0.62)'); g.addColorStop(1, 'rgba(80,140,50,0.55)'); x.fillStyle = g; x.fillRect(-W, -H, W * 2, H * 2);
     x.strokeStyle = 'rgba(235,255,190,0.25)'; x.lineWidth = 3; for (let i = 0; i < 4; i++) { x.beginPath(); for (let k = 0; k <= 20; k++) { const px = -e.rx + k / 20 * e.rx * 2, py = (i - 1.5) * e.ry * 0.38 + Math.sin(px / (e.rx * 0.3) + i * 1.7 + e.ph) * e.ry * 0.12; k ? x.lineTo(px, py) : x.moveTo(px, py); } x.stroke(); } }
   else { x.fillStyle = 'rgba(20,24,34,0.65)'; x.fillRect(-W, -H, W * 2, H * 2); const top = -e.ry * 0.62, g = x.createLinearGradient(0, top, 0, e.ry); g.addColorStop(0, 'rgba(120,200,255,0.92)'); g.addColorStop(1, 'rgba(25,80,170,0.95)'); x.fillStyle = g; x.fillRect(-W, top, W * 2, H); x.fillStyle = 'rgba(255,255,255,0.12)'; x.fillRect(-W, top, W * 2, 4); }
-  x.restore(); path(1); x.strokeStyle = kind === 'g' ? 'rgba(60,90,30,0.5)' : 'rgba(30,50,80,0.55)'; x.lineWidth = 2.5; x.stroke(); e._sp = c; return c; }
+  x.restore(); path(1); x.strokeStyle = kind === 'g' ? 'rgba(60,90,30,0.5)' : 'rgba(30,50,80,0.55)'; x.lineWidth = 2.5; x.stroke(); PSPR[key] = c; return c; }
 function drawItem(x, id, r) { const c = ITEMS[id][2] === 'f'; x.save(); x.lineCap = 'round'; x.lineJoin = 'round';
   if (c) { x.fillStyle = '#cdb994'; x.beginPath(); x.ellipse(0, 0, r, r * 0.85, 0, 0, TAU); x.fill(); x.strokeStyle = '#8a7350'; x.lineWidth = r * 0.12; x.stroke(); x.strokeStyle = '#6a5636'; x.lineWidth = r * 0.1; x.beginPath(); }
   switch (ITEMS[id][0]) {
@@ -845,8 +846,8 @@ function render() {
   for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = getChunk(ci); for (let k = k0; k <= k1; k++) { const tl = getTile(ch, k, true); const ty = Y0 + k * TH; if (tl) { tl.used = frameNo; if (tl.bg) x.drawImage(tl.bg, ch.x0 - ovl, ty - ovl, CW + 2 * ovl, tl.H + 2 * ovl); vis.push([ch, tl]); } else { const sm = ch.cols[16][0]; if (ty + TH > sm) { phMiss++; const d = ty + TH / 2 - sm; x.fillStyle = colOf(d < 110 ? TOPM[ch.bio] : d < 380 ? CLAY : d < 900 ? GRAV : d < 1750 ? ROCK : d < 3600 ? DEEP : d < 6800 ? MAG : d < 9800 ? CRYS : CORE)[0]; const y0 = Math.max(ty, sm); x.fillRect(ch.x0, y0, CW + 0.5, ty + TH - y0); } } } }
   for (const [ch, tl] of vis) x.drawImage(tl.fg, ch.x0, tl.top, CW + ovl, tl.H + ovl);
   if (vbot > Y1 - 4) { x.fillStyle = MCOL[BED][1]; x.fillRect(left, Y1 - 4, right - left, vbot - Y1 + 8); }
-  if (D && performance.now() < tileDeadline) { const vx = D.air ? D.vx : Math.cos(D.ang) * D.s, vy = D.air ? D.vy : Math.sin(D.ang) * D.s; tileDeadline += 1.5;
-    outer: for (const lt of [0.35, 0.7, 1.1]) { const px = cam.x + vx * lt, py = cam.y + vy * lt, hw = (right - left) / 2, hh = (vbot - vtop) / 2; for (let ci = Math.floor((px - hw) / CW); ci <= Math.floor((px + hw) / CW); ci++) { const ch = getChunk(ci); for (let k = clamp(Math.floor((py - hh - Y0) / TH), 0, NT - 1); k <= clamp(Math.floor((py + hh - Y0) / TH), 0, NT - 1); k++) { if (ch.tiles[k] || ch.cols[16][0] > Y0 + (k + 1) * TH + 40 && false) continue; if (performance.now() > tileDeadline) break outer; getTile(ch, k, true); } } } }
+  if (D && performance.now() < tileDeadline && tileCount < MAXT - 25) { const vx = D.air ? D.vx : Math.cos(D.ang) * D.s, vy = D.air ? D.vy : Math.sin(D.ang) * D.s; tileDeadline += 1.5;
+    outer: for (const lt of [0.45]) { const px = cam.x + vx * lt, py = cam.y + vy * lt, hw = (right - left) / 2, hh = (vbot - vtop) / 2; for (let ci = Math.floor((px - hw) / CW); ci <= Math.floor((px + hw) / CW); ci++) { const ch = getChunk(ci); for (let k = clamp(Math.floor((py - hh - Y0) / TH), 0, NT - 1); k <= clamp(Math.floor((py + hh - Y0) / TH), 0, NT - 1); k++) { if (ch.tiles[k] || ch.cols[16][0] > Y0 + (k + 1) * TH + 40 && false) continue; if (performance.now() > tileDeadline || tileCount >= MAXT - 15) break outer; const nt = getTile(ch, k, true); if (nt) nt.used = frameNo + 60; } } } }
   for (const k of [...chunks.keys()]) if (k * CW < left - 3000) { const ch = chunks.get(k); for (let q = 0; q < NT; q++) freeTile(ch, q); chunks.delete(k); }
   frameNo++; if ((frameNo & 15) === 0) evictTiles(cam.x, cam.y);
   if ((frameNo & 63) === 0) for (const [k, ch] of chunks) if (Math.abs(k * CW - cam.x) > 5000) { for (let q = 0; q < NT; q++) freeTile(ch, q); }
@@ -854,9 +855,9 @@ function render() {
   // dynamic features
   const t = T;
   for (let ci = Math.floor(left / CW) - 1; ci <= Math.floor(right / CW) + 1; ci++) { const ch = chunks.get(ci); if (!ch) continue; const F = ch.F;
-    for (const w of F.water) { if (w.dry) continue; const sp = pocketSprite(w, 'w'); if (!sp) continue; x.save(); if (w.breach) { x.beginPath(); x.rect(w.x - w.rx - 6, w.y + w.ry - 2 * w.ry * Math.max(0, w.vol), w.rx * 2 + 12, w.ry * 2 + 6); x.clip(); } x.drawImage(sp, w.x - sp.width / 2, w.y - sp.height / 2);
+    for (const w of F.water) { if (w.dry || SV.set.nopock) continue; const sp = pocketSprite(w, 'w'); if (!sp) continue; x.save(); if (w.breach) { x.beginPath(); x.rect(w.x - w.rx - 6, w.y + w.ry - 2 * w.ry * Math.max(0, w.vol), w.rx * 2 + 12, w.ry * 2 + 6); x.clip(); } x.drawImage(sp, w.x - sp.width / 2 * w.rx / 60, w.y - sp.height / 2 * w.ry / 40, sp.width * w.rx / 60, sp.height * w.ry / 40);
       const sy = w.breach ? w.y + w.ry - 2 * w.ry * Math.max(0, w.vol) : w.y - w.ry * 0.62; x.strokeStyle = 'rgba(220,245,255,0.75)'; x.lineWidth = 2; x.beginPath(); for (let k = 0; k <= 12; k++) { const px = w.x - w.rx * 0.8 + k / 12 * w.rx * 1.6; k ? x.lineTo(px, sy + Math.sin(px / 9 + t * 3 + w.ph) * 1.5) : x.moveTo(px, sy); } x.stroke(); x.restore(); }
-    for (const gs of F.gas) { if (gs.gas <= 0.05) continue; const sp = pocketSprite(gs, 'g'); if (!sp) continue; x.globalAlpha = 0.45 + 0.55 * gs.gas; x.drawImage(sp, gs.x - sp.width / 2, gs.y - sp.height / 2);
+    for (const gs of F.gas) { if (gs.gas <= 0.05 || SV.set.nopock) continue; const sp = pocketSprite(gs, 'g'); if (!sp) continue; x.globalAlpha = 0.45 + 0.55 * gs.gas; x.drawImage(sp, gs.x - sp.width / 2 * gs.rx / 60, gs.y - sp.height / 2 * gs.ry / 40, sp.width * gs.rx / 60, sp.height * gs.ry / 40);
       x.fillStyle = 'rgba(240,255,200,0.6)'; for (let i = 0; i < 4; i++) { const bx = gs.x + Math.sin(i * 2.1 + gs.ph + t * 0.3) * gs.rx * 0.55, by = gs.y + gs.ry * 0.45 - ((t * 14 + i * 17) % (gs.ry * 0.9)); x.beginPath(); x.arc(bx, by, 1.5 + i % 2, 0, TAU); x.fill(); } x.globalAlpha = 1; }
     for (const n of F.nitro) { if (!n.alive) continue; drawBomb(x, n, t); }
     for (const l of F.lava) { const gg = x.createRadialGradient(l.x, l.y, 2, l.x, l.y, l.rx); gg.addColorStop(0, '#fff2a0'); gg.addColorStop(0.45, '#ff9a2a'); gg.addColorStop(1, '#c8300e'); x.fillStyle = gg; x.beginPath(); x.ellipse(l.x, l.y, l.rx * (1 + 0.03 * Math.sin(t * 3 + l.ph)), l.ry, 0, 0, TAU); x.fill(); x.fillStyle = 'rgba(80,20,5,0.55)'; for (let i = 0; i < 4; i++) { x.beginPath(); x.ellipse(l.x + Math.sin(t * 0.7 + i * 2 + l.ph) * l.rx * 0.5, l.y + Math.cos(t * 0.5 + i * 1.7) * l.ry * 0.4, l.rx * 0.18, l.ry * 0.12, 0, 0, TAU); x.fill(); } x.fillStyle = 'rgba(255,240,180,0.8)'; for (let i = 0; i < 3; i++) { const k = ((t * 0.8 + i / 3 + l.ph) % 1); x.globalAlpha = 1 - k; x.beginPath(); x.arc(l.x + Math.sin(i * 2.4 + l.ph) * l.rx * 0.6, l.y + l.ry * 0.5 - k * l.ry, 2 + 3 * k, 0, TAU); x.fill(); } x.globalAlpha = 1; }
@@ -989,12 +990,13 @@ function showMenu() { endPending = null; fillMissions(); $('sBest').textContent 
 function renderShop() { $('shopBank').textContent = '◆ ' + SV.bank; $('shopList').innerHTML = UPS.map(u => { const l = U(u.k), c = COST[l]; return `<div class="up"><b>${u.n}</b><button data-k="${u.k}" ${l >= UMAX || SV.bank < c ? 'disabled' : ''}>${l >= UMAX ? 'MAX' : '◆ ' + c}</button><small>${u.d}</small><div class="pips">${Array.from({ length: UMAX }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</div></div>`; }).join(''); }
 function openShop(from) { backTo = from; renderShop(); show('ovShop'); }
 $('shopList').onclick = e => { const b = e.target.closest('button[data-k]'); if (!b || b.disabled) return; const k = b.dataset.k, l = U(k); if (l >= UMAX || SV.bank < COST[l]) return; SV.bank -= COST[l]; SV.up[k] = l + 1; saveSV(); audio(); SFX.gem(2); buzz(20); renderShop(); };
-function setLbl() { $('tSnd').lastChild.textContent = SV.set.snd ? 'On' : 'Off'; $('tVib').lastChild.textContent = SV.set.vib ? 'On' : 'Off'; $('tQ').lastChild.textContent = SV.set.q ? 'High' : 'Low (faster)'; $('tCave').lastChild.textContent = SV.set.cave ? 'On' : 'Off (faster)'; $('tFps').lastChild.textContent = SV.set.fps ? 'On' : 'Off'; }
+function setLbl() { $('tSnd').lastChild.textContent = SV.set.snd ? 'On' : 'Off'; $('tVib').lastChild.textContent = SV.set.vib ? 'On' : 'Off'; $('tQ').lastChild.textContent = SV.set.q ? 'High' : 'Low (faster)'; $('tCave').lastChild.textContent = SV.set.cave ? 'On' : 'Off (faster)'; $('tFps').lastChild.textContent = SV.set.fps ? 'On' : 'Off'; $('tPock').lastChild.textContent = SV.set.nopock ? 'Hidden (test)' : 'Shown'; }
 function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').textContent = inGame ? 'RESUME' : 'BACK'; $('bQuit').hidden = !inGame; show('ovSet'); }
 function pause() { if (!run || paused || !D || D.dead) return; paused = true; touches.clear(); $('pz').hidden = true; openSet(true); }
 function resume() { if (!paused) { if (!$('ovSet').hidden) showMenu(); return; } paused = false; touches.clear(); last = performance.now(); show(null); $('pz').hidden = false; }
 $('tSnd').onclick = () => { SV.set.snd = SV.set.snd ? 0 : 1; SOUND = !!SV.set.snd; if (master) master.gain.value = SOUND ? 0.8 : 0; if (SOUND) audio(); saveSV(); setLbl(); };
 $('tVib').onclick = () => { SV.set.vib = SV.set.vib ? 0 : 1; saveSV(); setLbl(); buzz(30); };
+$('tPock').onclick = () => { SV.set.nopock = SV.set.nopock ? 0 : 1; saveSV(); setLbl(); };
 $('tFps').onclick = () => { SV.set.fps = SV.set.fps ? 0 : 1; saveSV(); setLbl(); };
 $('tCave').onclick = () => { SV.set.cave = SV.set.cave ? 0 : 1; saveSV(); setLbl(); };
 $('tQ').onclick = () => { SV.set.q = SV.set.q ? 0 : 1; saveSV(); setLbl(); resize(); };
