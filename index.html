@@ -238,7 +238,7 @@ function ensureBand(ch, k) { if (k < 0 || k >= NT || ch.band[k]) return; ch.band
       for (const sh of shs) if (inShaft(sh, wx, wy, 0)) ch.mask[i] = 1;
       for (const L of lks) if (inPool(L, wx, wy) || inDome(L, wx, wy)) ch.mask[i] = 1;
       for (const cv of caves) { const dx = wx - cv.x, dy = wy - cv.y, f = caveSh(cv, Math.atan2(dy / cv.ry, dx / cv.rx)); if ((dx * dx) / ((cv.rx * f - 3) ** 2) + (dy * dy) / ((cv.ry * f - 3) ** 2) < 1) ch.mask[i] = 1; } } } }
-let tileCount = 0, tilesBuilt = 0, phMiss = 0; const MAXT = 150;
+let tileCount = 0, tilesBuilt = 0, phMiss = 0; const MAXT = 190;
 function getTile(ch, k, lazy) { let t = ch.tiles[k]; if (t) return t; if (lazy && tileBudget <= 0 && performance.now() > tileDeadline) return null; tileBudget--; tilesBuilt++; ensureBand(ch, k); t = buildTile(ch, k); if (!t) return null; ch.tiles[k] = t; tileCount++; t.used = frameNo;
   if (ch.built && ch.built[k]) { ensureBg(t); const x = t.ctx, r0 = k * RPT, r1 = Math.min(MROWS, r0 + RPT); x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; x.beginPath(); for (let rr = r0; rr < r1; rr++) for (let cc = 0; cc < MCOLS; cc++) if (ch.mask[rr * MCOLS + cc] === 1) { const cx = cc * CELL + 4, cy = Y0 + rr * CELL + 4 - t.top; x.moveTo(cx + 7.5, cy); x.arc(cx, cy, 7.5, 0, TAU); } x.fill(); x.restore(); }
   if (ch.built && ch.built[k] && ch.polys) for (const P of ch.polys) { if (P.y1 < t.top || P.y0 > t.top + t.H) continue; for (const [c, k2] of [[t.ctx, 1], ...(P.open ? [[t.bg.getContext('2d'), 0.5]] : [])]) { c.save(); c.globalCompositeOperation = 'destination-out'; c.fillStyle = '#000'; c.globalAlpha = 1; c.beginPath(); P.pts.forEach(([a, b], i) => i ? c.lineTo((a - ch.x0) * k2, (b - t.top) * k2) : c.moveTo((a - ch.x0) * k2, (b - t.top) * k2)); c.closePath(); c.fill(); c.restore(); } }
@@ -767,7 +767,8 @@ const GEMC = [['#ffb347', '#fff1c9'], ['#3ee08f', '#d9ffe9'], ['#c070ff', '#f5e3
 /* ================= RENDER ================= */
 const cv = $('cv'), ctx = cv.getContext('2d', { alpha: false }); let dpr = 1, VW = 1, VH = 1;
 const cam = { x: 0, y: 0, vh: 900, s: 1 };
-function resize() { dpr = Math.min(SV.set.q ? 1.5 : 1, window.devicePixelRatio || 1); VW = innerWidth; VH = innerHeight; cv.width = Math.round(VW * dpr); cv.height = Math.round(VH * dpr); }
+const RLV = [1.5, 1.25, 1, 0.85, 0.72]; let rLv = 0, ftE = 16.7, rT = 0, goodT = 0;
+function resize() { dpr = Math.min(RLV[Math.max(rLv, SV.set.q ? 0 : 2)], window.devicePixelRatio || 1); VW = innerWidth; VH = innerHeight; cv.width = Math.round(VW * dpr); cv.height = Math.round(VH * dpr); }
 const SKY = [['#5fb6ff', '#a9ddff', '#ffe2b8'], ['#3d5fae', '#ff9a72', '#ffcf86'], ['#0a1030', '#1d2758', '#3b3466']].map(r => r.map(h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16))));
 const mixC = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t); let nightF = 0; const STARS = Array.from({ length: 60 }, () => [rnd(), rnd(), 0.3 + rnd() * 0.7]);
 const dk = document.createElement('canvas'), dkx = dk.getContext('2d');
@@ -783,6 +784,8 @@ function drawBomb(x, n, t) { x.save(); x.translate(n.x, n.y); x.rotate(n.rot || 
   x.fillStyle = '#c9b45a'; x.fillRect(16, -10, 3, 20); x.fillStyle = '#2f2f20'; x.fillRect(-20, -9, 3, 18);
   x.fillStyle = 'rgba(255,255,255,0.25)'; x.fillRect(-18, -7, 30, 2); x.restore(); }
 const FIRE = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gg = g.createRadialGradient(32, 32, 0, 32, 32, 32); gg.addColorStop(0, 'rgba(255,230,150,1)'); gg.addColorStop(0.4, 'rgba(255,120,40,0.7)'); gg.addColorStop(1, 'rgba(200,40,10,0)'); g.fillStyle = gg; g.fillRect(0, 0, 64, 64); return c; })();
+const HOLE = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gg = g.createRadialGradient(32, 32, 0, 32, 32, 32); gg.addColorStop(0, 'rgba(0,0,0,1)'); gg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gg; g.fillRect(0, 0, 64, 64); return c; })();
+const VIG = (() => { const c = document.createElement('canvas'); c.width = 64; c.height = 128; const g = c.getContext('2d'), gg = g.createRadialGradient(32, 64, 22, 32, 64, 76); gg.addColorStop(0, 'rgba(255,60,20,0)'); gg.addColorStop(1, 'rgba(255,60,20,1)'); g.fillStyle = gg; g.fillRect(0, 0, 64, 128); return c; })();
 const SOFT = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gg = g.createRadialGradient(32, 32, 0, 32, 32, 32); gg.addColorStop(0, 'rgba(255,255,255,1)'); gg.addColorStop(0.55, 'rgba(255,255,255,0.6)'); gg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gg; g.fillRect(0, 0, 64, 64); return c; })();
 const easeBack = a => { const c = 1.9; return 1 + (c + 1) * Math.pow(a - 1, 3) + c * Math.pow(a - 1, 2); };
 function drawDrill(x, t) { const heat = clamp(D.heat, 0, 1.1);
@@ -806,7 +809,7 @@ function drawDrill(x, t) { const heat = clamp(D.heat, 0, 1.1);
 function render() {
   const x = ctx; x.setTransform(1, 0, 0, 1, 0, 0);
   // camera
-  if (D) { const gy = surf(D.x); const alt = gy - D.y; const spd = D.air ? Math.hypot(D.vx, D.vy) : D.s; const want = D.dead && D.why === 'Hull destroyed' ? 3900 : clamp(1000 + spd * 0.36 + Math.max(0, alt) * 0.6, 1000, 3600); cam.vh += (want - cam.vh) * 0.04; cam.s = VH / cam.vh;
+  if (D) { const gy = surf(D.x); const alt = gy - D.y; const spd = D.air ? Math.hypot(D.vx, D.vy) : D.s; const want = D.dead && D.why === 'Hull destroyed' ? 3300 : clamp(1000 + spd * 0.3 + Math.max(0, alt) * 0.5, 1000, 3000); cam.vh += (want - cam.vh) * 0.04; cam.s = VH / cam.vh;
     const vx = D.air ? D.vx : Math.cos(D.ang) * D.s, vy = D.air ? D.vy : Math.sin(D.ang) * D.s; const tx = D.x + Math.sign(vx || 1) * VW / cam.s * 0.06 + vx * 0.08, ty = (alt > 0 ? (D.y + gy) / 2 : D.y) + vy * 0.08; cam.x += (tx - cam.x) * 0.12; cam.y += (ty - cam.y) * 0.1; }
   const s = cam.s, sh = REDUCED ? 0 : shake, qk = REDUCED ? 0 : quake * 34 * Math.sin(performance.now() / 1000 * 31); const ox = VW / 2 - cam.x * s + (rnd() - 0.5) * sh, oy = VH / 2 - cam.y * s + (rnd() - 0.5) * sh + qk;
   // sky
@@ -897,10 +900,10 @@ function render() {
   x.setTransform(dpr, 0, 0, dpr, 0, 0);
   // darkness deep down / at night, with the drill's lamp
   { const nA = 0.55 * nightF, sY = (surf(cam.x) - cam.y) * s + VH / 2, yA = sY + 160 * s, yB = sY + 1500 * s;
-    if (nA > 0.02 || yA < VH) { const q = 0.5, W = Math.ceil(VW * q), H = Math.ceil(VH * q); if (dk.width !== W || dk.height !== H) { dk.width = W; dk.height = H; }
+    if (nA > 0.02 || yA < VH) { const q = 0.4, W = Math.ceil(VW * q), H = Math.ceil(VH * q); if (dk.width !== W || dk.height !== H) { dk.width = W; dk.height = H; }
       const d = dkx; d.setTransform(q, 0, 0, q, 0, 0); d.globalCompositeOperation = 'copy'; const gg = d.createLinearGradient(0, yA, 0, yB); gg.addColorStop(0, `rgba(6,5,14,${nA})`); gg.addColorStop(1, `rgba(6,5,14,${Math.max(nA, 0.8)})`); d.fillStyle = gg; d.fillRect(0, 0, VW, VH);
       d.globalCompositeOperation = 'destination-out'; d.fillStyle = '#000'; d.globalAlpha = 1; const SX = wx => wx * s + ox, SY = wy => wy * s + oy;
-      const hole = (wx, wy, r, a) => { const X = SX(wx), Y = SY(wy), R = r * s; if (X < -R || X > VW + R || Y < -R || Y > VH + R) return; const rg = d.createRadialGradient(X, Y, 0, X, Y, R); rg.addColorStop(0, `rgba(0,0,0,${a})`); rg.addColorStop(1, 'rgba(0,0,0,0)'); d.fillStyle = rg; d.fillRect(X - R, Y - R, R * 2, R * 2); };
+      const hole = (wx, wy, r, a) => { const X = SX(wx), Y = SY(wy), R = r * s; if (X < -R || X > VW + R || Y < -R || Y > VH + R || a <= 0) return; d.globalAlpha = Math.min(1, a); d.drawImage(HOLE, X - R, Y - R, R * 2, R * 2); d.globalAlpha = 1; };
       if (D && !(D.dead && D.why === 'Hull destroyed')) { const L = U('lamp'), c = Math.cos(D.ang), sn = Math.sin(D.ang), lx = D.x + c * 12, ly = D.y + sn * 12, fl = 0.97 + 0.03 * Math.sin(T * 37) * Math.sin(T * 11);
         hole(D.x, D.y, 70 + 10 * L, 0.55 * fl); hole(lx + c * 60, ly + sn * 60, 110 + 15 * L, 0.35 * fl);
         const cl = (380 + 90 * L) * fl, X = SX(lx), Y = SY(ly), R = cl * s; for (const [spr, a] of [[0.2 + 0.02 * L, 0.6], [0.34 + 0.03 * L, 0.35], [0.5 + 0.03 * L, 0.18]]) { const rg = d.createRadialGradient(X, Y, 4 * s, X, Y, R); rg.addColorStop(0, `rgba(0,0,0,${a})`); rg.addColorStop(0.25, `rgba(0,0,0,${a * 0.85})`); rg.addColorStop(0.6, `rgba(0,0,0,${a * 0.4})`); rg.addColorStop(1, 'rgba(0,0,0,0)'); d.fillStyle = rg; d.beginPath(); d.moveTo(X, Y); d.arc(X, Y, R, D.ang - spr, D.ang + spr); d.closePath(); d.fill(); } } else if (D) hole(D.x, D.y, 260, 0.75);
@@ -921,7 +924,7 @@ function render() {
       for (const [r0, r1, sc] of [[r - band, r, 1 + 0.09 * a], [r, r + band * 0.55, 1 - 0.05 * a]]) { if (r1 <= 1) continue; x.save(); x.beginPath(); x.arc(cx, cy, r1, 0, TAU); if (r0 > 0) x.arc(cx, cy, r0, 0, TAU, true); x.clip('evenodd'); x.translate(cx, cy); x.scale(sc, sc); x.translate(-cx, -cy); x.drawImage(wb, 0, 0, VW, VH); x.restore(); }
       x.globalAlpha = 0.45 * a; x.strokeStyle = '#fff8e8'; x.lineWidth = 2 + 4 * a; x.beginPath(); x.arc(cx, cy, Math.max(1, r), 0, TAU); x.stroke(); x.globalAlpha = 0.15 * a; x.lineWidth = band * 0.5; x.strokeStyle = '#ffffff'; x.beginPath(); x.arc(cx, cy, Math.max(1, r - band * 0.4), 0, TAU); x.stroke(); x.globalAlpha = 1; } }
   // overheating vignette
-  if (D && run && D.heat > 0.8) { const a = clamp((D.heat - 0.8) * 2.5, 0, 0.6) * (0.75 + 0.25 * Math.sin(T * 14)); const vg = x.createRadialGradient(VW / 2, VH / 2, Math.min(VW, VH) * 0.35, VW / 2, VH / 2, Math.max(VW, VH) * 0.75); vg.addColorStop(0, 'rgba(255,60,20,0)'); vg.addColorStop(1, `rgba(255,60,20,${a})`); x.fillStyle = vg; x.fillRect(0, 0, VW, VH); }
+  if (D && run && D.heat > 0.8) { const a = clamp((D.heat - 0.8) * 2.5, 0, 0.6) * (0.75 + 0.25 * Math.sin(T * 14)); x.globalAlpha = a; x.drawImage(VIG, 0, 0, VW, VH); x.globalAlpha = 1; }
   if (flash > 0.01) { x.fillStyle = `rgba(255,190,120,${flash * 0.5})`; x.fillRect(0, 0, VW, VH); }
   if (D && D.air && D.y < surf(D.x) - 200) { const gy = VH / 2 + (surf(D.x) - cam.y) * s; }
   if (endPending && D) { const a = clamp((deadT - 0.8) * 2, 0, 1); if (a > 0) { x.globalAlpha = a; x.font = '400 26px "Lilita One", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round'; x.lineWidth = 7; x.strokeStyle = 'rgba(60,25,10,0.75)'; x.strokeText(D.why, VW / 2, VH * 0.76, VW - 24); x.fillStyle = '#ffd0b0'; x.fillText(D.why, VW / 2, VH * 0.76, VW - 24); x.font = '900 15px Nunito, sans-serif'; x.lineWidth = 5; const tt = 'Tap to continue'; x.globalAlpha = a * (0.65 + 0.35 * Math.sin(performance.now() / 260)); x.strokeText(tt, VW / 2, VH * 0.76 + 34); x.fillStyle = '#fff'; x.fillText(tt, VW / 2, VH * 0.76 + 34); x.globalAlpha = 1; x.textBaseline = 'alphabetic'; } }
@@ -950,7 +953,9 @@ function sound() { if (!hum || !D) return; const tA = AC.currentTime; const unde
 /* ================= LOOP & INPUT ================= */
 let last = performance.now(), acc = 0; const STEP = 1 / 120;
 let errN = 0;
-function frameInner(now) { const rd = Math.min(0.05, (now - last) / 1000); last = now; budget = Math.max(0, budget - 2);
+function frameInner(now) { const rawFt = now - last, rd = Math.min(0.05, rawFt / 1000); last = now;
+  // dynamic resolution: drop it when frames are slow, raise it again when there is headroom
+  if (run && !paused && rawFt < 250) { ftE += (rawFt - ftE) * 0.05; rT += rawFt; if (rT > 1200) { rT = 0; if (ftE > 21 && rLv < RLV.length - 1) { rLv++; resize(); goodT = 0; } else if (ftE < 15.5) { goodT += 1.2; if (goodT > 6 && rLv > 0) { rLv--; resize(); goodT = 0; } } else goodT = 0; } } budget = Math.max(0, budget - 2);
   { let t = 0; for (const v of touches.values()) t += v; if (keys.ArrowRight || keys.KeyD || keys.ArrowDown || keys.Space) t += 1; if (keys.ArrowLeft || keys.KeyA || keys.ArrowUp) t -= 1; if (!window.__forceTurn) turn = clamp(t, -1, 1); hold = turn !== 0; }
   if (slowT > 0) { slowT -= rd; TS = 0.33; } else TS = Math.min(1, TS + rd * 2.5);
   if (D && D.dead && endPending) deadT += rd;
