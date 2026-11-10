@@ -181,37 +181,37 @@ let SEED = 1;
 const h1 = i => { const s = Math.sin(i * 127.1 + SEED * 311.7) * 43758.5453; return s - Math.floor(s); };
 const vn = x => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return h1(i) + (h1(i + 1) - h1(i)) * u; };
 function surf(x) { const amp = Math.min(1.7, 1 + Math.max(0, x) / 25000); return -30 + amp * (95 * Math.sin(x / 560 + 1.3) * (0.55 + 0.45 * vn(x / 1700)) + 80 * (vn(x / 340) - 0.5)) + 18 * (vn(x / 95) - 0.5); }
-const bed = x => 6300 + 90 * vn(x / 260 + 21);
-const B5 = x => 3600 + 220 * vn(x / 640 + 23);
+const bed = x => 12600 + 120 * vn(x / 260 + 21);
+const B5 = x => 3600 + 220 * vn(x / 640 + 23), B6 = x => 6800 + 300 * vn(x / 700 + 29), B7 = x => 9800 + 300 * vn(x / 760 + 31);
 const B1 = x => 110 + 40 * vn(x / 210 + 5), B2 = x => 380 + 80 * vn(x / 310 + 9), B3 = x => 900 + 120 * vn(x / 420 + 13), B4 = x => 1750 + 160 * vn(x / 520 + 17);
-const AIR = 0, SOIL = 1, CLAY = 2, GRAV = 3, ROCK = 4, BED = 5, TUN = 6, GAS = 7, WATER = 8, COAL = 9, DEEP = 10, SAND = 11, ICE = 12, ASH = 13, LAVA = 14, MAG = 15;
-const DRAG = [0.02, 0.09, 0.15, 0.22, 0.36, 4, 0.02, 0.05, 0.4, 0.2, 0.48, 0.1, 0.05, 0.12, 0.03, 0.42];
-const HEAT = [-0.3, -0.05, 0.025, 0.07, 0.17, 0.3, -0.18, -0.06, -1.4, 0.1, 0.26, 0.0, -0.6, 0.06, 2.4, 0.3];
-const MCOL = [null, ['#8a5a3a', '#6d4429', '#a8754f'], ['#b4704a', '#93573a', '#cf8c62'], ['#8d8377', '#6d655b', '#ada395'], ['#626774', '#4b4f5a', '#80869a'], ['#2d2833', '#1f1b24', '#3b3542'], null, null, null, ['#2a2220', '#1c1614', '#4a403a'], ['#4c4160', '#372e47', '#665a7c'], ['#cfae72', '#b08e56', '#e8cf98'], ['#bfe0f0', '#97c3da', '#eaf7fd'], ['#4a4247', '#363036', '#655b62'], ['#ff7a2a', '#d84a1a', '#ffd060'], ['#4a2226', '#331519', '#7a3028']];
+const AIR = 0, SOIL = 1, CLAY = 2, GRAV = 3, ROCK = 4, BED = 5, TUN = 6, GAS = 7, WATER = 8, COAL = 9, DEEP = 10, SAND = 11, ICE = 12, ASH = 13, LAVA = 14, MAG = 15, CRYS = 16, CORE = 17;
+const DRAG = [0.02, 0.09, 0.15, 0.22, 0.36, 4, 0.02, 0.05, 0.4, 0.2, 0.48, 0.1, 0.05, 0.12, 0.03, 0.42, 0.38, 0.5];
+const HEAT = [-0.3, -0.05, 0.025, 0.07, 0.17, 0.3, -0.18, -0.06, -1.4, 0.1, 0.26, 0.0, -0.6, 0.06, 2.4, 0.3, 0.12, 0.45];
+const MCOL = [null, ['#8a5a3a', '#6d4429', '#a8754f'], ['#b4704a', '#93573a', '#cf8c62'], ['#8d8377', '#6d655b', '#ada395'], ['#626774', '#4b4f5a', '#80869a'], ['#2d2833', '#1f1b24', '#3b3542'], null, null, null, ['#2a2220', '#1c1614', '#4a403a'], ['#4c4160', '#372e47', '#665a7c'], ['#cfae72', '#b08e56', '#e8cf98'], ['#bfe0f0', '#97c3da', '#eaf7fd'], ['#4a4247', '#363036', '#655b62'], ['#ff7a2a', '#d84a1a', '#ffd060'], ['#4a2226', '#331519', '#7a3028'], ['#2e2a4e', '#211d3a', '#5a4e9a'], ['#2a1410', '#1a0b08', '#6a2a12']];
 const colOf = m => MCOL[m] || MCOL[4];
-const MNAME = ['', 'soil', 'clay', 'gravel', 'rock', 'bedrock', '', '', '', 'coal', 'deep rock', 'sand', 'ice', 'ash', 'lava', 'magma rock'];
+const MNAME = ['', 'soil', 'clay', 'gravel', 'rock', 'bedrock', '', '', '', 'coal', 'deep rock', 'sand', 'ice', 'ash', 'lava', 'magma rock', 'crystal rock', 'core rock'];
 /* biomes: meadow → desert → tundra → volcanic, repeating */
 const BIO = ['MEADOW', 'DESERT', 'TUNDRA', 'VOLCANO'], TOPM = [1, 11, 12, 13];
 const bioV = x => x < 3000 ? 0 : (x + 700 * (Math.sin(x / 1900) * 0.5)) / 8000;
 const biome = x => x < 3000 ? 0 : Math.floor(bioV(x)) % 4;
 const ITEMS = [['ammonite', 'Ammonite', 'f'], ['trilo', 'Trilobite', 'f'], ['fern', 'Fern fossil', 'f'], ['fish', 'Fish fossil', 'f'], ['skull', 'Dino skull', 'f'], ['coin', 'Gold coin', 't'], ['watch', 'Pocket watch', 't'], ['helmet', 'Viking helmet', 't'], ['ring', 'Ruby ring', 't'], ['chest', 'Pirate chest', 't']];
-const Y0 = -320, Y1 = 6544, CW = 256, CELL = 8, MROWS = (Y1 - Y0) / CELL, MCOLS = CW / CELL;
+const Y0 = -320, Y1 = 12960, CW = 256, CELL = 8, MROWS = (Y1 - Y0) / CELL, MCOLS = CW / CELL;
 
 /* ================= CHUNKS ================= */
 const chunks = new Map();
 const GRAIN = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); const im = g.createImageData(128, 128); for (let i = 0; i < 128 * 128; i++) { const v = 128 + (Math.random() - 0.5) * 120 + (Math.random() < 0.04 ? 60 : 0); im.data[i * 4] = im.data[i * 4 + 1] = im.data[i * 4 + 2] = v; im.data[i * 4 + 3] = 255; } g.putImageData(im, 0, 0); return c; })();
 function rngFor(ci) { let s = (ci * 9301 + 49297 + SEED * 7717) % 233280; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
 function genFeatures(ci) { const R = rngFor(ci), x0 = ci * CW, bio = biome(x0 + CW / 2), F = { bio, gas: [], water: [], coal: [], nitro: [], gems: [], caves: [], sand: [], lava: [], shafts: [], fos: [] }; if (ci < 2) return F;
-  const nG = 2 + (R() < 0.6 ? 1 : 0); for (let i = 0; i < nG; i++) { const x = x0 + R() * CW, d = 120 + R() * 5900; F.gas.push({ x, y: surf(x) + d, rx: 48 + R() * 55, ry: 30 + R() * 30, gas: 1, ph: R() * 6 }); }
-  for (let wi = 0; wi < 2; wi++) if (R() < 0.42) { const x = x0 + R() * CW, d = 160 + R() * (wi ? 5800 : 2400); F.water.push({ x, y: surf(x) + d, rx: 50 + R() * 50, ry: 28 + R() * 22, ph: R() * 6 }); }
-  F.caves = []; for (let ci2 = 0; ci2 < 2; ci2++) if (R() < 0.42) { const x = x0 + R() * CW, d = 180 + R() * 5800; F.caves.push({ x, y: surf(x) + d, rx: 70 + R() * 90, ry: 40 + R() * 45, ph: R() * 6 }); }
-  if (R() < 0.6) { const x = x0 + R() * CW, d = 300 + R() * 3200; F.coal.push({ x, y: surf(x) + d, rx: 120 + R() * 110, ry: 13 + R() * 9, rot: (R() - 0.5) * 0.4, burnt: false }); }
-  const nN = R() < 0.2 ? 0 : R() < 0.6 ? 1 : R() < 0.85 ? 2 : 3; for (let i = 0; i < nN; i++) { let x = x0 + R() * CW, y = surf(x) + 70 + R() * 5900; if (F.gas.length && R() < 0.4) { const g = F.gas[0]; x = g.x + g.rx * 0.9; y = g.y; } if (!F.caves.some(c => inEll(c, x, y, 30))) F.nitro.push({ x, y, alive: true, ph: R() * 6, rot: (R() - 0.5) * 1.6 }); }
-  const nE = 11 + (R() * 8 | 0); for (let i = 0; i < nE; i++) { const x = x0 + R() * CW, d = 50 + R() * 6100; const k = d < 600 ? 0 : d < 1800 ? 1 : d < 3500 ? 2 : 3; F.gems.push({ x, y: surf(x) + d, k, alive: true, ph: R() * 6 }); }
-  if (R() < 0.4) { const x = x0 + R() * CW, d = 3700 + R() * 2400; F.lava.push({ x, y: surf(x) + d, rx: 50 + R() * 60, ry: 26 + R() * 22, ph: R() * 6 }); }
+  const nG = 3 + (R() * 3 | 0); for (let i = 0; i < nG; i++) { const x = x0 + R() * CW, d = 120 + R() * 12200; F.gas.push({ x, y: surf(x) + d, rx: 48 + R() * 55, ry: 30 + R() * 30, gas: 1, ph: R() * 6 }); }
+  for (let wi = 0; wi < 3; wi++) if (R() < 0.42) { const x = x0 + R() * CW, d = 160 + R() * (wi ? 12000 : 2400); F.water.push({ x, y: surf(x) + d, rx: 50 + R() * 50, ry: 28 + R() * 22, ph: R() * 6 }); }
+  F.caves = []; for (let ci2 = 0; ci2 < 4; ci2++) if (R() < 0.42) { const x = x0 + R() * CW, d = 180 + R() * 12100; F.caves.push({ x, y: surf(x) + d, rx: 70 + R() * 90, ry: 40 + R() * 45, ph: R() * 6 }); }
+  if (R() < 0.6) { const x = x0 + R() * CW, d = 300 + R() * 6000; F.coal.push({ x, y: surf(x) + d, rx: 120 + R() * 110, ry: 13 + R() * 9, rot: (R() - 0.5) * 0.4, burnt: false }); }
+  const nN = 1 + (R() * 4 | 0); for (let i = 0; i < nN; i++) { let x = x0 + R() * CW, y = surf(x) + 70 + R() * 12200; if (F.gas.length && R() < 0.4) { const g = F.gas[0]; x = g.x + g.rx * 0.9; y = g.y; } if (!F.caves.some(c => inEll(c, x, y, 30))) F.nitro.push({ x, y, alive: true, ph: R() * 6, rot: (R() - 0.5) * 1.6 }); }
+  const nE = 20 + (R() * 12 | 0); for (let i = 0; i < nE; i++) { const x = x0 + R() * CW, d = 50 + R() * 12400; const k = d < 600 ? 0 : d < 1800 ? 1 : d < 3500 ? 2 : 3; F.gems.push({ x, y: surf(x) + d, k, alive: true, ph: R() * 6 }); }
+  for (let li = 0; li < 2; li++) if (R() < 0.45) { const x = x0 + R() * CW, d = 3700 + R() * 8700; F.lava.push({ x, y: surf(x) + d, rx: 50 + R() * 60, ry: 26 + R() * 22, ph: R() * 6 }); }
   if (bio === 3) { F.lava = F.lava.concat(F.water.map(w => ({ ...w, rx: w.rx * 1.2 }))); F.water = []; if (R() < 0.5) { const x = x0 + R() * CW, d = 250 + R() * 1800; F.lava.push({ x, y: surf(x) + d, rx: 50 + R() * 50, ry: 26 + R() * 20, ph: R() * 6 }); } }
   if (bio !== 3 && ci > 8 && R() < 0.07) { const xa = x0 + R() * 70, L = 220 + R() * 190, y = surf(xa) + 170 + R() * 650, sl = (R() - 0.5) * 0.12; if (!F.caves.some(c => Math.abs(c.y - y) < 150)) F.shafts.push({ xa, xb: xa + L, y, sl, h: 46, v: R() < 0.55 ? xa + 20 + R() * (L - 40) : null, trig: false }); }
-  if (R() < 0.25) { const x = x0 + R() * CW, d = 260 + R() * 5800, pool = d < 1200 ? [0, 1, 2, 5, 6] : d < 3200 ? [1, 2, 3, 6, 7] : [3, 4, 7, 8, 9]; F.fos.push({ x, y: surf(x) + d, id: pool[R() * pool.length | 0], alive: true, ph: R() * 6 }); }
+  if (R() < 0.4) { const x = x0 + R() * CW, d = 260 + R() * 12000, pool = d < 1200 ? [0, 1, 2, 5, 6] : d < 3200 ? [1, 2, 3, 6, 7] : [3, 4, 7, 8, 9]; F.fos.push({ x, y: surf(x) + d, id: pool[R() * pool.length | 0], alive: true, ph: R() * 6 }); }
   F.sand = []; const nS = bio !== 0 ? 0 : R() < 0.65 ? 1 + (R() < 0.4 ? 1 : 0) : 0; for (let i = 0; i < nS; i++) { const x = x0 + R() * CW, d = 30 + R() * 420; F.sand.push({ x, y: surf(x) + d, rx: 55 + R() * 70, ry: 18 + R() * 26, rot: (R() - 0.5) * 0.3 }); }
   return F; }
 /* ===== TERRENG I RUTER (256×256), bygges når de trengs ===== */
@@ -220,13 +220,13 @@ function inShaft(sh, x, y, pad) { if (x >= sh.xa - pad && x <= sh.xb + pad) { co
 const caveSh = (cv, a) => 1 + 0.18 * Math.sin(a * 3 + cv.ph) + 0.1 * Math.sin(a * 7 + cv.ph * 2);
 let tileBudget = 99;
 function getChunk(ci) { let ch = chunks.get(ci); if (ch) return ch; const x0 = ci * CW, F = genFeatures(ci); const NB = [genFeatures(ci - 1), F, genFeatures(ci + 1)];
-  const cols = []; for (let cc = 0; cc < MCOLS; cc++) { const wx = x0 + cc * CELL + 4; cols.push([surf(wx), B1(wx), B2(wx), B3(wx), B4(wx), bed(wx), B5(wx)]); }
+  const cols = []; for (let cc = 0; cc < MCOLS; cc++) { const wx = x0 + cc * CELL + 4; cols.push([surf(wx), B1(wx), B2(wx), B3(wx), B4(wx), bed(wx), B5(wx), B6(wx), B7(wx)]); }
   ch = { ci, x0, F, NB, cols, bio: F.bio, mask: new Uint8Array(MCOLS * MROWS), cm: new Uint8Array(MCOLS * MROWS), band: new Uint8Array(NT), tiles: new Array(NT) }; chunks.set(ci, ch); return ch; }
 function ensureBand(ch, k) { if (k < 0 || k >= NT || ch.band[k]) return; ch.band[k] = 1; const r0 = k * RPT, r1 = Math.min(MROWS, r0 + RPT), yA = Y0 + r0 * CELL, yB = Y0 + r1 * CELL, mid = ch.x0 + CW / 2;
   const near = [], caves = [], shs = []; for (const FF of ch.NB) { for (const sh of FF.shafts) if (sh.xb > ch.x0 - 30 && sh.xa < ch.x0 + CW + 30) shs.push(sh); for (const e of FF.sand || []) if (Math.abs(e.x - mid) < CW / 2 + e.rx + 8 && e.y + e.rx > yA && e.y - e.rx < yB) near.push([e, SAND]); for (const e of FF.coal) if (Math.abs(e.x - mid) < CW / 2 + e.rx + 8 && e.y + e.rx > yA && e.y - e.rx < yB) near.push([e, COAL]);
     for (const cv of FF.caves || []) if (Math.abs(cv.x - mid) < CW / 2 + cv.rx * 1.3 + 8 && cv.y + cv.ry * 1.3 > yA && cv.y - cv.ry * 1.3 < yB) caves.push(cv); }
-  for (let cc = 0; cc < MCOLS; cc++) { const [s0, b1, b2, b3, b4, bd, b5] = ch.cols[cc], wx = ch.x0 + cc * CELL + 4;
-    for (let rr = r0; rr < r1; rr++) { const wy = Y0 + rr * CELL + 4, i = rr * MCOLS + cc; if (wy < s0) continue; const d = wy - s0; let m = wy > bd ? BED : d < b1 ? TOPM[ch.bio] : d < b2 ? CLAY : d < b3 ? GRAV : d < b4 ? ROCK : d < b5 ? DEEP : MAG;
+  for (let cc = 0; cc < MCOLS; cc++) { const [s0, b1, b2, b3, b4, bd, b5, b6, b7] = ch.cols[cc], wx = ch.x0 + cc * CELL + 4;
+    for (let rr = r0; rr < r1; rr++) { const wy = Y0 + rr * CELL + 4, i = rr * MCOLS + cc; if (wy < s0) continue; const d = wy - s0; let m = wy > bd ? BED : d < b1 ? TOPM[ch.bio] : d < b2 ? CLAY : d < b3 ? GRAV : d < b4 ? ROCK : d < b5 ? DEEP : d < b6 ? MAG : d < b7 ? CRYS : CORE;
       for (const [e, mm] of near) if (inEll(e, wx, wy, 0)) m = mm; ch.cm[i] = m;
       for (const sh of shs) if (inShaft(sh, wx, wy, 0)) ch.mask[i] = 1;
       for (const cv of caves) { const dx = wx - cv.x, dy = wy - cv.y, f = caveSh(cv, Math.atan2(dy / cv.ry, dx / cv.rx)); if ((dx * dx) / ((cv.rx * f - 3) ** 2) + (dy * dy) / ((cv.ry * f - 3) ** 2) < 1) ch.mask[i] = 1; } } } }
@@ -242,10 +242,12 @@ function buildTile(ch, k) {
   const R = rngFor(ch.ci * 37 + k * 101 + 7777), xs = []; for (let px = -8; px <= W + 8; px += 8) xs.push(x0 + px);
   const poly = (topF, botF) => { x.beginPath(); xs.forEach((wx, i) => { const y = topF(wx) - top; i ? x.lineTo(wx - x0, y) : x.moveTo(wx - x0, y); }); for (let i = xs.length - 1; i >= 0; i--) x.lineTo(xs[i] - x0, botF(xs[i]) - top); x.closePath(); };
   const ss = xs.map(surf), sMin = Math.min(...ss), sMax = Math.max(...ss);
-  const bio = ch.bio, layers = [[w => surf(w), w => surf(w) + B1(w), TOPM[bio]], [w => surf(w) + B1(w), w => surf(w) + B2(w), 2], [w => surf(w) + B2(w), w => surf(w) + B3(w), 3], [w => surf(w) + B3(w), w => surf(w) + B4(w), 4], [w => surf(w) + B4(w), w => surf(w) + B5(w), 10], [w => surf(w) + B5(w), w => bed(w), 15], [w => bed(w), () => Y1 + 10, 5]];
+  const bio = ch.bio, layers = [[w => surf(w), w => surf(w) + B1(w), TOPM[bio]], [w => surf(w) + B1(w), w => surf(w) + B2(w), 2], [w => surf(w) + B2(w), w => surf(w) + B3(w), 3], [w => surf(w) + B3(w), w => surf(w) + B4(w), 4], [w => surf(w) + B4(w), w => surf(w) + B5(w), 10], [w => surf(w) + B5(w), w => surf(w) + B6(w), 15], [w => surf(w) + B6(w), w => surf(w) + B7(w), 16], [w => surf(w) + B7(w), w => bed(w), 17], [w => bed(w), () => Y1 + 10, 5]];
   for (const [tf, bf, m] of layers) { let tmin = 1e9, bmax = -1e9; for (const wx of xs) { tmin = Math.min(tmin, tf(wx)); bmax = Math.max(bmax, bf(wx)); } if (bmax < top || tmin > top + H) continue;
     const C = MCOL[m]; poly(tf, bf); x.fillStyle = C[0]; x.fill(); x.save(); x.clip();
     const N = m === 3 ? 60 : 34; for (let i = 0; i < N; i++) { const px = R() * W, py = R() * H, sz = m === 3 ? 2 + R() * 5 : 1 + R() * 2.5; x.fillStyle = R() < 0.5 ? C[1] : C[2]; x.globalAlpha = 0.55; x.beginPath(); if (m === 3) x.ellipse(px, py, sz, sz * 0.75, R() * 3, 0, TAU); else x.arc(px, py, sz, 0, TAU); x.fill(); }
+    if (m === 16) { for (let i = 0; i < 9; i++) { const px = R() * W, py = R() * H, sz = 4 + R() * 9, a = R() * 3; x.globalAlpha = 0.85; x.fillStyle = ['#9f8cff', '#6ad8ff', '#d48cff'][i % 3]; x.beginPath(); x.moveTo(px + Math.cos(a) * sz, py + Math.sin(a) * sz); x.lineTo(px + Math.cos(a + 2.3) * sz * 0.45, py + Math.sin(a + 2.3) * sz * 0.45); x.lineTo(px - Math.cos(a) * sz * 0.6, py - Math.sin(a) * sz * 0.6); x.lineTo(px + Math.cos(a - 2.3) * sz * 0.45, py + Math.sin(a - 2.3) * sz * 0.45); x.closePath(); x.fill(); x.fillStyle = 'rgba(255,255,255,0.6)'; x.fillRect(px - 1, py - 1, 2, 2); } }
+    if (m === 17) { x.strokeStyle = '#ff8a1a'; x.lineWidth = 3; x.globalAlpha = 0.7; for (let i = 0; i < 9; i++) { let px = R() * W, py = R() * H; x.beginPath(); x.moveTo(px, py); for (let q = 0; q < 6; q++) { px += (R() - 0.5) * 26; py += (R() - 0.3) * 18; x.lineTo(px, py); } x.stroke(); } }
     if (m === 15) { x.strokeStyle = '#ff5a1a'; x.lineWidth = 2; x.globalAlpha = 0.55; for (let i = 0; i < 7; i++) { let px = R() * W, py = R() * H; x.beginPath(); x.moveTo(px, py); for (let q = 0; q < 5; q++) { px += (R() - 0.5) * 22; py += (R() - 0.3) * 16; x.lineTo(px, py); } x.stroke(); } }
     if (m === 4 || m === 5 || m === 10) { x.strokeStyle = C[1]; x.lineWidth = 1.5; x.globalAlpha = 0.7; for (let i = 0; i < 4; i++) { let px = R() * W, py = R() * H; x.beginPath(); x.moveTo(px, py); for (let q = 0; q < 4; q++) { px += (R() - 0.3) * 18; py += (R() - 0.5) * 14; x.lineTo(px, py); } x.stroke(); } }
     if (m === 1 && bio === 0 && sMin < top + H && sMax + 40 > top) { x.strokeStyle = '#5a3a22'; x.lineWidth = 1.2; x.globalAlpha = 0.5; for (let i = 0; i < 10; i++) { let px = R() * W, py = surf(x0 + px) - top + 6; x.beginPath(); x.moveTo(px, py); for (let q = 0; q < 5; q++) { px += (R() - 0.5) * 10; py += 5 + R() * 6; x.lineTo(px, py); } x.stroke(); } }
@@ -411,7 +413,7 @@ function dust(x, y, n, c, sp) { if (!SV.set.q && rnd() < 0.5) return; for (let i
 let MODE = 'free', S = {}, HM = 1, runReward = 0, ghost = null, ghostRec = [], ghostT = 0, paused = false, tut = null, misT = 0;
 const MIS = {
   dist: { t: n => `Reach ${n} m`, n: l => 500 + 350 * l, v: () => D.maxX / 10 },
-  depth: { t: n => `Drill ${n} m deep`, n: l => Math.min(560, 60 + 30 * l), v: () => S.depth },
+  depth: { t: n => `Drill ${n} m deep`, n: l => Math.min(1200, 60 + 35 * l), v: () => S.depth },
   perf: { t: n => `Land ${n} perfect dive${n > 1 ? 's' : ''}`, n: l => 2 + (l >> 1), v: () => S.perf },
   flips: { t: n => `Land ${n} flip${n > 1 ? 's' : ''}`, n: l => 1 + (l >> 1), v: () => S.flips },
   bombs: { t: n => `Blow up ${n} old bomb${n > 1 ? 's' : ''}`, n: l => 1 + (l / 3 | 0), v: () => S.bombs },
@@ -725,7 +727,7 @@ function render() {
   // terrain chunks
   const left = cam.x - VW / 2 / s - 40, right = cam.x + VW / 2 / s + 40, vtop = cam.y - VH / 2 / s - 40, vbot = cam.y + VH / 2 / s + 40; const k0 = clamp(Math.floor((vtop - Y0) / TH), 0, NT - 1), k1 = clamp(Math.floor((vbot - Y0) / TH), 0, NT - 1);
   tileBudget = 2; const vis = [];
-  for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = getChunk(ci); for (let k = k0; k <= k1; k++) { const tl = getTile(ch, k, true); const ty = Y0 + k * TH; if (tl) { tl.used = frameNo; x.drawImage(tl.bg, ch.x0, ty, CW, tl.H); vis.push([ch, tl]); } else { const sm = ch.cols[16][0]; if (ty + TH > sm) { const d = ty + TH / 2 - sm; x.fillStyle = colOf(d < 110 ? TOPM[ch.bio] : d < 380 ? CLAY : d < 900 ? GRAV : d < 1750 ? ROCK : d < 3600 ? DEEP : MAG)[0]; const y0 = Math.max(ty, sm); x.fillRect(ch.x0, y0, CW + 0.5, ty + TH - y0); } } } }
+  for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = getChunk(ci); for (let k = k0; k <= k1; k++) { const tl = getTile(ch, k, true); const ty = Y0 + k * TH; if (tl) { tl.used = frameNo; x.drawImage(tl.bg, ch.x0, ty, CW, tl.H); vis.push([ch, tl]); } else { const sm = ch.cols[16][0]; if (ty + TH > sm) { const d = ty + TH / 2 - sm; x.fillStyle = colOf(d < 110 ? TOPM[ch.bio] : d < 380 ? CLAY : d < 900 ? GRAV : d < 1750 ? ROCK : d < 3600 ? DEEP : d < 6800 ? MAG : d < 9800 ? CRYS : CORE)[0]; const y0 = Math.max(ty, sm); x.fillRect(ch.x0, y0, CW + 0.5, ty + TH - y0); } } } }
   for (const [ch, tl] of vis) x.drawImage(tl.fg, ch.x0, tl.top, CW + 0.5, tl.H + 0.5);
   if (D && tileBudget > 0) { const dir = (D.air ? D.vx : Math.cos(D.ang)) >= 0 ? 1 : -1, kd = clamp(Math.floor((D.y - Y0) / TH), 0, NT - 1); outer: for (let a = 1; a <= 4; a++) { const ch = getChunk(Math.floor(D.x / CW) + dir * a); for (const k of [kd, kd + 1, kd - 1, clamp(Math.floor((ch.cols[16][0] - Y0) / TH), 0, NT - 1)]) { if (k < 0 || k >= NT || ch.tiles[k]) continue; getTile(ch, k, true); if (tileBudget <= 0) break outer; } } }
   for (const k of [...chunks.keys()]) if (k * CW < left - 3000) { const ch = chunks.get(k); for (let q = 0; q < NT; q++) freeTile(ch, q); chunks.delete(k); }
@@ -812,7 +814,7 @@ function updateFX(dt) { if (run) stepWater(dt); for (const p of parts) if (p.k =
   shake *= Math.pow(0.004, dt); flash *= Math.exp(-6 * dt); }
 function hud() { if (!D) return; $('dist').firstChild.nodeValue = Math.max(0, Math.round(D.maxX / 10)) + ' m'; $('best').textContent = (MODE === 'daily' ? 'Daily best ' + (SV.daily ? SV.daily.best : 0) : 'Best ' + best) + ' m · deep ' + SV.deep + ' m'; { const dd = run ? Math.round((D.y - surf(D.x)) / 10) : 0; const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; $('dep').textContent = (dd > 2 ? '↓ ' + dd + ' m  ' : '') + (run ? Math.round(sp * 0.36) + ' km/h' : ''); } $('gems').textContent = '◆ ' + gems;
   $('fuel').firstChild.style.width = (D.fuel * 100) + '%'; $('heat').firstChild.style.width = (clamp(D.heat, 0, 1) * 100) + '%'; $('hull').firstChild.style.width = (clamp(D.hull / HM, 0, 1) * 100) + '%'; }
-let sndHold = 0, sndSp = 0; const GRIND = [0, 450, 600, 900, 1500, 1800, 0, 300, 250, 700, 1700, 380, 330, 520, 160, 1900];
+let sndHold = 0, sndSp = 0; const GRIND = [0, 450, 600, 900, 1500, 1800, 0, 300, 250, 700, 1700, 380, 330, 520, 160, 1900, 2400, 1300];
 function sound() { if (!hum || !D) return; const tA = AC.currentTime; const under = run && !paused && !D.air && !D.dead && !D.lying; const sp = under ? D.s : 0; const m = D.mat || SOIL, hard = DRAG[m] || 0.1;
   const live = run && !paused && !D.dead; if (under) { sndHold = 0.35; sndSp = sp; } else if (!live) sndHold = 0; else if (sndHold > 0) sndHold -= 1 / 60; const on = under || (live && sndHold > 0), spx = under ? sp : sndSp;
   const k = clamp(spx / 1600, 0, 1); hum.g.gain.setTargetAtTime(on ? 0.03 + 0.03 * k : 0, tA, 0.15); hum.o.frequency.setTargetAtTime(150 + 260 * k, tA, 0.12); hum.o2.frequency.setTargetAtTime(300 + 520 * k, tA, 0.12); hum.f.frequency.setTargetAtTime(1200 + 1600 * k, tA, 0.12);
