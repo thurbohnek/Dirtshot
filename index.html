@@ -145,6 +145,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
     <button class="tog" id="tSnd">Sound <span></span></button>
     <button class="tog" id="tVib">Vibration <span></span></button>
     <button class="tog" id="tQ">Graphics <span></span></button>
+    <button class="tog" id="tCave">Cave-ins <span></span></button>
   </div>
   <button class="btn" id="bResume">RESUME</button>
   <button class="link" id="bQuit">Quit to menu</button>
@@ -705,7 +706,7 @@ function stepTut(dt) { tut.t += dt; const st = tut.st;
 const TUTX = ['Hold the RIGHT side of the screen to rotate ↻', 'Let go to fly straight – hit the ground nose-first', 'Hold a side to steer – point up to burst out!', 'Land along the slope for a PERFECT DIVE'];
 
 function step(dt) {
-  T += dt; updateFalls(dt); if (D && !D.dead && T - D_lastStruct > 0.5) { D_lastStruct = T; if (D.y > surf(D.x) + 20) structCheck(D.x - Math.cos(D.ang) * 120, D.y - Math.sin(D.ang) * 120); } if (structQ.length) { const q = structQ.shift(); structCheck(q[0], q[1]); } if (ev.length) { const due = ev.filter(e => e.t <= T); if (due.length) { ev = ev.filter(e => e.t > T); due.forEach(e => e.fn()); } }
+  T += dt; if (!SV.set.cave) { fallEv.length = 0; structQ.length = 0; } updateFalls(dt); if (SV.set.cave && D && !D.dead && T - D_lastStruct > 0.5) { D_lastStruct = T; if (D.y > surf(D.x) + 20) structCheck(D.x - Math.cos(D.ang) * 120, D.y - Math.sin(D.ang) * 120); } if (structQ.length) { const q = structQ.shift(); structCheck(q[0], q[1]); } if (ev.length) { const due = ev.filter(e => e.t <= T); if (due.length) { ev = ev.filter(e => e.t > T); due.forEach(e => e.fn()); } }
   if (D.dead) return;
   D.px = D.x; D.py = D.y;
   if (D.lying) { stepLying(dt); if (D.hull <= 0) die('Hull destroyed'); return; }
@@ -978,12 +979,13 @@ function showMenu() { endPending = null; fillMissions(); $('sBest').textContent 
 function renderShop() { $('shopBank').textContent = '◆ ' + SV.bank; $('shopList').innerHTML = UPS.map(u => { const l = U(u.k), c = COST[l]; return `<div class="up"><b>${u.n}</b><button data-k="${u.k}" ${l >= UMAX || SV.bank < c ? 'disabled' : ''}>${l >= UMAX ? 'MAX' : '◆ ' + c}</button><small>${u.d}</small><div class="pips">${Array.from({ length: UMAX }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</div></div>`; }).join(''); }
 function openShop(from) { backTo = from; renderShop(); show('ovShop'); }
 $('shopList').onclick = e => { const b = e.target.closest('button[data-k]'); if (!b || b.disabled) return; const k = b.dataset.k, l = U(k); if (l >= UMAX || SV.bank < COST[l]) return; SV.bank -= COST[l]; SV.up[k] = l + 1; saveSV(); audio(); SFX.gem(2); buzz(20); renderShop(); };
-function setLbl() { $('tSnd').lastChild.textContent = SV.set.snd ? 'On' : 'Off'; $('tVib').lastChild.textContent = SV.set.vib ? 'On' : 'Off'; $('tQ').lastChild.textContent = SV.set.q ? 'High' : 'Low (faster)'; }
+function setLbl() { $('tSnd').lastChild.textContent = SV.set.snd ? 'On' : 'Off'; $('tVib').lastChild.textContent = SV.set.vib ? 'On' : 'Off'; $('tQ').lastChild.textContent = SV.set.q ? 'High' : 'Low (faster)'; $('tCave').lastChild.textContent = SV.set.cave ? 'On' : 'Off (faster)'; }
 function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').textContent = inGame ? 'RESUME' : 'BACK'; $('bQuit').hidden = !inGame; show('ovSet'); }
 function pause() { if (!run || paused || !D || D.dead) return; paused = true; touches.clear(); $('pz').hidden = true; openSet(true); }
 function resume() { if (!paused) { if (!$('ovSet').hidden) showMenu(); return; } paused = false; touches.clear(); last = performance.now(); show(null); $('pz').hidden = false; }
 $('tSnd').onclick = () => { SV.set.snd = SV.set.snd ? 0 : 1; SOUND = !!SV.set.snd; if (master) master.gain.value = SOUND ? 0.8 : 0; if (SOUND) audio(); saveSV(); setLbl(); };
 $('tVib').onclick = () => { SV.set.vib = SV.set.vib ? 0 : 1; saveSV(); setLbl(); buzz(30); };
+$('tCave').onclick = () => { SV.set.cave = SV.set.cave ? 0 : 1; saveSV(); setLbl(); };
 $('tQ').onclick = () => { SV.set.q = SV.set.q ? 0 : 1; saveSV(); setLbl(); resize(); };
 $('bResume').onclick = () => resume();
 $('bQuit').onclick = () => { paused = false; run = false; endRun(); showMenu(); };
