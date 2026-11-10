@@ -330,7 +330,7 @@ function stepSand() { if (!active.size) return; const list = [...active]; active
     n++; const cells = [[gx, gy]]; const up = cellAt(gx, gy - 1); if (up && up.ch.mask[up.i] !== 1 && up.ch.cm[up.i] === m && rnd() < 0.5) cells.push([gx, gy - 1]);
     for (const [cx, cy] of cells) { const c = cellAt(cx, cy); c.ch.mask[c.i] = 1; const x = c.ch.ctx; x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; x.beginPath(); x.arc(c.lx, c.ly, 7, 0, TAU); x.fill(); x.restore(); wake(cx, cy); }
     clods.push({ x: gx * CELL + 4 + dir * 2, y: Y0 + gy * CELL + 4, vx: dir * (40 + rnd() * 40), vy: 0, m, n: cells.length, r: 4.5 + cells.length * 1.6, rot: rnd() * 6, vr: (rnd() - 0.5) * 6, sh: [0.8 + rnd() * 0.3, 0.8 + rnd() * 0.3, 0.8 + rnd() * 0.3, 0.8 + rnd() * 0.3, 0.8 + rnd() * 0.3] }); }
-  if (n > 8 && thr('rumble', 0.4)) noise({ f0: 220, f1: 60, dur: 0.4, gain: Math.min(0.1, n / 600) }); }
+  if (n > 8) rumble(Math.min(0.6, n / 60)); }
 function landClod(c, gx, gy) { let left = c.n, cy = gy; const C = colOf(c.m);
   while (left > 0 && cy >= 0) { const cc = cellAt(gx, cy); if (!cc) break; if (cc.ch.mask[cc.i] === 1) { cc.ch.mask[cc.i] = 0; cc.ch.cm[cc.i] = c.m; const x = cc.ch.ctx; x.fillStyle = C[0]; x.beginPath(); for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + c.rot, rr = 7.2 * c.sh[k]; k ? x.lineTo(cc.lx + Math.cos(a) * rr, cc.ly + Math.sin(a) * rr) : x.moveTo(cc.lx + Math.cos(a) * rr, cc.ly + Math.sin(a) * rr); } x.closePath(); x.fill(); x.fillStyle = C[1]; x.globalAlpha = 0.5; x.beginPath(); x.arc(cc.lx + 2, cc.ly + 2, 3, 0, TAU); x.fill(); x.fillStyle = C[2]; x.beginPath(); x.arc(cc.lx - 2, cc.ly - 2, 1.6, 0, TAU); x.fill(); x.globalAlpha = 1; active.add(AK(gx, cy)); left--; } cy--; }
   if (rnd() < 0.3) parts.push({ k: 'smoke', x: c.x, y: c.y, vx: (rnd() - 0.5) * 20, vy: -15, t: 0, life: 0.8, s: 6, c: C[2] }); }
@@ -370,7 +370,7 @@ function tryCollapse(e) { if (pieces.length > 30) return; let y = e.y; const sx 
   const cx = (minx + maxx) / 2, cy = (miny + maxy) / 2;
   pieces.push({ cv, x: cx, y: cy, ox: minx - cx, oy: miny - cy, bw, bh, pts: pts.map(([px, py]) => [px - cx, py - cy]), vx: (rnd() - 0.5) * 30, vy: 0, rot: 0, vr: (rnd() - 0.5) * 1.2, m, w, h, gen: e.gen, sx, ceilTop: top, life: 0 });
   for (let i = 0; i < 4; i++) parts.push({ k: 'rock', x: sx + (rnd() - 0.5) * w, y: ceilY, vx: (rnd() - 0.5) * 40, vy: 40 + rnd() * 80, t: 0, life: 0.5, s: 1.5 + rnd() * 2, c: colOf(m)[2], rot: 0, vr: 0, g: 1500 });
-  if (thr('crack', 0.15)) noise({ type: 'highpass', f0: 1800, f1: 500, dur: 0.12, gain: 0.08 }); }
+  rumble(0.35, sx, ceilY); }
 function stepPiece(p, dt) { p.life += dt; p.vy = Math.min(p.vy + G * 0.9 * dt, 1200); p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
   const c = Math.cos(p.rot), s = Math.sin(p.rot);
   // treffer boret?
@@ -380,7 +380,7 @@ function stepPiece(p, dt) { p.life += dt; p.vy = Math.min(p.vy + G * 0.9 * dt, 1
   if (!hit && p.y < Y1 + 100) return;
   p.dead = true; const spd = p.vy; if (spd > 650 && p.w > 34) { crumble(p, 0.5); } stamp(p);
   for (let i = 0; i < 5; i++) parts.push({ k: 'smoke', x: p.x + (rnd() - 0.5) * p.w, y: p.y + p.h * 0.3, vx: (rnd() - 0.5) * 50, vy: -20 - rnd() * 20, t: 0, life: 1.1, s: 8 + rnd() * 8 });
-  if (thr('land', 0.08)) { tone({ f0: 110, f1: 45, dur: 0.22, gain: Math.min(0.3, 0.06 + p.w / 300) }); noise({ f0: 700, f1: 100, dur: 0.2, gain: Math.min(0.2, 0.05 + p.w / 400) }); }
+  rumble(Math.min(0.8, p.w / 60), p.x, p.y); const nd = nearD(p.x, p.y); if (p.w > 30 && nd > 0.5 && thr('land', 0.45)) noise({ f0: 380, f1: 70, dur: 0.35, gain: 0.08 * nd });
   if (Math.hypot(p.x - cam.x, p.y - cam.y) < 700) shake = Math.max(shake, Math.min(5, p.w / 14));
   fallEv.push({ x: p.sx, y: p.ceilTop + 4, t: T + 0.25 + rnd() * 0.6, gen: p.gen + 1 }); }
 function stamp(p) { const c = Math.cos(p.rot), s = Math.sin(p.rot); const R0 = Math.hypot(p.bw, p.bh) / 2 + 2;
@@ -404,7 +404,8 @@ function startLoops() { // drill: smooth motor whine + grinding noise + sub rumb
   const o = mk('triangle', 170), o2 = mk('sine', 340); const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 0.7; f.frequency.value = 900; const g = AC.createGain(); g.gain.value = 0; o.connect(f); o2.connect(f); f.connect(g); g.connect(master);
   const sub = mk('sine', 48), sg = AC.createGain(); sg.gain.value = 0; sub.connect(sg); sg.connect(master);
   const gs = AC.createBufferSource(); gs.buffer = NB; gs.loop = true; const gf = AC.createBiquadFilter(); gf.type = 'bandpass'; gf.Q.value = 1.1; gf.frequency.value = 600; const gl = AC.createBiquadFilter(); gl.type = 'lowpass'; gl.frequency.value = 3500; const gg = AC.createGain(); gg.gain.value = 0; gs.connect(gf); gf.connect(gl); gl.connect(gg); gg.connect(master); gs.start();
-  hum = { o, o2, f, g, sub, sg, gf, gg };
+  const rs = AC.createBufferSource(); rs.buffer = NB; rs.loop = true; rs.playbackRate.value = 0.5; const rf = AC.createBiquadFilter(); rf.type = 'lowpass'; rf.frequency.value = 180; rf.Q.value = 0.5; const rg = AC.createGain(); rg.gain.value = 0; rs.connect(rf); rf.connect(rg); rg.connect(master); rs.start();
+  hum = { o, o2, f, g, sub, sg, gf, gg, rg };
   const s = AC.createBufferSource(); s.buffer = NB; s.loop = true; const wf = AC.createBiquadFilter(); wf.type = 'bandpass'; wf.Q.value = 0.6; const wg = AC.createGain(); wg.gain.value = 0; s.connect(wf); wf.connect(wg); wg.connect(master); s.start(); wind = { f: wf, g: wg }; }
 function tone(o) { const a = audio(); if (!a || budget > 50) return; budget++; const t = a.currentTime + (o.delay || 0); const osc = a.createOscillator(); osc.type = o.type || 'sine'; osc.frequency.setValueAtTime(o.f0, t); if (o.f1) osc.frequency.exponentialRampToValueAtTime(o.f1, t + o.dur); const g = a.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.gain, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + o.dur); osc.connect(g); g.connect(master); osc.start(t); osc.stop(t + o.dur + 0.05); }
 function noise(o) { const a = audio(); if (!a || budget > 50) return; budget++; const t = a.currentTime + (o.delay || 0); const s = a.createBufferSource(); s.buffer = NB; const f = a.createBiquadFilter(); f.type = o.type || 'lowpass'; f.frequency.setValueAtTime(o.f0, t); if (o.f1) f.frequency.exponentialRampToValueAtTime(o.f1, t + o.dur); const g = a.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.gain, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + o.dur); s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random()); s.stop(t + o.dur + 0.05); }
@@ -423,6 +424,7 @@ const SFX = {
   nuke() { noise({ f0: 900, f1: 45, dur: 5.5, gain: 1.2 }); noise({ f0: 320, f1: 35, dur: 6, gain: 1, delay: 0.25 }); tone({ f0: 95, f1: 30, dur: 4, gain: 1 }); tone({ type: 'triangle', f0: 140, f1: 42, dur: 3, gain: 0.45 }); return; tone({ type: 'triangle', f0: 55, f1: 28, dur: 2.5, gain: 0.5, delay: 0.05 }); noise({ f0: 6000, f1: 60, dur: 3.5, gain: 0.9 }); noise({ type: 'bandpass', f0: 300, f1: 80, dur: 2.5, gain: 0.5, delay: 0.25 }); },
   over() { [7, 4, 0, -5].forEach((s, i) => tone({ type: 'triangle', f0: 330 * Math.pow(2, s / 12), dur: 0.35, gain: 0.1, delay: i * 0.13 })); },
 };
+let rumbleLv = 0; const nearD = (x, y) => D ? clamp(1 - Math.hypot(x - D.x, y - D.y) / 1400, 0, 1) : 0; const rumble = (k, x, y) => { rumbleLv = Math.max(rumbleLv, k * (x === undefined ? 1 : nearD(x, y))); };
 const lastS = {}; function thr(k, g) { const n = performance.now() / 1000; if ((lastS[k] || 0) + g > n) return false; lastS[k] = n; return true; }
 function buzz(p) { try { if (SV.set.vib && navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
 
@@ -527,7 +529,7 @@ function collapseSeg(g) { g.done = true; const r = TR + 2, C = colOf(g.m === WAT
   for (let i = 0; i < 3; i++) parts.push({ k: 'rock', x: g.x + (rnd() - 0.5) * 20, y: g.y - TR, vx: (rnd() - 0.5) * 40, vy: 40 + rnd() * 80, t: 0, life: 0.5, s: 2 + rnd() * 3, c: C[2], rot: 0, vr: 0, g: 1300 });
   if (rnd() < 0.3) parts.push({ k: 'smoke', x: g.x, y: g.y, vx: 0, vy: -10, t: 0, life: 0.9, s: 10 });
   if (g.y - surf(g.x) < 45 && rnd() < 0.5) parts.push({ k: 'smoke', x: g.x, y: surf(g.x), vx: 0, vy: -20, t: 0, life: 1.2, s: 14 });
-  if (thr('rumble', 0.35)) noise({ f0: 260, f1: 60, dur: 0.35, gain: 0.07 });
+  rumble(0.4, g.x, g.y);
   if (!D.air && !D.dead && Math.hypot(g.x - D.x, g.y - D.y) < 34 && ((g.x - D.x) * Math.cos(D.ang) + (g.y - D.y) * Math.sin(D.ang)) > 0) { D.s *= 0.55; D.hull -= 0.05; if (thr('cavein', 1)) { say('CAVE-IN!', '#ffb36b', true); shake = Math.max(shake, 7); buzz(50); } } }
 function caveCheck() {}
 function updateCollapse() { let n = 0; for (const g of segs) { if (g.done || g.due > T) continue; collapseSeg(g); if (++n > 12) break; } if (segs.length > 600) segs = segs.filter(g => !g.done && g.x > (D ? D.maxX : 0) - 4000); }
@@ -551,7 +553,7 @@ function structCheck(cx, cy) { const N = 32, x0 = Math.floor(cx / CELL) * CELL -
   for (const [wx, wy] of fall) setOpen(wx, wy);
   const nb = clamp(Math.round(fall.length / 7), 1, 16); for (let i = 0; i < nb; i++) { const [wx, wy] = fall[(rnd() * fall.length) | 0]; boulders.push({ x: wx, y: wy, vx: (rnd() - 0.5) * 40, vy: 0, rot: rnd() * 6, vr: (rnd() - 0.5) * 3, s: 5 + rnd() * 7, c: C, rest: false, pts: Array.from({ length: 6 }, (_, k) => 0.7 + rnd() * 0.4) }); }
   for (let i = 0; i < 6; i++) parts.push({ k: 'smoke', x: mx + (rnd() - 0.5) * 40, y: my, vx: (rnd() - 0.5) * 30, vy: -10, t: 0, life: 1.4, s: 12 });
-  if (thr('rockfall', 0.4)) { noise({ f0: 500, f1: 70, dur: 0.6, gain: 0.25 }); tone({ f0: 70, f1: 35, dur: 0.4, gain: 0.2 }); } shake = Math.max(shake, 4 + Math.min(8, fall.length / 20)); if (fall.length > 25 && thr('rfmsg', 1.5)) say('Rockfall!', '#d8d0c0'); }
+  rumble(0.8); shake = Math.max(shake, 4 + Math.min(8, fall.length / 20)); if (fall.length > 25 && thr('rfmsg', 1.5)) say('Rockfall!', '#d8d0c0'); }
 function stepBoulders(dt) { for (const b of boulders) { if (b.rest) continue; b.vy += G * dt; const ny = b.y + b.vy * dt, nx = b.x + b.vx * dt;
     if (!cellOpen(nx, ny + b.s * 0.6) && ny > surf(nx)) { b.vy = -b.vy * 0.2; b.vx *= 0.5; b.vr *= 0.5; if (Math.abs(b.vy) < 40) b.rest = true; } else { b.x = nx; b.y = ny; } b.rot += b.vr * dt;
     if (D && !D.dead && !b.hitD && Math.hypot(b.x - D.x, b.y - D.y) < 26 && b.vy > 250) { b.hitD = true; D.hull -= 0.03 * b.s / 8; SFX.clang(); if (thr('bonk', 0.5)) say('Bonk!', '#d8d0c0'); } if (b.y > Y1 + 300) b.rest = true; }
@@ -767,7 +769,7 @@ const GEMC = [['#ffb347', '#fff1c9'], ['#3ee08f', '#d9ffe9'], ['#c070ff', '#f5e3
 /* ================= RENDER ================= */
 const cv = $('cv'), ctx = cv.getContext('2d', { alpha: false }); let dpr = 1, VW = 1, VH = 1;
 const cam = { x: 0, y: 0, vh: 900, s: 1 };
-const RLV = [1.5, 1.25, 1, 0.85, 0.72]; let rLv = 0, ftE = 16.7, rT = 0, goodT = 0;
+const RLV = [1.5, 1.25, 1, 0.85, 0.72]; let rLv = (window.devicePixelRatio || 1) > 2 ? 1 : 0, ftE = 16.7, rT = 0, goodT = 0, fps30 = false, lagT = 0, workE = 8, fpsTick = 0;
 function resize() { dpr = Math.min(RLV[Math.max(rLv, SV.set.q ? 0 : 2)], window.devicePixelRatio || 1); VW = innerWidth; VH = innerHeight; cv.width = Math.round(VW * dpr); cv.height = Math.round(VH * dpr); }
 const SKY = [['#5fb6ff', '#a9ddff', '#ffe2b8'], ['#3d5fae', '#ff9a72', '#ffcf86'], ['#0a1030', '#1d2758', '#3b3466']].map(r => r.map(h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16))));
 const mixC = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t); let nightF = 0; const STARS = Array.from({ length: 60 }, () => [rnd(), rnd(), 0.3 + rnd() * 0.7]);
@@ -942,9 +944,9 @@ function updateFX(dt) { stepShocks(dt); if (run) stepWater(dt); for (const p of 
   shake *= Math.pow(0.004, dt); quake *= Math.exp(-0.9 * dt); if (quake < 0.01) quake = 0; for (const w of warps) w.t += dt; warps = warps.filter(w => w.t < w.d); flash *= Math.exp(-6 * dt); }
 function hud() { if (!D) return; $('dist').firstChild.nodeValue = Math.max(0, Math.round(D.maxX / 10)) + ' m'; $('best').textContent = (MODE === 'daily' ? 'Daily best ' + (SV.daily ? SV.daily.best : 0) : 'Best ' + best) + ' m · deep ' + SV.deep + ' m'; { const dd = run ? Math.round((D.y - surf(D.x)) / 10) : 0; const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; $('dep').textContent = (dd > 2 ? '↓ ' + dd + ' m  ' : '') + (run ? Math.round(sp * 0.36) + ' km/h' + (sp > MACH1 * 0.8 ? '  · MACH ' + (sp / MACH1).toFixed(1) : '') : ''); } $('gems').textContent = '◆ ' + gems;
   $('fuel').firstChild.style.width = (D.fuel * 100) + '%'; $('heat').firstChild.style.width = (clamp(D.heat, 0, 1) * 100) + '%'; $('hull').firstChild.style.width = (clamp(D.hull / HM, 0, 1) * 100) + '%'; }
-let sndHold = 0, sndSp = 0; const GRIND = [0, 450, 600, 900, 1500, 1800, 0, 300, 250, 700, 1700, 380, 330, 520, 160, 1900, 2400, 1300];
+let sndHold = 0, sndSp = 0, rumbleS = 0; const GRIND = [0, 450, 600, 900, 1500, 1800, 0, 300, 250, 700, 1700, 380, 330, 520, 160, 1900, 2400, 1300];
 function sound() { if (!hum || !D) return; const tA = AC.currentTime; const under = run && !paused && !D.air && !D.dead && !D.lying; const sp = under ? D.s : 0; const m = D.mat || SOIL, hard = DRAG[m] || 0.1;
-  const live = run && !paused && !D.dead; if (under) { sndHold = 0.35; sndSp = sp; } else if (!live) sndHold = 0; else if (sndHold > 0) sndHold -= 1 / 60; const on = under || (live && sndHold > 0), spx = under ? sp : sndSp;
+  rumbleS += (rumbleLv - rumbleS) * 0.08; rumbleLv *= 0.9; hum.rg.gain.setTargetAtTime(paused ? 0 : rumbleS * 0.35, tA, 0.25); const live = run && !paused && !D.dead; if (under) { sndHold = 0.35; sndSp = sp; } else if (!live) sndHold = 0; else if (sndHold > 0) sndHold -= 1 / 60; const on = under || (live && sndHold > 0), spx = under ? sp : sndSp;
   const k = clamp(spx / 1600, 0, 1); hum.g.gain.setTargetAtTime(on ? 0.03 + 0.03 * k : 0, tA, 0.15); hum.o.frequency.setTargetAtTime(150 + 260 * k, tA, 0.12); hum.o2.frequency.setTargetAtTime(300 + 520 * k, tA, 0.12); hum.f.frequency.setTargetAtTime(1200 + 1600 * k, tA, 0.12);
   hum.sg.gain.setTargetAtTime(on ? 0.05 + 0.04 * k : 0, tA, 0.15); hum.sub.frequency.setTargetAtTime(44 + 20 * k, tA, 0.1);
   hum.gg.gain.setTargetAtTime(on && m !== WATER ? Math.min(0.16, 0.04 + hard * 0.22) * (0.5 + 0.5 * k) : 0, tA, 0.15); hum.gf.frequency.setTargetAtTime((GRIND[m] || 600) * (0.8 + 0.5 * k), tA, 0.08);
@@ -955,13 +957,16 @@ let last = performance.now(), acc = 0; const STEP = 1 / 120;
 let errN = 0;
 function frameInner(now) { const rawFt = now - last, rd = Math.min(0.05, rawFt / 1000); last = now;
   // dynamic resolution: drop it when frames are slow, raise it again when there is headroom
-  if (run && !paused && rawFt < 250) { ftE += (rawFt - ftE) * 0.05; rT += rawFt; if (rT > 1200) { rT = 0; if (ftE > 21 && rLv < RLV.length - 1) { rLv++; resize(); goodT = 0; } else if (ftE < 15.5) { goodT += 1.2; if (goodT > 6 && rLv > 0) { rLv--; resize(); goodT = 0; } } else goodT = 0; } } budget = Math.max(0, budget - 2);
+  if (run && !paused && rawFt < 250) { ftE += (rawFt - ftE) * 0.05; rT += rawFt; if (rT > 1200) { rT = 0;
+      if (!fps30) { if (ftE > 21 && rLv < RLV.length - 1) { rLv++; resize(); goodT = 0; } else if (ftE > 21) { lagT += 1.2; if (lagT > 2.4) { fps30 = true; lagT = 0; goodT = 0; } } else if (ftE < 15.5) { lagT = 0; goodT += 1.2; if (goodT > 6 && rLv > 0) { rLv--; resize(); goodT = 0; } } else { goodT = 0; lagT = 0; } }
+      else { if (ftE < 36 && workE < 9) { goodT += 1.2; if (goodT > 8) { fps30 = false; goodT = 0; } } else goodT = 0; } } } budget = Math.max(0, budget - 2);
   { let t = 0; for (const v of touches.values()) t += v; if (keys.ArrowRight || keys.KeyD || keys.ArrowDown || keys.Space) t += 1; if (keys.ArrowLeft || keys.KeyA || keys.ArrowUp) t -= 1; if (!window.__forceTurn) turn = clamp(t, -1, 1); hold = turn !== 0; }
   if (slowT > 0) { slowT -= rd; TS = 0.33; } else TS = Math.min(1, TS + rd * 2.5);
   if (D && D.dead && endPending) deadT += rd;
   if (D) { if (!paused && (run || ev.length || (endPending && deadT < 8))) { acc += rd * TS; let n = 0; while (acc >= STEP && n < 12) { step(STEP); acc -= STEP; n++; } if (n === 12) acc = 0; } if (!paused) updateFX(rd * TS); if (run && !paused && (misT += rd) > 0.25) { misT = 0; checkMissions(); } }
   try { render(); hud(); if (AC) sound(); } catch (e) { errN++; if (errN < 5) console.error(e); try { evictTiles(cam.x, cam.y); } catch (e2) {} } }
-function frame(now) { try { frameInner(now); } catch (e) { errN++; if (errN < 5) console.error(e); } requestAnimationFrame(frame); }
+function frame(now) { if (fps30 && run && !paused && (++fpsTick & 1)) { requestAnimationFrame(frame); return; } const w0 = performance.now(); try { frameInner(now); } catch (e) { errN++; if (errN < 5) console.error(e); } workE += (performance.now() - w0 - workE) * 0.05; requestAnimationFrame(frame); }
+function frameOld(now) { try { frameInner(now); } catch (e) { errN++; if (errN < 5) console.error(e); } requestAnimationFrame(frame); }
 const down = e => { audio(); if (e.target.closest && e.target.closest('button')) return; if (endPending) { showEnd(); return; } touches.set(e.pointerId, e.clientX > innerWidth / 2 ? 1 : -1); };
 const up = e => { touches.delete(e.pointerId); };
 window.addEventListener('pointerdown', down); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up); window.addEventListener('blur', () => touches.clear());
@@ -1001,7 +1006,7 @@ window.addEventListener('resize', resize); resize();
 // preview behind title
 SEED = 3; D = { x: 600, y: surf(600) - 100, vx: 0, vy: 0, ang: 0.3, air: true, s: 0, fuel: 1, heat: 0, hull: 1, maxX: 0, dead: false, spin: 0, mat: AIR }; cam.x = 700; cam.y = surf(700) + 200; cam.vh = 1100;
 requestAnimationFrame(frame);
-window.__T = { T: () => T, fev: () => JSON.stringify(fallEv), tc: (x, y) => { tryCollapse({ x, y, gen: 0 }); return pieces.length; }, fe: () => fallEv.length, dbgC: (x, y) => { let yy = y, g = 0; const o = []; while (cellOpen(x, yy) && g++ < 60) { yy -= 4; } o.push(yy, surf(x), cellMat(x, yy - 3), cellMat(x, yy - 9), cellOpen(x, yy + 6)); return o; }, fall: (x, y) => fallEv.push({ x, y, t: T, gen: 0 }), np: () => pieces.length, carve: (a, b, r, c, d) => carve(a, b, r, c, d), sc: (x, y) => structCheck(x, y), nb: () => boulders.length, segs: () => [segs.length, segs.filter(g => g.done).length], get D() { return D; }, reset, setHold: v => { turn = v ? 1 : 0; hold = !!v; }, setTurn: v => { turn = v; }, setSteer: v => { steer = v; }, step: n => { for (let i = 0; i < n; i++) step(STEP); }, get run() { return run; }, miss: () => phMiss, built: () => tilesBuilt, chunks: () => chunks, NT, TH, CW, Y0, freeTile: (ch, k) => freeTile(ch, k), getTile: (ch, k) => getTile(ch, k), tiles: () => tileCount, render: () => { render(); hud(); }, fx: dt => updateFX(dt), mound, crater, cam, SFX, SV, feats: x => featsNear(x), biome, chunk: x => chunkAt(x), S: () => S, U, show, pause, resume, get paused() { return paused; }, gems: () => gems, mat: (x, y) => mat(x, y), surf };
+window.__T = { T: () => T, fev: () => JSON.stringify(fallEv), tc: (x, y) => { tryCollapse({ x, y, gen: 0 }); return pieces.length; }, fe: () => fallEv.length, dbgC: (x, y) => { let yy = y, g = 0; const o = []; while (cellOpen(x, yy) && g++ < 60) { yy -= 4; } o.push(yy, surf(x), cellMat(x, yy - 3), cellMat(x, yy - 9), cellOpen(x, yy + 6)); return o; }, fall: (x, y) => fallEv.push({ x, y, t: T, gen: 0 }), np: () => pieces.length, carve: (a, b, r, c, d) => carve(a, b, r, c, d), sc: (x, y) => structCheck(x, y), nb: () => boulders.length, segs: () => [segs.length, segs.filter(g => g.done).length], get D() { return D; }, reset, setHold: v => { turn = v ? 1 : 0; hold = !!v; }, setTurn: v => { turn = v; }, setSteer: v => { steer = v; }, step: n => { for (let i = 0; i < n; i++) step(STEP); }, get run() { return run; }, snd: () => ({ hum, wind, master }), miss: () => phMiss, built: () => tilesBuilt, chunks: () => chunks, NT, TH, CW, Y0, freeTile: (ch, k) => freeTile(ch, k), getTile: (ch, k) => getTile(ch, k), tiles: () => tileCount, render: () => { render(); hud(); }, fx: dt => updateFX(dt), mound, crater, cam, SFX, SV, feats: x => featsNear(x), biome, chunk: x => chunkAt(x), S: () => S, U, show, pause, resume, get paused() { return paused; }, gems: () => gems, mat: (x, y) => mat(x, y), surf };
 })();
 </script>
 </body>
