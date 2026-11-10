@@ -760,9 +760,9 @@ function render() {
   x.setTransform(dpr * s, 0, 0, dpr * s, ox * dpr, oy * dpr);
   // terrain chunks
   const left = cam.x - VW / 2 / s - 40, right = cam.x + VW / 2 / s + 40, vtop = cam.y - VH / 2 / s - 40, vbot = cam.y + VH / 2 / s + 40; const k0 = clamp(Math.floor((vtop - Y0) / TH), 0, NT - 1), k1 = clamp(Math.floor((vbot - Y0) / TH), 0, NT - 1);
-  tileBudget = 2; const vis = [];
-  for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = getChunk(ci); for (let k = k0; k <= k1; k++) { const tl = getTile(ch, k, true); const ty = Y0 + k * TH; if (tl) { tl.used = frameNo; x.drawImage(tl.bg, ch.x0, ty, CW, tl.H); vis.push([ch, tl]); } else { const sm = ch.cols[16][0]; if (ty + TH > sm) { const d = ty + TH / 2 - sm; x.fillStyle = colOf(d < 110 ? TOPM[ch.bio] : d < 380 ? CLAY : d < 900 ? GRAV : d < 1750 ? ROCK : d < 3600 ? DEEP : d < 6800 ? MAG : d < 9800 ? CRYS : CORE)[0]; const y0 = Math.max(ty, sm); x.fillRect(ch.x0, y0, CW + 0.5, ty + TH - y0); } } } }
-  for (const [ch, tl] of vis) x.drawImage(tl.fg, ch.x0, tl.top, CW + 0.5, tl.H + 0.5);
+  tileBudget = 2; const vis = [], ovl = Math.max(1.5, 1.2 / s);
+  for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = getChunk(ci); for (let k = k0; k <= k1; k++) { const tl = getTile(ch, k, true); const ty = Y0 + k * TH; if (tl) { tl.used = frameNo; x.drawImage(tl.bg, ch.x0 - ovl, ty - ovl, CW + 2 * ovl, tl.H + 2 * ovl); vis.push([ch, tl]); } else { const sm = ch.cols[16][0]; if (ty + TH > sm) { const d = ty + TH / 2 - sm; x.fillStyle = colOf(d < 110 ? TOPM[ch.bio] : d < 380 ? CLAY : d < 900 ? GRAV : d < 1750 ? ROCK : d < 3600 ? DEEP : d < 6800 ? MAG : d < 9800 ? CRYS : CORE)[0]; const y0 = Math.max(ty, sm); x.fillRect(ch.x0, y0, CW + 0.5, ty + TH - y0); } } } }
+  for (const [ch, tl] of vis) x.drawImage(tl.fg, ch.x0, tl.top, CW + ovl, tl.H + ovl);
   if (D && tileBudget > 0) { const dir = (D.air ? D.vx : Math.cos(D.ang)) >= 0 ? 1 : -1, kd = clamp(Math.floor((D.y - Y0) / TH), 0, NT - 1); outer: for (let a = 1; a <= 4; a++) { const ch = getChunk(Math.floor(D.x / CW) + dir * a); for (const k of [kd, kd + 1, kd - 1, clamp(Math.floor((ch.cols[16][0] - Y0) / TH), 0, NT - 1)]) { if (k < 0 || k >= NT || ch.tiles[k]) continue; getTile(ch, k, true); if (tileBudget <= 0) break outer; } } }
   for (const k of [...chunks.keys()]) if (k * CW < left - 3000) { const ch = chunks.get(k); for (let q = 0; q < NT; q++) freeTile(ch, q); chunks.delete(k); }
   frameNo++; if ((frameNo & 15) === 0) evictTiles(cam.x, cam.y);
