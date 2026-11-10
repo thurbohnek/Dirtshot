@@ -162,6 +162,10 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
   <div class="row"><button class="btn2" id="bShop2">WORKSHOP</button><button class="btn2" id="bMenu">MENU</button></div>
 </div></div>
 <script>
+(() => { const P = CanvasRenderingContext2D.prototype, oe = P.ellipse, oa = P.arc, F = v => (v > 0 && isFinite(v)) ? v : 0.001;
+  P.ellipse = function (x, y, rx, ry, ...r) { return oe.call(this, x, y, F(rx), F(ry), ...r); };
+  P.arc = function (x, y, rr, ...r) { return oa.call(this, x, y, F(rr), ...r); }; })();
+
 (function () {
 'use strict';
 const $ = id => document.getElementById(id);
