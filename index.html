@@ -971,6 +971,10 @@ function sound() { if (!hum || !D) return; const tA = AC.currentTime; const unde
 /* ================= LOOP & INPUT ================= */
 let last = performance.now(), acc = 0; const STEP = 1 / 120;
 let lastErr = '', errN = 0, fpsW = 0, fpsWT = 0, fpsShow = '', fpsN = 0, fpsAcc = 0, fpsWorstShow = 0;
+// draw the drill between the last two physics steps so it moves evenly every frame (no jitter at speed)
+function renderI() { const d = D; if (!d || d.px === undefined || paused || d.dead) { render(); return; } const al = Math.min(1, Math.max(0, acc / STEP)), rx = d.x, ry = d.y, ra = d.ang;
+  if (Math.abs(rx - d.px) + Math.abs(ry - d.py) > 300) { render(); return; } let da = ra - d.pa; da = ((da + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+  d.x = d.px + (rx - d.px) * al; d.y = d.py + (ry - d.py) * al; d.ang = d.pa + da * al; try { render(); } finally { if (D === d) { d.x = rx; d.y = ry; d.ang = ra; } } }
 function frameInner(now) { const rawFt = now - last, rd = Math.min(0.05, rawFt / 1000); last = now;
   // dynamic resolution: drop it when frames are slow, raise it again when there is headroom
   if (run && !paused && rawFt < 250) { ftE += (rawFt - ftE) * 0.05; rT += rawFt; if (rT > 1200) { rT = 0;
@@ -979,8 +983,8 @@ function frameInner(now) { const rawFt = now - last, rd = Math.min(0.05, rawFt /
   { let t = 0; for (const v of touches.values()) t += v; if (keys.ArrowRight || keys.KeyD || keys.ArrowDown || keys.Space) t += 1; if (keys.ArrowLeft || keys.KeyA || keys.ArrowUp) t -= 1; if (!window.__forceTurn) turn = clamp(t, -1, 1); hold = turn !== 0; }
   if (slowT > 0) { slowT -= rd; TS = 0.33; } else TS = Math.min(1, TS + rd * 2.5);
   if (D && D.dead && endPending) deadT += rd;
-  if (D) { if (!paused && (run || ev.length || (endPending && deadT < 8))) { acc += rd * TS; let n = 0; while (acc >= STEP && n < 12) { step(STEP); acc -= STEP; n++; } if (n === 12) acc = 0; } if (!paused) updateFX(rd * TS); if (run && !paused && (misT += rd) > 0.25) { misT = 0; checkMissions(); } }
-  try { runTileJobs(run ? 3 : 8); render(); hud(); if (AC) sound(); } catch (e) { errN++; lastErr = String(e && e.message || e).slice(0, 60); if (errN < 5) console.error(e); try { evictTiles(cam.x, cam.y, true); } catch (e2) {} } }
+  if (D) { if (!paused && (run || ev.length || (endPending && deadT < 8))) { acc += rd * TS; let n = 0; while (acc >= STEP && n < 12) { D.px = D.x; D.py = D.y; D.pa = D.ang; step(STEP); acc -= STEP; n++; } if (n === 12) acc = 0; } if (!paused) updateFX(rd * TS); if (run && !paused && (misT += rd) > 0.25) { misT = 0; checkMissions(); } }
+  try { runTileJobs(run ? 3 : 8); renderI(); hud(); if (AC) sound(); } catch (e) { errN++; lastErr = String(e && e.message || e).slice(0, 60); if (errN < 5) console.error(e); try { evictTiles(cam.x, cam.y, true); } catch (e2) {} } }
 function frame(now) { if (fps30 && run && !paused && (++fpsTick & 1)) { requestAnimationFrame(frame); return; } const w0 = performance.now(); if (SV.set.fps) { const ft = now - (frame.l || now); frame.l = now; fpsN++; fpsAcc += ft; fpsW = Math.max(fpsW, ft); if (fpsAcc > 1000) { fpsShow = `${Math.round(fpsN * 1000 / fpsAcc)} fps · worst ${Math.round(fpsW)} ms · work ${workE.toFixed(1)} ms · res ${RLV[Math.max(rLv, SV.set.q ? 0 : 2)]}${fps30 ? ' · 30-mode' : ''} · tiles ${tileCount}`; fpsN = 0; fpsAcc = 0; fpsW = 0; } } try { frameInner(now); } catch (e) { errN++; if (errN < 5) console.error(e); } workE += (performance.now() - w0 - workE) * 0.05; requestAnimationFrame(frame); }
 function frameOld(now) { try { frameInner(now); } catch (e) { errN++; if (errN < 5) console.error(e); } requestAnimationFrame(frame); }
 const down = e => { audio(); if (e.target.closest && e.target.closest('button')) return; if (endPending) { showEnd(); return; } touches.set(e.pointerId, e.clientX > innerWidth / 2 ? 1 : -1); };
