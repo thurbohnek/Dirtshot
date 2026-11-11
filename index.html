@@ -318,6 +318,21 @@ function drawCombo(x) { if (!D || (!CB.p && CB.red <= 0 && CB.bank <= 0)) return
   if (CB.p > 0) { const cx = VW - 22, cy = 108, sc = 1 + 0.45 * CB.pulse + 0.08 * bp; x.save(); x.translate(cx, cy); x.scale(sc, sc); x.textAlign = 'right'; x.textBaseline = 'middle'; x.lineJoin = 'round'; x.font = '400 40px "Lilita One", sans-serif'; x.lineWidth = 7; x.strokeStyle = 'rgba(25,12,40,0.75)'; const tx = '×' + CB_M[lv]; x.strokeText(tx, 0, 0); x.fillStyle = col; x.fillText(tx, 0, 0); x.restore();
     const w = 92, f = clamp(CB.t / CB_T, 0, 1); x.fillStyle = 'rgba(0,0,0,0.4)'; x.fillRect(cx - w, cy + 24, w, 6); x.fillStyle = col; x.fillRect(cx - w * f, cy + 24, w * f, 6);
     const nx = CB_LV[lv + 1]; x.font = '800 11px Nunito, sans-serif'; x.textAlign = 'right'; x.fillStyle = 'rgba(255,255,255,0.85)'; x.fillText(nx ? `COMBO ${Math.floor(CB.p)} / ${nx}` : `COMBO ${Math.floor(CB.p)}  MAX`, cx, cy + 42); } }
+// ===== weather: snow (tundra) and embers (volcano) as parallax flakes that move with the camera, fade in/out, only in open sky
+const FLK = []; let wSnow = 0, wEmb = 0, wcx = null, wcy = 0;
+function drawWeather(x, s) { if (!D || REDUCED) return; const dt = Math.min(0.05, camDt), b = biome(cam.x), above = clamp(1 - (cam.y - surf(cam.x)) / 700, 0, 1);
+  wSnow += ((b === 2 ? 1 : 0) - wSnow) * Math.min(1, dt * 0.7); wEmb += ((b === 3 ? 1 : 0) - wEmb) * Math.min(1, dt * 0.7);
+  const dcx = wcx === null ? 0 : (cam.x - wcx) * s, dcy = wcx === null ? 0 : (cam.y - wcy) * s; wcx = cam.x; wcy = cam.y; const jump = Math.abs(dcx) > VW || Math.abs(dcy) > VH;
+  const N = SV.set.q ? 70 : 36; while (FLK.length < N) FLK.push({ x: Math.random() * VW, y: Math.random() * VH, z: 0.35 + Math.random() * 0.65, ph: Math.random() * 6, e: FLK.length % 2 }); FLK.length = N;
+  const ws = Math.max(wSnow, wEmb) * above; if (ws < 0.02) return; x.save(); x.lineCap = 'round';
+  for (const f of FLK) { const emb = f.e && wEmb > wSnow, fall = emb ? -40 - 50 * f.z : 50 + 70 * f.z, sway = Math.sin(T * 1.3 + f.ph) * 18 * f.z;
+    const rvx = (sway + (emb ? 6 : -14)) * dt - dcx * f.z, rvy = fall * f.z * dt - dcy * f.z;
+    f.x += rvx; f.y += rvy; if (jump) { f.x = Math.random() * VW; f.y = Math.random() * VH; }
+    if (f.x < -20) f.x += VW + 40; else if (f.x > VW + 20) f.x -= VW + 40; if (f.y < -20) f.y += VH + 40; else if (f.y > VH + 20) f.y -= VH + 40;
+    const wx = cam.x + (f.x - VW / 2) / s, wy = cam.y + (f.y - VH / 2) / s; if (wy > surf(wx) - 4) continue;
+    const a = (emb ? wEmb : wSnow) * above * (0.45 + 0.55 * f.z); if (a < 0.02) continue; const col = emb ? `rgba(255,${120 + (f.ph * 20 | 0) % 60},50,${a})` : `rgba(255,255,255,${a * 0.9})`, r = emb ? 0.8 + f.z * 1.2 : 1 + f.z * 2;
+    const sl = Math.hypot(rvx, rvy), L = Math.min(46, sl * 0.7); if (L > r * 1.5) { x.strokeStyle = col; x.lineWidth = r * 1.4; x.beginPath(); x.moveTo(f.x, f.y); x.lineTo(f.x - rvx / sl * L, f.y - rvy / sl * L); x.stroke(); } else { x.fillStyle = col; x.beginPath(); x.arc(f.x, f.y, r, 0, TAU); x.fill(); } }
+  x.restore(); }
 // the lamp's light only reaches as far as open space: rays stop at the first solid ground
 let LP = null, LPf = -1, camDt = 1 / 60;
 function lampPoly(lx, ly, ang, cl) { if (LPf === frameNo && LP) return LP; LPf = frameNo; const N = SV.set.q ? 30 : 20, pts = [lx, ly], st = 9;
@@ -1027,7 +1042,7 @@ function render() {
       for (let r = Math.floor(left / LAKEW) - 1; r <= Math.floor(right / LAKEW) + 1; r++) { const L = lakeOf(r); if (L && !L.gone) { hole(L.x, L.y - L.dh * 0.2, L.rx * 1.5, 0.95); hole(L.x - L.rx * 0.5, L.y, L.rx * 0.8, 0.8); hole(L.x + L.rx * 0.5, L.y, L.rx * 0.8, 0.8); } }
       d.globalCompositeOperation = 'source-over'; x.drawImage(dk, 0, 0, VW, VH); } }
   // snow in the tundra, embers over the volcano
-  if (D && !REDUCED) { const b = biome(cam.x); if (b === 2 || b === 3) { const n = SV.set.q ? 50 : 24; x.fillStyle = b === 2 ? 'rgba(255,255,255,0.85)' : 'rgba(255,140,60,0.8)'; for (let i = 0; i < n; i++) { const sp = 30 + (i * 37 % 50), px = ((i * 97.3 + Math.sin(T * 0.7 + i) * 30 - cam.x * s * 0.3) % VW + VW) % VW, py = b === 2 ? ((i * 53.1 + T * sp - cam.y * s * 0.3) % VH + VH) % VH : VH - ((i * 53.1 + T * sp - cam.y * s * 0.3) % VH + VH) % VH; x.globalAlpha = 0.5 + 0.5 * ((i * 7) % 5) / 5; x.beginPath(); x.arc(px, py, b === 2 ? 1.5 + (i % 3) : 1 + (i % 2), 0, TAU); x.fill(); } x.globalAlpha = 1; } }
+  drawWeather(x, s);
   // speed lines
   if (D && run && !REDUCED && D.air) { const vx = D.air ? D.vx : Math.cos(D.ang) * D.s, vy = D.air ? D.vy : Math.sin(D.ang) * D.s, sp = Math.hypot(vx, vy); if (sp > 1400) { const f = clamp((sp - 1400) / 2200, 0, 1), a = Math.atan2(vy, vx), cx = Math.cos(a), cy = Math.sin(a), n = 3 + (f * 7 | 0); x.strokeStyle = D.air ? '#ffffff' : '#ffe6c8'; x.lineCap = 'round';
     for (let i = 0; i < n; i++) { const px = rnd() * VW, py = rnd() * VH, dc = Math.hypot(px - VW / 2, py - VH / 2) / (VW * 0.5); if (dc < 0.45) continue; const L = (40 + sp * 0.08) * (0.5 + rnd()); x.globalAlpha = 0.05 + 0.12 * f; x.lineWidth = 1 + rnd(); x.beginPath(); x.moveTo(px, py); x.lineTo(px - cx * L, py - cy * L); x.stroke(); } x.globalAlpha = 1; } }
