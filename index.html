@@ -38,6 +38,8 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 .sub2 { font: 800 15px var(--f-b); text-shadow: 0 2px 0 rgba(60,30,10,.5); }
 #snd { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px)); z-index: 6; width: 42px; height: 42px; border-radius: 14px; border: 2px solid #fff; background: rgba(255,255,255,.7); font: 700 18px var(--f-b); color: var(--ink); }
 #snd.off { opacity: .45; }
+#bst { position: fixed; left: 50%; transform: translateX(-50%); bottom: max(14px, env(safe-area-inset-bottom, 0px)); z-index: 4; width: 76px; height: 76px; border-radius: 50%; border: 3px solid #fff; color: #fff; font: 900 13px var(--f-b); letter-spacing: .04em; background: conic-gradient(#ff8a2a calc(var(--f, 1) * 360deg), rgba(40,30,30,.55) 0); box-shadow: 0 4px 0 rgba(0,0,0,.25); touch-action: none; user-select: none; -webkit-user-select: none; }
+#bst.on { border-color: #ffd45a; filter: brightness(1.25); }
 #pz { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px)); z-index: 4; width: 44px; height: 44px; border-radius: 14px; border: 2px solid #fff; background: rgba(255,255,255,.7); font: 900 16px var(--f-b); color: var(--ink); }
 #pz[hidden] { display: none; }
 .row { display: flex; gap: 10px; }
@@ -111,7 +113,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
     <div class="bar"><span>HULL</span><i id="hull"><b></b></i></div>
   </div>
 </div>
-<button id="pz" aria-label="Pause" hidden>II</button>
+<button id="pz" aria-label="Pause" hidden>II</button><button id="bst" aria-label="Boost" hidden>BOOST</button>
 <div id="intro" aria-label="Studio.grane"><div class="in">
   <svg viewBox="0 0 200 200" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <polyline points="68,78 100,46 132,78" stroke="#C6FF3D" stroke-width="20"/>
@@ -167,6 +169,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
   <div class="res" id="endDist">0 m</div>
   <div class="sub2" id="endBest"></div>
   <div class="sub2" id="endGems"></div>
+  <div class="sub2" id="endRec"></div>
   <div class="mis" id="misE"></div>
   <button class="btn" id="bAgain">AGAIN</button>
   <div class="row"><button class="btn2" id="bShop2">WORKSHOP</button><button class="btn2" id="bMenu">MENU</button></div>
@@ -189,7 +192,7 @@ const SV = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('dirts
   if (fresh) { try { o.best = +localStorage.getItem('dirtshot.best') || 0; if (localStorage.getItem('dirtshot.snd') === '0') o.set.snd = 0; } catch (e) {} }
   return o; })();
 function saveSV() { try { localStorage.setItem('dirtshot.v2', JSON.stringify(SV)); } catch (e) {} }
-const UPS = [{ k: 'tip', n: 'Diamond tip', d: 'Bites through rock and clay faster' }, { k: 'eng', n: 'Engine', d: 'More thrust underground' }, { k: 'cool', n: 'Cooling', d: 'Heats up slower' }, { k: 'hull', n: 'Hull', d: 'Thicker armour – survive more hits' }, { k: 'fin', n: 'Fins', d: 'Faster flips and more air control' }, { k: 'lamp', n: 'Lamp', d: 'Lights up the deep, pulls in gems' }];
+const UPS = [{ k: 'tip', n: 'Diamond tip', d: 'Bites through rock and clay faster' }, { k: 'eng', n: 'Engine', d: 'More thrust underground' }, { k: 'cool', n: 'Cooling', d: 'Heats up slower' }, { k: 'hull', n: 'Hull', d: 'Thicker armour – survive more hits' }, { k: 'fin', n: 'Fins', d: 'Faster flips and more air control' }, { k: 'lamp', n: 'Lamp', d: 'Lights up the deep, pulls in gems' }, { k: 'boost', n: 'Boost rocket', d: 'A BOOST button – thrust that works even in space' }];
 const COST = [25, 60, 120, 220, 380], UMAX = 5; const U = k => SV.up[k] || 0;
 const dayNo = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
 
@@ -227,12 +230,13 @@ const GMOON = 330, bodyR = x => isMoon(x) ? RMN : RPL, bodyC = x => isMoon(x) ? 
 function airAcc(x, y, vx, vy) { const Rb = bodyR(x), r = Math.max(30, Rb - y), g = (isMoon(x) ? GMOON : G) * (r >= Rb ? (Rb / r) ** 2 : r / Rb); const o = otherG ? otherG(x, y) : null; return [vx * vy / r + (o ? o[0] : 0), g - vx * vx / r + (o ? o[1] : 0)]; }
 var otherG = (x, y) => { const m = isMoon(x), [X, Y] = toCart(x, y), ox = m ? 0 : MCX, oy = m ? 0 : MCY, Ro = m ? RPL : RMN, go = m ? G * 0.35 : GMOON, dx = ox - X, dy = oy - Y, d = Math.max(Ro, Math.hypot(dx, dy)), a = go * Ro * Ro / (d * d), ax = a * dx / d, ay = a * dy / d, th = (x - (m ? M0U : 0)) / (m ? RMN : RPL); return [ax * Math.cos(th) + ay * Math.sin(th), -(ax * Math.sin(th) - ay * Math.cos(th))]; };
 function cartTo(X, Y, toMoon) { const cx = toMoon ? MCX : 0, cy = toMoon ? MCY : 0, Rb = toMoon ? RMN : RPL, dx = X - cx, dy = Y - cy, th = Math.atan2(dx, -dy); return [(toMoon ? M0U : 0) + th * Rb, Rb - Math.hypot(dx, dy), th]; }
-function switchFrame(toMoon) { const m0 = isMoon(D.x), Rb0 = m0 ? RMN : RPL, th0 = (D.x - (m0 ? M0U : 0)) / Rb0, [X, Y] = toCart(D.x, D.y);
+function switchFrame(toMoon) { if (toMoon) { D.peri = 1e9; D.mLand = false; } const m0 = isMoon(D.x), Rb0 = m0 ? RMN : RPL, th0 = (D.x - (m0 ? M0U : 0)) / Rb0, [X, Y] = toCart(D.x, D.y);
   const VX = D.vx * Math.cos(th0) - D.vy * Math.sin(th0), VY = D.vx * Math.sin(th0) + D.vy * Math.cos(th0); // global velocity (vy is 'down' = inwards)
   const [u, y, th1] = cartTo(X, Y, toMoon); D.x = D.px = u; D.y = D.py = y; D.vx = VX * Math.cos(th1) + VY * Math.sin(th1); D.vy = -VX * Math.sin(th1) + VY * Math.cos(th1); D.ang = norm(D.ang + th0 - th1);
+  if (!toMoon && !D.mLand && D.peri < RMN * 2.1) { D.vx *= 1.22; D.vy *= 1.22; gems += 150; S.sling = (S.sling || 0) + 1; say('GRAVITY SLINGSHOT!  ◆+150', '#b8a8ff', true); SFX.mach(2, false); addChain(4); }
   const thc0 = (cam.x - (m0 ? M0U : 0)) / Rb0, [CX, CY] = toCart(cam.x, cam.y), [cu, cyy, thc1] = cartTo(CX, CY, toMoon); cam.x = cu; cam.y = cyy; camRot += thc1 - thc0; parts.length = 0; rings.length = 0; shocks.length = 0; warps.length = 0; D.trail = []; FLY.length = 0;
   if (toMoon && !S.moonSoi) { S.moonSoi = 1; say('APPROACHING THE MOON', '#e8e8ff', true); } }
-function frameCheck() { const [X, Y] = toCart(D.x, D.y), dm = Math.hypot(X - MCX, Y - MCY); if (!isMoon(D.x) && dm < RMN * 3.2) switchFrame(true); else if (isMoon(D.x) && dm > RMN * 3.6) switchFrame(false);
+function frameCheck() { const [X, Y] = toCart(D.x, D.y), dm = Math.hypot(X - MCX, Y - MCY); if (isMoon(D.x)) D.peri = Math.min(D.peri || 1e9, dm); if (!isMoon(D.x) && dm < RMN * 3.2) switchFrame(true); else if (isMoon(D.x) && dm > RMN * 3.6) switchFrame(false);
   const alt = surf(D.x) - D.y; if (!isMoon(D.x) && alt > 4000 && !S.space) { S.space = 1; gems += 60; say('SPACE!  ◆+60', '#c8e0ff', true); SFX.lvlUp(3); addChain(3); }
   if (!isMoon(D.x)) { D.orbU = (D.orbU || 0) + Math.abs(D.x - (D.orbX === undefined ? D.x : D.orbX)); D.orbX = D.x; if (D.orbU > CPL) { D.orbU = 0; S.orbits = (S.orbits || 0) + 1; gems += 300; say(S.orbits > 1 ? `ORBIT ×${S.orbits}!  ◆+300` : 'FULL ORBIT!  ◆+300', '#9fe8ff', true); SFX.bank(); addChain(5); } } }
 const kAt = (x, y) => Math.max(0.004, ((isMoon(x) ? RMN : RPL) - y) / (isMoon(x) ? RMN : RPL)); // real width of one flat unit at this depth
@@ -248,6 +252,7 @@ function genFeatures(ci) { const moon = ci > MCI / 2, cm = moon ? (((ci - MCI) %
   const RB = moon ? RMN : RPL, kd = d => Math.max(0.12, (RB - d) / RB); // flat features get wider with depth so they stay round on the globe
   if (moon) { for (let ci2 = 0; ci2 < 3; ci2++) if (R() < 0.45) { const x = x0 + R() * CW, d = 150 + R() * 5600, sc = 1 + d / 3000; F.caves.push({ x, y: surf(x) + d, rx: (70 + R() * 90) * sc / kd(d), ry: (40 + R() * 45) * sc, ph: R() * 6 }); }
     const nE = 5 + (R() * 6 | 0); for (let i = 0; i < nE; i++) { const x = x0 + R() * CW, d = 40 + R() * 5800; F.gems.push({ x, y: surf(x) + d, k: d < 400 ? 2 : 3, alive: true, ph: R() * 6 }); }
+    F.mst = []; if (R() < 0.3) { const x = x0 + R() * CW, d = 120 + R() * 4800; F.mst.push({ x, y: surf(x) + d, alive: true, ph: R() * 6 }); }
     if (R() < 0.3) { const x = x0 + R() * CW, d = 200 + R() * 4000; F.fos.push({ x, y: surf(x) + d, id: [5, 8, 9][R() * 3 | 0], alive: true, ph: R() * 6 }); }
     return F; }
   if (cm < 2 || cm >= NCE - 2) return F;
@@ -289,6 +294,50 @@ function ensureBand(ch, k) { if (k < 0 || k >= NT || ch.band[k]) return; ch.band
       for (const L of lks) if (inPool(L, wx, wy) || inDome(L, wx, wy)) ch.mask[i] = 1;
       for (const cv of caves) { const dx = wx - cv.x, dy = wy - cv.y, f = caveSh(cv, Math.atan2(dy / cv.ry, dx / cv.rx)); if ((dx * dx) / ((cv.rx * f - 3) ** 2) + (dy * dy) / ((cv.ry * f - 3) ** 2) < 1) ch.mask[i] = 1; } } } }
 let tileCount = 0, tilesBuilt = 0, phMiss = 0; const MAXT = 140;
+// ===== asteroids & satellites circling the planet (positions follow from the run clock)
+let ORB = [];
+function mkOrbits() { const o = []; let sd = 4242; const R = () => (sd = (sd * 16807) % 2147483647) / 2147483647; for (let i = 0; i < 40; i++) { const r = RPL + 2600 + R() * 26000, sat = R() < 0.25; o.push({ r, th0: R() * TAU, w: Math.sqrt(G * RPL * RPL / (r * r * r)) * (R() < 0.8 ? 1 : -1), sat, sz: sat ? 46 : 34 + R() * 70, spin: (R() - 0.5) * 1.2, ph: R() * 6, dead: -1, seed: i }); } return o; }
+function orbPos(o) { const th = o.th0 + o.w * (D ? D.runT : 0), u0 = th * RPL; return [u0 + Math.round((cam.x - u0) / CPL) * CPL, RPL - o.r]; }
+function stepOrbits() { if (!D.air || isMoon(D.x) || D.y > -1500) return; const k = kAt(D.x, D.y), sp = Math.hypot(D.vx, D.vy);
+  for (const o of ORB) { if (o.dead > D.runT) continue; let [u, y] = orbPos(o); u += Math.round((D.x - u) / CPL) * CPL; if (Math.hypot((u - D.x) * k, y - D.y) > o.sz + 26) continue;
+    o.dead = D.runT + 60; const va = Math.atan2(D.vy, D.vx), side = Math.abs(Math.sin(angDiff(D.ang, va))) > 0.6;
+    for (let i = 0; i < 26; i++) parts.push({ k: o.sat ? 'spark' : 'rock', x: u, y, vx: (rnd() - 0.5) * 900 + D.vx * 0.3 / k, vy: (rnd() - 0.5) * 900 + D.vy * 0.3, t: 0, life: 1.2, s: 3 + rnd() * 5, c: o.sat ? (rnd() < 0.5 ? '#9fd0ff' : '#ffffff') : ['#8a7a6a', '#6a5e54', '#a8988a'][rnd() * 3 | 0], rot: rnd() * 6, vr: (rnd() - 0.5) * 12, g: 0 });
+    shake = Math.max(shake, 18); SFX.thunk(); buzz([30, 20, 40]);
+    if (o.sat) { gems += 40; D.hull -= 0.1; S.sat = (S.sat || 0) + 1; say('SATELLITE!  ◆+40', '#9fd0ff', true); SFX.clang(); }
+    else { const v = Math.round(6 + o.sz / 8) * cbMult(); gems += v; S.ast = (S.ast || 0) + 1; say(`ASTEROID!  ◆+${v}`, '#d8c8b0', true); if (side && sp > 1500) { D.hull -= 0.2; say('GLANCING HIT', '#ff8a6a'); } }
+    addChain(2); POP.push({ x: D.x, y: D.y - 30, txt: o.sat ? '+40' : '+' + Math.round(6 + o.sz / 8) * cbMult(), c: '#fff', t: 0, big: true }); } }
+function drawOrbits(x, left, right, vtop, vbot, s) { if (isMoon(cam.x) || !D) return; for (const o of ORB) { if (o.dead > D.runT) continue; const [u, y] = orbPos(o); if (u < left - 200 || u > right + 200 || y < vtop - 200 || y > vbot + 200) continue; const k = kAt(u, y), px = o.sz * s;
+    x.save(); x.translate(u, y); x.scale(1 / k, 1); if (px < 2.5) { x.fillStyle = o.sat ? '#cfe6ff' : '#b0a090'; const d = 2.5 / s; x.fillRect(-d, -d, 2 * d, 2 * d); x.restore(); continue; }
+    x.rotate(o.ph + o.spin * D.runT);
+    if (o.sat) { x.fillStyle = '#2a5aa8'; x.fillRect(-o.sz, -9, o.sz * 0.7, 18); x.fillRect(o.sz * 0.3, -9, o.sz * 0.7, 18); x.strokeStyle = '#9fc4ff'; x.lineWidth = 1.5; for (let i = -o.sz; i < o.sz; i += 8) { if (Math.abs(i) < o.sz * 0.3) continue; x.beginPath(); x.moveTo(i, -9); x.lineTo(i, 9); x.stroke(); } x.fillStyle = '#d8dce4'; x.fillRect(-12, -12, 24, 24); x.fillStyle = '#ffcf4a'; x.fillRect(-12, -12, 24, 5); x.fillStyle = (T * 2 % 1) < 0.5 ? '#ff4040' : '#401010'; x.beginPath(); x.arc(0, -16, 3, 0, TAU); x.fill(); }
+    else { let sd = o.seed * 99 + 7; const R = () => (sd = (sd * 16807) % 2147483647) / 2147483647; x.fillStyle = '#7a6c60'; x.beginPath(); for (let i = 0; i < 11; i++) { const a = i / 11 * TAU, r = o.sz * (0.75 + 0.3 * R()); i ? x.lineTo(Math.cos(a) * r, Math.sin(a) * r) : x.moveTo(Math.cos(a) * r, Math.sin(a) * r); } x.closePath(); x.fill(); x.fillStyle = 'rgba(0,0,0,0.22)'; for (let i = 0; i < 4; i++) { x.beginPath(); x.arc((R() - 0.5) * o.sz, (R() - 0.5) * o.sz, o.sz * (0.08 + 0.12 * R()), 0, TAU); x.fill(); } x.fillStyle = 'rgba(255,255,255,0.12)'; x.beginPath(); x.arc(-o.sz * 0.2, -o.sz * 0.25, o.sz * 0.35, 0, TAU); x.fill(); }
+    x.restore(); } }
+// ===== flight path in space: where the current orbit takes you
+function drawPath(x, s) { if (!D || D.dead || !D.air) return; const alt = surf(D.x) - D.y; if (alt < 2500 && !isMoon(D.x)) return; if (isMoon(D.x) && alt < 600) return;
+  let px = D.x, py = D.y, vx = D.vx, vy = D.vy, hit = null, orbit = false; const pts = [px, py], u0 = D.x, Rb = bodyR(D.x), dt = clamp(Rb / 26000 * 0.09, 0.03, 0.12);
+  for (let i = 0; i < 520; i++) { const [ax, ay] = airAcc(px, py, vx, vy); vx += ax * dt; vy += ay * dt; px += vx / kAt(px, py) * dt; py += vy * dt; if (i % 3 === 0) pts.push(px, py); if (py > surf(px)) { hit = [px, surf(px)]; break; } if (Math.abs(px - u0) > bodyC(D.x) * 0.97) { orbit = true; break; } if (Rb - py > (isMoon(D.x) ? RMN * 3.6 : MDIST * 1.3)) break; }
+  x.save(); x.setLineDash([7, 7]); x.lineDashOffset = -T * 30; x.lineWidth = 2; x.strokeStyle = orbit ? 'rgba(140,240,255,0.8)' : 'rgba(255,255,255,0.6)'; x.beginPath(); for (let i = 0; i < pts.length; i += 2) { const [sx, sy] = W2S(pts[i], pts[i + 1]); i ? x.lineTo(sx, sy) : x.moveTo(sx, sy); } x.stroke(); x.setLineDash([]);
+  if (hit) { const [hx, hy] = W2S(hit[0], hit[1]); x.strokeStyle = 'rgba(255,90,70,0.95)'; x.lineWidth = 3; x.beginPath(); x.moveTo(hx - 7, hy - 7); x.lineTo(hx + 7, hy + 7); x.moveTo(hx + 7, hy - 7); x.lineTo(hx - 7, hy + 7); x.stroke(); }
+  if (orbit) { const [lx, ly] = W2S(pts[pts.length - 2], pts[pts.length - 1]); x.font = '800 11px Nunito, sans-serif'; x.fillStyle = 'rgba(140,240,255,0.9)'; x.textAlign = 'center'; x.fillText('STABLE ORBIT', clamp(lx, 50, VW - 50), clamp(ly - 10, 110, VH - 80)); }
+  x.restore(); return orbit; }
+// ===== the crystal at the centre of the Earth and the moonstones
+function grabCore() { const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; if (S.crys) return; if (sp > 2500) { S.crys = 1; SV.cc = Math.min(10, (SV.cc || 0) + 1); saveSV(); say(`CORE CRYSTAL! ${SV.cc}/10  · heat resistance +5%`, '#ff9cf0', true); SFX.bank(); flash = Math.max(flash, 0.6); for (let i = 0; i < 40; i++) parts.push({ k: 'spark', x: D.x, y: D.y, vx: (rnd() - 0.5) * 1400, vy: (rnd() - 0.5) * 1400, t: 0, life: 0.9, s: 3, c: rnd() < 0.5 ? '#ff9cf0' : '#ffffff' }); } else say('Too slow to grab the core crystal (900 km/h)', '#ffb0e0', true); }
+const crysHeat = () => 1 - 0.05 * (SV.cc || 0);
+// ===== re-entry: thick air at orbital speed heats the drill; nose-first is survivable
+function reentryStep(dt, atm, dd, sp) { if (isMoon(D.x)) return 0; const alt = surf(D.x) - D.y; if (alt > 14000) D.wasSpace = true; if (sp < 3000 || atm < 0.005) { D.reQ = 0; return 0; }
+  const q = atm * Math.pow((sp - 3000) / 2600, 2) * 0.55 * (0.5 + 1.6 * Math.abs(Math.sin(dd))) * crysHeat() * (1 - 0.11 * U('cool')); D.reQ = q; D.heat = Math.min(1.25, D.heat + q * dt); D.reMax = Math.max(D.reMax || 0, D.heat);
+  if (D.heat > 1) { D.hull -= (D.heat - 0.95) * 2.4 * dt; if (thr('burn', 1.2)) say('BURNING UP!', '#ff7a30', true); }
+  if (thr('reS', 0.09)) noise({ type: 'bandpass', f0: 600 + q * 900, dur: 0.14, gain: Math.min(0.25, q * 0.5) }); return q; }
+function reentryCheck() { if (!D.wasSpace || isMoon(D.x)) return; const alt = surf(D.x) - D.y; if (alt > 2500) return; D.wasSpace = false; if (D.hull <= 0) return; if ((D.reMax || 0) < 0.85) { gems += 150; say('PERFECT RE-ENTRY!  ◆+150', '#ffd27a', true); SFX.bank(); addChain(4); } else { gems += 50; say('RE-ENTRY  ◆+50', '#ffb07a', true); addChain(2); } D.reMax = 0; }
+function drawReentry(x) { const q = D.reQ || 0; if (q < 0.01 || D.dead) return; const k2 = clamp(q * 4, 0, 1), a = Math.atan2(D.vy, D.vx), fl = 0.8 + 0.2 * Math.sin(T * 50);
+  x.save(); x.translate(D.x, D.y); x.rotate(a); x.globalCompositeOperation = 'lighter'; const L = 160 + 300 * k2, g = x.createLinearGradient(30, 0, -L, 0); g.addColorStop(0, `rgba(255,240,200,${0.8 * k2 * fl})`); g.addColorStop(0.25, `rgba(255,140,40,${0.5 * k2})`); g.addColorStop(1, 'rgba(255,60,20,0)'); x.fillStyle = g;
+  const w = 30 + 14 * k2; x.beginPath(); x.moveTo(44, 0); x.quadraticCurveTo(20, -w * 1.3, -40, -w); x.quadraticCurveTo(-L * 0.6, -w * 0.5, -L, 0); x.quadraticCurveTo(-L * 0.6, w * 0.5, -40, w); x.quadraticCurveTo(20, w * 1.3, 44, 0); x.fill();
+  x.globalAlpha = k2; x.drawImage(FIRE, 10, -40, 80, 80); x.restore(); if (rnd() < k2) parts.push({ k: 'spark', x: D.x, y: D.y, vx: -D.vx * 0.2 + (rnd() - 0.5) * 300, vy: -D.vy * 0.2 + (rnd() - 0.5) * 300, t: 0, life: 0.5, s: 2.5, c: rnd() < 0.5 ? '#ffb040' : '#fff0c0' }); }
+// ===== boost rocket (works in vacuum)
+function boostStep(dt) { if (!D.boostM) return; if (boostOn && D.boostF > 0) { const th = 1700 + 160 * U('boost'); if (D.air) { D.vx += Math.cos(D.ang) * th * dt; D.vy += Math.sin(D.ang) * th * dt; } else if (!D.lying) D.s += th * 0.55 * dt; else { D.lying = false; D.air = true; D.vx = Math.cos(D.ang) * 400; D.vy = Math.sin(D.ang) * 400 - 200; }
+    D.boostF = Math.max(0, D.boostF - dt); D.boosting = true; if (thr('bstS', 0.07)) noise({ type: 'bandpass', f0: 380, dur: 0.12, gain: 0.16 }); const c = Math.cos(D.ang), sn = Math.sin(D.ang), kk = kAt(D.x, D.y);
+    for (let i = 0; i < 3; i++) parts.push({ k: 'spark', x: D.x - c * 60 / kk, y: D.y - sn * 60, vx: (-c * (700 + rnd() * 500) + (rnd() - 0.5) * 200) / kk, vy: -sn * (700 + rnd() * 500) + (rnd() - 0.5) * 200, t: 0, life: 0.35, s: 3, c: rnd() < 0.5 ? '#ffd45a' : '#ff7a2a' }); }
+  else { D.boosting = false; if (!D.air || D.lying) D.boostF = Math.min(D.boostM, D.boostF + dt * 0.12); } }
 // ===== combo chain: tricks build a multiplier, music layers and screen glow; bank it or lose it on a crash
 const CB_LV = [0, 3, 8, 16, 28], CB_M = [1, 2, 3, 5, 8], CB_C = ['#ffffff', '#7df9ff', '#c6ff3d', '#ffb43a', '#ff5ad8'], CB_T = 4;
 let CB = { p: 0, lv: 0, t: 0, pulse: 0, red: 0, bank: 0 }, FLY = [], POP = [], plN = 0, plT = -9;
@@ -601,6 +650,12 @@ const MIS = {
   coal: { t: () => 'Set a coal seam on fire', n: () => 1, v: () => S.coal },
   mach: { t: () => 'Break the sound barrier', n: () => 1, v: () => S.mach || 0 },
   fos: { t: n => `Find ${n} fossil${n > 1 ? 's' : ''} or treasure`, n: l => 1 + (l / 5 | 0), v: () => S.fos || 0 },
+  space: { t: () => 'Fly out into space', n: () => 1, v: () => S.space || 0 },
+  orbit: { t: () => 'Complete a full orbit', n: () => 1, v: () => S.orbits || 0 },
+  core: { t: () => "Drill through the Earth's core", n: () => 1, v: () => S.coreN || 0 },
+  moon: { t: () => 'Land on the moon', n: () => 1, v: () => S.moonLand || 0 },
+  mstone: { t: n => `Bring ${n} moonstone${n > 1 ? 's' : ''} back to Earth`, n: l => 1 + Math.min(4, l / 6 | 0), v: () => S.mdel || 0 },
+  moonthru: { t: () => 'Drill straight through the moon', n: () => 1, v: () => S.moonCore || 0 },
   bio: { t: n => `Reach the ${BIO[n].toLowerCase()}`, n: l => 1 + Math.min(2, l / 4 | 0), v: () => { const b = biome(D.x); return b >= 1 ? b : 0; } } };
 function newMission(excl) { const ks = Object.keys(MIS).filter(k => !excl.includes(k)); const k = ks[Math.random() * ks.length | 0]; const l = SV.mlv; return { k, n: MIS[k].n(l), r: 15 + 8 * Math.min(l, 20), ok: 0 }; }
 function fillMissions() { SV.mis = (SV.mis || []).filter(m => MIS[m.k] && !m.ok); while (SV.mis.length < 3) SV.mis.push(newMission(SV.mis.map(m => m.k))); saveSV(); }
@@ -608,7 +663,7 @@ function checkMissions() { if (!D || !S.perf && S.perf !== 0) return; for (const
 const misHTML = () => '<h3>Missions</h3>' + SV.mis.map(m => `<div class="${m.ok ? 'ok' : ''}"><i>${m.ok ? '✓' : ''}</i><span>${MIS[m.k].t(m.n)}</span><em>◆ ${m.r}</em></div>`).join('');
 function reset(daily) { CAVC.clear(); CB = { p: 0, lv: 0, t: 0, pulse: 0, red: 0, bank: 0 }; FLY = []; POP = []; MU.on = false; tileJobs = []; shocks = []; LKN.clear(); H1C.clear(); SC.clear(); endPending = null; LAKES.clear(); warps = []; quake = 0; for (const ch of chunks.values()) for (let q = 0; q < NT; q++) freeTile(ch, q); tileCount = 0; fillMissions(); MODE = daily ? 'daily' : 'free'; const dn = dayNo(); SEED = daily ? 1000 + (dn * 7919) % 8000 : 1 + (Math.random() * 1000 | 0); if (SV.daily && SV.daily.day !== dn) SV.daily = null; ghost = daily && SV.daily ? SV.daily.ghost : null; ghostRec = []; ghostT = 0; S = { perf: 0, flips: 0, bombs: 0, water: 0, coal: 0, alt: 0, depth: 0, cav: 0 }; runReward = 0; paused = false; lastBio = 0; lavaT = 0; HM = 1 + 0.25 * U('hull'); tut = SV.tut ? null : { st: 0, t: 0 }; touches.clear(); chunks.clear(); segs = []; wreck = []; boulders = []; active.clear(); clods = []; SURFC.clear(); fallEv = []; pieces = []; structQ = []; D_lastStruct = 0; parts = []; rings = []; msgs = []; ev = []; gems = 0; T = 0; shake = 0; flash = 0;
   const x = -200; D = { x, y: surf(x) - 330, vx: 700, vy: -160, ang: -0.2, air: true, s: 0, fuel: 1, heat: 0, hull: 1, px: x, py: surf(x) - 330, maxX: 0, mat: AIR, why: '', dead: false, spin: 0, lastMat: AIR, airT: 0, fin: 1, flips: 0, flipAcc: 0, av: 0, gav: 0, crashT: 0, segX: 0, segY: 0, solidT: 0 };
-  D.hull = HM; cam.x = D.x + 200; cam.y = D.y + 150; cam.vh = 900; run = true; show(null); $('pz').hidden = false; }
+  D.hull = HM; D.boostF = D.boostM = U('boost') ? 1.2 + 0.5 * U('boost') : 0; D.runT = 0; D.lapU0 = D.x; D.lapT0 = 0; D.mstone = 0; D.reMax = 0; ORB = mkOrbits(); $('bst').hidden = !U('boost'); cam.x = D.x + 200; cam.y = D.y + 150; cam.vh = 900; run = true; show(null); $('pz').hidden = false; }
 const norm = a => { a = ((a + Math.PI) % TAU + TAU) % TAU - Math.PI; return a; };
 const angDiff = (a, b) => norm(a - b);
 function clampAng(a) { a = norm(a); if (Math.cos(a) >= 0) return clamp(a, -1.45, 1.45); let am = norm(Math.PI - a); am = clamp(am, -1.45, 1.45); return norm(Math.PI - am); }
@@ -640,7 +695,7 @@ function stepLying(dt) { D.fin = Math.max(0, D.fin - dt * 6);
   if (!isMoon(D.x)) D.maxX = Math.max(D.maxX, D.x); D.heat = Math.max(0, D.heat - 0.2 * dt); }
 function say(t, col, big) { msgs.push({ t, col: col || '#fff', big: !!big, life: 0 }); if (msgs.length > 3) msgs.shift(); }
 function at(d, fn) { ev.push({ t: T + d, fn }); }
-function enterGround() { D.orbU = 0; D.orbX = undefined; if (isMoon(D.x) && !S.moonLand) { S.moonLand = 1; gems += 500; say('MOON LANDING!  ◆+500', '#ffffff', true); SFX.bank(); flash = Math.max(flash, 0.4); addChain(6); }
+function enterGround() { D.orbU = 0; D.orbX = undefined; if (isMoon(D.x)) D.mLand = true; if (!isMoon(D.x) && D.mstone > 0) { const v = D.mstone * 120; gems += v; S.mdel = (S.mdel || 0) + D.mstone; say(`MOONSTONES DELIVERED ×${D.mstone}  ◆+${v}`, '#d8b8ff', true); SFX.bank(); addChain(5); D.mstone = 0; } 
   const sa = Math.atan2(surf(D.x + 6) - surf(D.x - 6), 12); const va = Math.atan2(D.vy, D.vx), sp = Math.hypot(D.vx, D.vy);
   const tx = Math.cos(sa), ty = Math.sin(sa), nxi = -ty, nyi = tx; const vin = D.vx * nxi + D.vy * nyi, along = Math.abs(D.vx * tx + D.vy * ty);
   const rel = Math.atan2(vin, along); // >0 = into the ground
@@ -659,6 +714,7 @@ let camRot = 0;
 function coreCross() { const Rb = bodyR(D.x); if (D.y < Rb - 18 || (D.air ? D.vy : Math.sin(D.ang)) <= 0) return false; const C = bodyC(D.x), mir = o => { o.x += C / 2; o.y = 2 * Rb - o.y; };
   mir(D); D.ang = norm(D.ang + Math.PI); D.vx = -D.vx; D.vy = -D.vy; D.px = D.x; D.py = D.y; D.segX = D.x; D.segY = D.y; mir(cam); camRot += Math.PI;
   for (const p of parts) { mir(p); p.vx = -p.vx; p.vy = -p.vy; } FLY.forEach(f => f.a += Math.PI); rings.length = 0; shocks.length = 0; warps.length = 0;
+  S.coreN = (S.coreN || 0) + (isMoon(D.x) ? 0 : 1); if (isMoon(D.x)) S.moonCore = 1; else grabCore();
   if (!S.core) { S.core = 1; gems += 250; say('CORE PIERCED!  ◆+250', '#ffd040', true); SFX.mach(3, true); flash = Math.max(flash, 0.6); } else say('THROUGH THE CORE!', '#ffd040', true); shake = Math.max(shake, 30); buzz([60, 40, 90]); addChain(4); return true; }
 function exitGround() { D.s *= 1.12; D.av = 0; D.y = Math.min(D.y, surf(D.x) - 1); D.air = true; D.flips = 0; D.flipAcc = 0; D.vx = Math.cos(D.ang) * D.s; D.vy = Math.sin(D.ang) * D.s; SFX.pop(); { const C = colOf(TOPM[biome(D.x)]), k = clamp(D.s / 2000, 0.2, 1), sy = surf(D.x); crater(D.x, sy + 8, 26 + 18 * k); spray(D.x, sy, D.ang, 0.7, 30 + 34 * k, D.s * 0.35 + 150, D.s * 0.85 + 200, [C[0], C[1], C[2]], 6, 12 + 10 * k); spray(D.x, sy, -Math.PI / 2, 1.8, 18, 160, 460, [C[1], C[2]], 4, 8); if (biome(D.x) === 0) spray(D.x, sy, D.ang, 0.5, 6 + 6 * k, D.s * 0.4, D.s * 0.7, ['#5aa83a', '#78c84a'], 9, 16); dust(D.x, sy - 6, 14, C[2], 260); rings.push({ x: D.x, y: sy, r: 60 + 80 * k, t: 0, d: 0.25 }); shake = Math.max(shake, 5 + 8 * k); { const mx = D.x; at(0.06, () => mound(mx, k, true)); } buzz(25); if ((D.mach || 0) >= 1) { supImpact(D.x, sy, D.ang, true); tunnelShock(1.4); } } if (D.s > 900) say('LAUNCH!', '#fff', true); addChain(1); D.airT = 0; }
 function explode(x, y, R, power, kind) { if (kind === 'nitro') S.bombs++;
@@ -791,9 +847,9 @@ function drawItem(x, id, r) { const c = ITEMS[id][2] === 'f'; x.save(); x.lineCa
     case 'chest': x.fillStyle = '#8a4a1e'; x.fillRect(-r * 0.75, -r * 0.2, r * 1.5, r * 0.8); x.beginPath(); x.ellipse(0, -r * 0.2, r * 0.75, r * 0.45, 0, Math.PI, TAU); x.fill(); x.fillStyle = '#ffcc33'; x.fillRect(-r * 0.75, -r * 0.25, r * 1.5, r * 0.12); x.fillRect(-r * 0.1, -r * 0.3, r * 0.2, r * 0.35); x.fillRect(-r * 0.5, -r * 0.6, r * 0.12, r * 1.2); x.fillRect(r * 0.38, -r * 0.6, r * 0.12, r * 1.2); break; }
   x.restore(); }
 function die(why) { if (D.dead) return; breakChain(true); FLY = []; D.dead = true; D.why = why; run = false; SFX.over(); if (why === 'Hull destroyed') nuke(D.x, D.y);
-  $('pz').hidden = true; const r = endRun(); slowmo(0.6); deadT = 0; endPending = () => { $('endWhy').textContent = (MODE === 'daily' ? 'Daily run · ' : '') + why; $('endDist').textContent = r.m + ' m';
+  $('pz').hidden = true; $('bst').hidden = true; bstHeld = false; const r = endRun(); slowmo(0.6); deadT = 0; endPending = () => { $('endWhy').textContent = (MODE === 'daily' ? 'Daily run · ' : '') + why; $('endDist').textContent = r.m + ' m';
     $('endBest').textContent = (r.nb ? (MODE === 'daily' ? 'New daily best!' : 'New best!') : (MODE === 'daily' ? 'Daily best ' + SV.daily.best + ' m' : 'Best ' + best + ' m')) + ' · ' + r.dm + ' m deep' + (r.nd ? ' – record!' : '');
-    $('endGems').textContent = '◆ ' + gems + ' gems' + (runReward ? '  +  ◆ ' + runReward + ' missions' : '') + '  ·  bank ◆ ' + SV.bank; $('misE').innerHTML = misHTML(); show('ovEnd'); }; }
+    $('endGems').textContent = '◆ ' + gems + ' gems' + (runReward ? '  +  ◆ ' + runReward + ' missions' : '') + '  ·  bank ◆ ' + SV.bank; { const rc = SV.rec || {}, fm = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'), bits = []; if (S.laps) bits.push(`${S.laps} lap${S.laps > 1 ? 's' : ''} round the planet`); if (rc.lap) bits.push('best lap ' + fm(rc.lap)); if (S.coreN) bits.push(`through the core ×${S.coreN}`); if (S.moonLand) bits.push('moon landing'); $('endRec').textContent = bits.join(' · '); } $('misE').innerHTML = misHTML(); show('ovEnd'); }; }
 let endPending = null, deadT = 0; const MACH1 = 3430; // 343 m/s at 10 px per metre
 let shocks = [], pathT = 0;
 function supImpact(x, sy, ang, out) { if (!thr('supimp', 0.8)) return; const M = Math.min(3, D.mach || 1), R = 70 + 45 * (M - 1), C = colOf(TOPM[biome(x)]); bigCrater(x, sy + (out ? 0 : R * 0.15), R * 1.5, R * 0.8, true, false); SFX.boom(0.7); shake = Math.max(shake, 26); flash = Math.max(flash, 0.15);
@@ -860,6 +916,7 @@ function showEnd() { if (!endPending || deadT < 0.8) return; const f = endPendin
 function endRun() { checkMissions(); const m = Math.round(D.maxX / 10), dm = Math.round(S.depth || 0); let nb = false, nd = false;
   if (m > SV.best) { SV.best = best = m; if (MODE === 'free') nb = true; } if (dm > SV.deep) { SV.deep = dm; nd = true; }
   if (MODE === 'daily') { const dn = dayNo(); if (!SV.daily || SV.daily.day !== dn) SV.daily = { day: dn, best: 0, ghost: null }; if (m > SV.daily.best) { SV.daily.best = m; SV.daily.ghost = ghostRec; nb = true; } }
+  const rc = SV.rec || (SV.rec = { lap: 0, laps: 0, core: 0 }); if ((S.laps || 0) > rc.laps) rc.laps = S.laps; if ((S.coreN || 0) > rc.core) rc.core = S.coreN;
   SV.bank += gems; saveSV(); return { m, dm, nb, nd }; }
 function stepTut(dt) { tut.t += dt; const st = tut.st;
   if (st === 0 && D.air && turn) { tut.h = (tut.h || 0) + dt; if (tut.h > 0.35) next(); }
@@ -869,7 +926,8 @@ const TUTX = ['Hold the RIGHT side of the screen to rotate ↻', 'Let go to fly 
 
 function step(dt) {
   T += dt; if (!SV.set.cave) { fallEv.length = 0; structQ.length = 0; } updateFalls(dt); if (SV.set.cave && D && !D.dead && T - D_lastStruct > 0.5) { D_lastStruct = T; if (D.y > surf(D.x) + 20) structCheck(D.x - Math.cos(D.ang) * 120, D.y - Math.sin(D.ang) * 120); } if (structQ.length) { const q = structQ.shift(); structCheck(q[0], q[1]); } if (ev.length) { const due = ev.filter(e => e.t <= T); if (due.length) { ev = ev.filter(e => e.t > T); due.forEach(e => e.fn()); } }
-  if (D.dead) return; chainTick(dt); stepFly(dt); { const vx = D.air ? D.vx : Math.cos(D.ang) * D.s, vy = D.air ? D.vy : Math.sin(D.ang) * D.s, k = 1 - dt * 3; D.mvx = (D.mvx || 0) * k; D.mvy = (D.mvy || 0) * k; if (vx * vx + vy * vy > D.mvx * D.mvx + D.mvy * D.mvy) { D.mvx = vx; D.mvy = vy; } }
+  if (D.dead) return; chainTick(dt); stepFly(dt); D.runT = (D.runT || 0) + dt; boostStep(dt); if (isMoon(D.x) && !D.air) { D.mLand = true; if (!S.moonLand) { S.moonLand = 1; gems += 500; say('MOON LANDING!  ◆+500', '#ffffff', true); SFX.bank(); flash = Math.max(flash, 0.4); addChain(6); } } stepOrbits(); reentryCheck();
+  if (!isMoon(D.x) && D.x - D.lapU0 >= CPL) { const lt = D.runT - D.lapT0; S.laps = (S.laps || 0) + 1; D.lapU0 += CPL; D.lapT0 = D.runT; const rc = SV.rec || (SV.rec = { lap: 0, laps: 0, core: 0 }), fm = Math.floor(lt / 60) + ':' + String(Math.floor(lt % 60)).padStart(2, '0'); if (!rc.lap || lt < rc.lap) { rc.lap = lt; saveSV(); say(`LAP ${S.laps}  ${fm}  NEW RECORD!`, '#c6ff3d', true); } else say(`LAP ${S.laps}  ${fm}`, '#e8f8ff', true); gems += 100; addChain(4); } { const vx = D.air ? D.vx : Math.cos(D.ang) * D.s, vy = D.air ? D.vy : Math.sin(D.ang) * D.s, k = 1 - dt * 3; D.mvx = (D.mvx || 0) * k; D.mvy = (D.mvy || 0) * k; if (vx * vx + vy * vy > D.mvx * D.mvx + D.mvy * D.mvy) { D.mvx = vx; D.mvy = vy; } }
   D.px = D.x; D.py = D.y;
   if (D.lying) { stepLying(dt); if (D.hull <= 0) die('Hull destroyed'); return; }
   if (D.air) {
@@ -878,7 +936,7 @@ function step(dt) {
     const want = turn ? turn * 6.8 * (1 + 0.08 * U('fin')) : angDiff(va, D.ang) * 4 * atm + D.av * (1 - atm) * 0.98; D.av += (want - D.av) * Math.min(1, dt * 5.5);
     const prevA = D.ang; D.ang += D.av * dt;
     const dA = D.ang - prevA; D.flipAcc += dA; if (Math.abs(D.flipAcc) >= TAU - 0.3) { D.flipAcc -= Math.sign(D.flipAcc) * TAU; D.flips++; say(D.flips > 1 ? `FLIP ×${D.flips}!` : 'FLIP!', '#7df9ff'); SFX.flip(D.flips); addChain(1); }
-    const dd = angDiff(D.ang, va); if (Math.abs(dd) < 1.9) va += clamp(dd, -1, 1) * 1.5 * (1 + 0.12 * U('fin')) * D.fin * atm * dt; sp *= Math.exp(-(0.01 + 0.05 * Math.abs(Math.sin(dd)) * D.fin) * atm * dt);
+    const dd = angDiff(D.ang, va); sp *= Math.exp(-reentryStep(dt, atm, dd, sp) * 0.22 * dt); if (Math.abs(dd) < 1.9) va += clamp(dd, -1, 1) * 1.5 * (1 + 0.12 * U('fin')) * D.fin * atm * dt; sp *= Math.exp(-(0.01 + 0.05 * Math.abs(Math.sin(dd)) * D.fin) * atm * dt);
     D.vx = Math.cos(va) * sp; D.vy = Math.sin(va) * sp; { const [ax, ay] = airAcc(D.x, D.y, D.vx, D.vy); D.vx += ax * dt; D.vy += ay * dt; }
     D.x += D.vx / kAt(D.x, D.y) * dt; D.y += D.vy * dt; if (coreCross()) return; frameCheck(); D.heat = Math.max(0, D.heat + HEAT[AIR] * dt);
     if (D.airT > 0.2 && D.y < surf(D.x) - 2) { const c = Math.cos(D.ang), sn = Math.sin(D.ang); for (const t of [-56, -36, -16]) { const px = D.x + c * t, py = D.y + sn * t; if (py > surf(px) + 2) { const sa = Math.atan2(surf(px + 6) - surf(px - 6), 12), vin = -D.vx * Math.sin(sa) + D.vy * Math.cos(sa); if (vin > 0) { layDown(sa); return; } } } }
@@ -901,7 +959,7 @@ function step(dt) {
     const thrust = (THR * (1 + 0.07 * U('eng')) + 200 * clamp(1 - D.s / 400, 0, 1)) * clamp(1.15 - D.s / 1700, 0, 1); const sn = Math.sin(D.ang), gin = (isMoon(D.x) ? GMOON / G : 1) * clamp((bodyR(D.x) - D.y) / bodyR(D.x), 0, 1); D.s += (thrust + G * gin * (sn > 0 ? 0.85 : 0.2) * sn) * dt; D.s *= Math.exp(-DRAG[m] * (m === ROCK || m === DEEP || m === GRAV || m === CLAY || m === COAL ? 1 - 0.08 * U('tip') : 1) * dt); if (D.s > 250) { const pump = Math.abs(D.gav) * 0.05 * dt; D.s += D.s * pump; if (pump > 0.12 * dt && thr('carve', 2.5) && D.s > 1400) say('CARVE!', '#ffe08a'); if (pump > 0.08 * dt && D.s > 1100 && thr('cbc', 0.6)) addChain(1); }
     D.s = clamp(D.s, 0, 5500 + 1300 * CB.lv);
     D.fuel = 1; if (false) D.fuel = Math.max(0, D.fuel - (0.03 + DRAG[m] * 0.025) * dt);
-    D.heat = clamp(D.heat + HEAT[m] * dt * (HEAT[m] > 0 ? (0.1 + D.s / 1000) * (1 - 0.11 * U('cool')) : 1), 0, 1.15); if (D.heat > 1) { D.hull -= 0.1 * dt; if (thr('hot', 1.2)) say('OVERHEATING!', '#ff5a2e'); }
+    D.heat = clamp(D.heat + HEAT[m] * dt * (HEAT[m] > 0 ? (0.1 + D.s / 1000) * (1 - 0.11 * U('cool')) * crysHeat() : 1), 0, 1.15); if (D.heat > 1) { D.hull -= 0.1 * dt; if (thr('hot', 1.2)) say('OVERHEATING!', '#ff5a2e'); }
     if (m === WATER && D.lastMat !== WATER) S.water++;
     if (m === WATER && D.lastMat !== WATER && thr('cool', 1.5)) { SFX.splash(); say('Cooled', '#9fdcff'); }
     D.lastMat = m;
@@ -919,7 +977,8 @@ function step(dt) {
   stepWorld(dt);
   // nitro & gems
   for (const F of featsNear(D.x)) { for (const n of F.nitro) if (n.alive && Math.hypot(n.x - D.x, n.y - D.y) < 36) { n.alive = false; explode(n.x, n.y, 90, 480, 'nitro'); }
-    for (const e of F.gems) if (e.alive && Math.hypot(e.x - D.x, e.y - D.y) < 70 + 12 * U('lamp')) pickGem(e); }
+    for (const e of F.gems) if (e.alive && Math.hypot((e.x - D.x) * kAt(e.x, e.y), e.y - D.y) < 70 + 12 * U('lamp')) pickGem(e);
+    if (F.mst) for (const e of F.mst) if (e.alive && Math.hypot((e.x - D.x) * kAt(e.x, e.y), e.y - D.y) < 80) { e.alive = false; D.mstone++; say(`MOONSTONE!  (${D.mstone} carried – take it to Earth)`, '#d8b8ff', true); SFX.lvlUp(2); for (let i = 0; i < 16; i++) parts.push({ k: 'spark', x: e.x, y: e.y, vx: (rnd() - 0.5) * 500, vy: (rnd() - 0.5) * 500, t: 0, life: 0.6, s: 2.5, c: '#d8b8ff' }); } }
   if (D.hull <= 0) die('Hull destroyed');
   { const dd = (D.y - surf(D.x)) / 10; if (dd > S.depth) S.depth = dd; if (!D.air) S.gr = 1; if (S.gr && -dd > S.alt) S.alt = -dd; }
   if (MODE === 'daily') { ghostT += dt; if (ghostT >= 0.1 && ghostRec.length < 14000) { ghostT -= 0.1; ghostRec.push(Math.round(D.x), Math.round(D.y)); } }
@@ -1022,7 +1081,7 @@ const STARS2 = Array.from({ length: 140 }, () => [Math.random(), Math.random(), 
 function drawSpace(x, spF) { if (spF <= 0.01) return; x.fillStyle = `rgba(2,3,10,${spF})`; x.fillRect(0, 0, VW, VH); x.fillStyle = '#fff'; for (const st of STARS2) { x.globalAlpha = spF * st[2] * (0.7 + 0.3 * Math.sin(T * 1.5 + st[2] * 20)); x.fillRect(st[0] * VW, st[1] * VH, 1.6, 1.6); } x.globalAlpha = 1;
   // the atmosphere as a glowing rim around the planet
   const [ex, ey] = C2S(0, 0), R1 = RPL * GV.s, R2 = (RPL + 5000) * GV.s; if (R2 > 2) { const g = x.createRadialGradient(ex, ey, R1 * 0.97, ex, ey, R2); g.addColorStop(0, `rgba(140,200,255,${0.75 * spF})`); g.addColorStop(0.35, `rgba(90,150,255,${0.35 * spF})`); g.addColorStop(1, 'rgba(60,120,255,0)'); x.fillStyle = g; x.beginPath(); x.arc(ex, ey, R2, 0, TAU); x.fill(); } }
-const BODYIMG = {}; function bodyImg(m) { if (BODYIMG[m]) return BODYIMG[m]; const N = 512, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), Rb = m ? RMN : RPL, k = N / 2 / Rb, u0 = m ? M0U : 0, C = m ? CMN : CPL; x.translate(N / 2, N / 2);
+const BODYIMG = {}; let phaseCv = null; function bodyImg(m) { if (BODYIMG[m]) return BODYIMG[m]; const N = 512, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), Rb = m ? RMN : RPL, k = N / 2 / Rb, u0 = m ? M0U : 0, C = m ? CMN : CPL; x.translate(N / 2, N / 2);
   const ring = (fn, col) => { x.beginPath(); for (let i = 0; i <= 360; i++) { const th = i / 360 * TAU, u = u0 + th / TAU * C, r = Rb - fn(u); i ? x.lineTo(Math.sin(th) * r * k, -Math.cos(th) * r * k) : x.moveTo(Math.sin(th) * r * k, -Math.cos(th) * r * k); } x.closePath(); x.fillStyle = col; x.fill(); };
   const L = m ? LAYM[2] : LAYM[1]; ring(surf, MCOL[m ? 13 : 1][0]); for (let i = 0; i < 4; i++) { x.beginPath(); for (let j = 0; j <= 90; j++) { const th = (i + j / 90) / 4 * TAU, u = u0 + th / TAU * C, r = Rb - surf(u); j ? x.lineTo(Math.sin(th) * r * k, -Math.cos(th) * r * k) : (x.moveTo(0, 0), x.lineTo(Math.sin(th) * r * k, -Math.cos(th) * r * k)); } x.closePath(); x.fillStyle = MCOL[TOPM[m ? 4 : (i + 0) % 4]][0]; x.fill(); }
   [B1, B2, B3, B4, B5, B6, B7].forEach((f, i) => ring(u => surf(u) + f(u), MCOL[L[i]][0]));
@@ -1031,6 +1090,10 @@ const BODYIMG = {}; function bodyImg(m) { if (BODYIMG[m]) return BODYIMG[m]; con
 // the body we are not standing on, drawn as a whole disk
 function drawOther(x, spF) { const m = isMoon(cam.x) ? 0 : 1, [cx, cy] = C2S(m ? MCX : 0, m ? MCY : 0), R = (m ? RMN : RPL) * GV.s; if (cx < -R || cx > VW + R || cy < -R || cy > VH + R || R < 0.5) return; const th = isMoon(cam.x) ? (cam.x - M0U) / RMN : cam.x / RPL;
   x.save(); x.translate(cx, cy); x.rotate(-th + camRot); x.drawImage(bodyImg(m), -R * 1.0, -R * 1.0, R * 2, R * 2); x.restore();
+  { const sunA = T * TAU / 180 + 1.2, [ox2, oy2] = toCart(cam.x, cam.y), bx = m ? MCX : 0, by = m ? MCY : 0, obsA = Math.atan2(ox2 - bx, -(oy2 - by)), ph = Math.cos(angDiff(sunA, obsA)), lit = -th + camRot + sunA - Math.PI / 2, P = phaseCv || (phaseCv = document.createElement('canvas')), N = 256; P.width = P.height = N; const q = P.getContext('2d'); q.clearRect(0, 0, N, N); q.translate(N / 2, N / 2); q.rotate(lit); const r = N / 2 - 1;
+    q.fillStyle = m ? 'rgba(4,4,12,0.88)' : 'rgba(2,4,14,0.8)'; q.beginPath(); q.arc(0, 0, r, 0, TAU); q.fill(); q.globalCompositeOperation = 'destination-out'; q.beginPath(); q.arc(0, 0, r, -Math.PI / 2, Math.PI / 2); q.fill(); if (ph > 0) { q.beginPath(); q.ellipse(0, 0, r * ph, r, 0, 0, TAU); q.fill(); } else { q.globalCompositeOperation = 'source-over'; q.beginPath(); q.ellipse(0, 0, r * -ph + 0.5, r, 0, 0, TAU); q.fill(); }
+    if (!m) { q.globalCompositeOperation = 'source-atop'; q.fillStyle = 'rgba(255,210,120,0.9)'; let sd = 11; const RR = () => (sd = (sd * 16807) % 2147483647) / 2147483647; for (let i = 0; i < 70; i++) { const a = RR() * TAU, d = Math.sqrt(RR()) * r * 0.92; q.fillRect(Math.cos(a) * d, Math.sin(a) * d, 2, 2); } }
+    x.drawImage(P, cx - R, cy - R, R * 2, R * 2); }
   if (!m) { const g = x.createRadialGradient(cx, cy, R * 0.97, cx, cy, R * 1.2); g.addColorStop(0, 'rgba(140,200,255,0.7)'); g.addColorStop(1, 'rgba(60,120,255,0)'); x.fillStyle = g; x.beginPath(); x.arc(cx, cy, R * 1.2, 0, TAU); x.fill(); } }
 function render() {
   let x = ctx; x.setTransform(1, 0, 0, 1, 0, 0);
@@ -1080,7 +1143,8 @@ function render() {
       x.fillStyle = 'rgba(240,255,200,0.6)'; for (let i = 0; i < 4; i++) { const bx = gs.x + Math.sin(i * 2.1 + gs.ph + t * 0.3) * gs.rx * 0.55, by = gs.y + gs.ry * 0.45 - ((t * 14 + i * 17) % (gs.ry * 0.9)); x.beginPath(); x.arc(bx, by, 1.5 + i % 2, 0, TAU); x.fill(); } x.globalAlpha = 1; }
     for (const n of F.nitro) { if (!n.alive) continue; drawBomb(x, n, t); }
     for (const l of F.lava) { const gg = x.createRadialGradient(l.x, l.y, 2, l.x, l.y, l.rx); gg.addColorStop(0, '#fff2a0'); gg.addColorStop(0.45, '#ff9a2a'); gg.addColorStop(1, '#c8300e'); x.fillStyle = gg; x.beginPath(); x.ellipse(l.x, l.y, l.rx * (1 + 0.03 * Math.sin(t * 3 + l.ph)), l.ry, 0, 0, TAU); x.fill(); x.fillStyle = 'rgba(80,20,5,0.55)'; for (let i = 0; i < 4; i++) { x.beginPath(); x.ellipse(l.x + Math.sin(t * 0.7 + i * 2 + l.ph) * l.rx * 0.5, l.y + Math.cos(t * 0.5 + i * 1.7) * l.ry * 0.4, l.rx * 0.18, l.ry * 0.12, 0, 0, TAU); x.fill(); } x.fillStyle = 'rgba(255,240,180,0.8)'; for (let i = 0; i < 3; i++) { const k = ((t * 0.8 + i / 3 + l.ph) % 1); x.globalAlpha = 1 - k; x.beginPath(); x.arc(l.x + Math.sin(i * 2.4 + l.ph) * l.rx * 0.6, l.y + l.ry * 0.5 - k * l.ry, 2 + 3 * k, 0, TAU); x.fill(); } x.globalAlpha = 1; }
-    for (const o of F.fos) { if (!o.alive) continue; x.save(); x.translate(o.x, o.y + Math.sin(t * 1.8 + o.ph) * 2); x.scale(1 / kAt(o.x, o.y), 1); x.fillStyle = `rgba(255,230,150,${0.18 + 0.1 * Math.sin(t * 3 + o.ph)})`; x.beginPath(); x.arc(0, 0, 30, 0, TAU); x.fill(); drawItem(x, o.id, 18); x.restore(); if ((t * 1.3 + o.ph) % 2.2 < 0.2) { x.fillStyle = '#fff'; x.beginPath(); x.arc(o.x + 12, o.y - 12, 2.5, 0, TAU); x.fill(); } }
+    if (F.mst) for (const e of F.mst) { if (!e.alive) continue; const k = kAt(e.x, e.y), pu = 0.75 + 0.25 * Math.sin(t * 3 + e.ph); x.save(); x.translate(e.x, e.y); x.scale(1 / k, 1); x.globalCompositeOperation = 'lighter'; x.globalAlpha = 0.6 * pu; x.drawImage(SOFT, -40, -40, 80, 80); x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1; x.fillStyle = '#b89cff'; x.beginPath(); x.arc(0, 0, 13, 0, TAU); x.fill(); x.fillStyle = '#efe4ff'; x.beginPath(); x.arc(-4, -4, 5, 0, TAU); x.fill(); x.restore(); }
+      for (const o of F.fos) { if (!o.alive) continue; x.save(); x.translate(o.x, o.y + Math.sin(t * 1.8 + o.ph) * 2); x.scale(1 / kAt(o.x, o.y), 1); x.fillStyle = `rgba(255,230,150,${0.18 + 0.1 * Math.sin(t * 3 + o.ph)})`; x.beginPath(); x.arc(0, 0, 30, 0, TAU); x.fill(); drawItem(x, o.id, 18); x.restore(); if ((t * 1.3 + o.ph) % 2.2 < 0.2) { x.fillStyle = '#fff'; x.beginPath(); x.arc(o.x + 12, o.y - 12, 2.5, 0, TAU); x.fill(); } }
     for (const e of F.gems) { if (!e.alive) continue; const C = GEMC[e.k]; x.save(); x.translate(e.x, e.y); x.scale(1 / kAt(e.x, e.y), 1); x.rotate(Math.sin(t * 2 + e.ph) * 0.2); const sz = 7 + e.k * 2; x.fillStyle = C[0]; x.beginPath(); x.moveTo(0, -sz); x.lineTo(sz * 0.8, -sz * 0.2); x.lineTo(0, sz); x.lineTo(-sz * 0.8, -sz * 0.2); x.closePath(); x.fill(); x.fillStyle = C[1]; x.beginPath(); x.moveTo(0, -sz); x.lineTo(sz * 0.3, -sz * 0.2); x.lineTo(0, 0); x.lineTo(-sz * 0.3, -sz * 0.2); x.closePath(); x.fill();
       if ((t * 1.5 + e.ph) % 2 < 0.25) { x.fillStyle = '#fff'; x.beginPath(); x.arc(sz * 0.5, -sz * 0.6, 2, 0, TAU); x.fill(); } x.restore(); } }
   // lava lakes
@@ -1114,7 +1178,8 @@ function render() {
       x.save(); x.translate(gx, gy); x.rotate(ga); x.scale(1.25, 1.25); x.globalAlpha = 0.5; x.fillStyle = '#d8f6ff'; x.beginPath(); x.moveTo(-42, -13); x.lineTo(-6, -15); x.lineTo(30, 0); x.lineTo(-6, 15); x.lineTo(-42, 13); x.closePath(); x.fill(); x.restore();
       x.globalAlpha = 0.8; x.fillStyle = '#e8fbff'; x.font = `900 ${Math.round(12 / s)}px Nunito, sans-serif`; x.textAlign = 'center'; x.fillText('GHOST', gx, gy - 26 - 14 / s); x.globalAlpha = 1; } }
   drawShocks(x);
-  if (D && !(D.dead && D.why === 'Hull destroyed')) { const kd = kAt(D.x, D.y); x.save(); x.translate(D.x, D.y); x.scale(1 / kd, 1); x.translate(-D.x, -D.y); drawDrill(x, t); if (!D.dead) { drawVapor(x); drawPlasma(x); drawFly(x); } x.restore(); }
+  drawOrbits(x, left, right, vtop, vbot, s);
+  if (D && !(D.dead && D.why === 'Hull destroyed')) { const kd = kAt(D.x, D.y); x.save(); x.translate(D.x, D.y); x.scale(1 / kd, 1); x.translate(-D.x, -D.y); if (!D.dead) drawReentry(x); drawDrill(x, t); if (!D.dead) { drawVapor(x); drawPlasma(x); drawFly(x); } x.restore(); }
   if (wreck.length) drawWreck(x); if (boulders.length) drawBoulders(x); if (pieces.length) drawPieces(x);
   // additive glow stuff
   x.globalCompositeOperation = 'lighter';
@@ -1147,6 +1212,8 @@ function render() {
       d.globalCompositeOperation = 'source-over'; x.drawImage(dk, 0, 0, VW, VH); } }
   x = ctx; x.setTransform(1, 0, 0, 1, 0, 0); { const wp = SV.set.flat ? null : glWarp(GV); if (wp) x.drawImage(wp, shx * dpr, shy * dpr); else x.drawImage(Fcv, shx * dpr, shy * dpr); } x.setTransform(dpr, 0, 0, dpr, 0, 0);
   drawOther(x, spF);
+  if (D && !isMoon(cam.x) && !S.crys) { const [cx, cy] = W2S(cam.x, RPL); if (cx > -60 && cx < VW + 60 && cy > -60 && cy < VH + 60) { const z = clamp(GV.s * 260, 7, 46), pu = 0.8 + 0.2 * Math.sin(T * 4); x.save(); x.translate(cx, cy); x.globalCompositeOperation = 'lighter'; x.globalAlpha = 0.7 * pu; x.drawImage(SOFT, -z * 3, -z * 3, z * 6, z * 6); x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1; x.rotate(T * 0.6); x.fillStyle = '#ff9cf0'; x.beginPath(); x.moveTo(0, -z); x.lineTo(z * 0.6, 0); x.lineTo(0, z); x.lineTo(-z * 0.6, 0); x.closePath(); x.fill(); x.fillStyle = '#ffe4fb'; x.beginPath(); x.moveTo(0, -z); x.lineTo(z * 0.6, 0); x.lineTo(0, -z * 0.1); x.closePath(); x.fill(); x.restore(); } }
+  if (D && !D.dead) drawPath(x, GV.s);
   // far out: mark the drill, and point to the moon
   if (D && GV.s < 0.16) { const [dx, dy] = W2S(D.x, D.y), a = clamp((0.16 - GV.s) / 0.06, 0, 1), pu = 0.6 + 0.4 * Math.sin(T * 6); x.globalAlpha = a; x.fillStyle = 'rgba(255,190,60,0.35)'; x.beginPath(); x.arc(dx, dy, 11 + 4 * pu, 0, TAU); x.fill(); x.fillStyle = '#ffd45a'; x.beginPath(); x.arc(dx, dy, 4.5, 0, TAU); x.fill(); x.globalAlpha = 1; }
   if (D && !isMoon(cam.x) && spF > 0.3) { const [mx, my] = C2S(MCX, MCY), R = RMN * GV.s, M = 34; if (mx < -R || mx > VW + R || my < -R || my > VH + R) { const cx = VW / 2, cy = VH / 2, ang = Math.atan2(my - cy, mx - cx), tx = clamp(cx + Math.cos(ang) * VW, M, VW - M), ty = clamp(cy + Math.sin(ang) * VH, M + 90, VH - M - 60);
@@ -1181,7 +1248,7 @@ function updateFX(dt) { stepShocks(dt); if (run) stepWater(dt); for (const p of 
   for (const r of rings) r.t += dt; rings = rings.filter(r => r.t < r.d); for (const m of msgs) m.life += dt; msgs = msgs.filter(m => m.life < 1.4);
   camRot = Math.atan2(Math.sin(camRot), Math.cos(camRot)); camRot *= Math.exp(-1.1 * dt); shake *= Math.pow(0.004, dt); quake *= Math.exp(-0.9 * dt); if (quake < 0.01) quake = 0; for (const w of warps) w.t += dt; warps = warps.filter(w => w.t < w.d); if (!warps.length && wb) { wb.width = wb.height = 0; wb = null; } flash *= Math.exp(-6 * dt); }
 const hudC = ['', '', ''];
-function hud() { if (!D) return; { const dm = Math.max(0, Math.round(D.maxX / 10)); $('dist').firstChild.nodeValue = dm + ' m'; $('dist').classList.toggle('long', dm > 99999); } $('best').textContent = (MODE === 'daily' ? 'Daily best ' + (SV.daily ? SV.daily.best : 0) : 'Best ' + best) + ' m · deep ' + SV.deep + ' m'; { const dd = run ? Math.round((D.y - surf(D.x)) / 10) : 0; const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; const t1 = dd > 2 ? '↓ ' + dd + ' m' : dd < -60 ? '↑ ' + (-dd) + ' m' : '', t2 = run ? Math.round(sp * 0.36) + ' km/h' : '', t3 = run && sp > MACH1 * 0.8 ? '· MACH ' + (sp / MACH1).toFixed(1) : ''; if (hudC[0] !== t1) $('dDep').textContent = hudC[0] = t1; if (hudC[1] !== t2) $('dSpd').textContent = hudC[1] = t2; if (hudC[2] !== t3) $('dMach').textContent = hudC[2] = t3; } $('gems').textContent = '◆ ' + gems;
+function hud() { if (!D) return; if (D.boostM) $('bst').style.setProperty('--f', (D.boostF / D.boostM).toFixed(3)); { const dm = Math.max(0, Math.round(D.maxX / 10)); $('dist').firstChild.nodeValue = dm + ' m'; $('dist').classList.toggle('long', dm > 99999); } $('best').textContent = (MODE === 'daily' ? 'Daily best ' + (SV.daily ? SV.daily.best : 0) : 'Best ' + best) + ' m · deep ' + SV.deep + ' m'; { const dd = run ? Math.round((D.y - surf(D.x)) / 10) : 0; const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; const t1 = dd > 2 ? '↓ ' + dd + ' m' : dd < -60 ? '↑ ' + (-dd) + ' m' : '', t2 = run ? Math.round(sp * 0.36) + ' km/h' : '', t3 = run && sp > MACH1 * 0.8 ? '· MACH ' + (sp / MACH1).toFixed(1) : ''; if (hudC[0] !== t1) $('dDep').textContent = hudC[0] = t1; if (hudC[1] !== t2) $('dSpd').textContent = hudC[1] = t2; if (hudC[2] !== t3) $('dMach').textContent = hudC[2] = t3; } $('gems').textContent = '◆ ' + gems;
   $('fuel').firstChild.style.width = (D.fuel * 100) + '%'; $('heat').firstChild.style.width = (clamp(D.heat, 0, 1) * 100) + '%'; $('hull').firstChild.style.width = (clamp(D.hull / HM, 0, 1) * 100) + '%'; }
 let sndHold = 0, sndSp = 0, rumbleS = 0; const GRIND = [0, 450, 600, 900, 1500, 1800, 0, 300, 250, 700, 1700, 380, 330, 520, 160, 1900, 2400, 1300];
 function sound() { if (!hum || !D) return; const tA = AC.currentTime; const under = run && !paused && !D.air && !D.dead && !D.lying; const sp = under ? D.s : 0; const m = D.mat || SOIL, hard = DRAG[m] || 0.1;
@@ -1206,17 +1273,18 @@ function frameInner(now) { const rawFt = now - last, rd = Math.min(0.05, rawFt /
   if (run && !paused && rawFt < 250) { ftE += (rawFt - ftE) * 0.05; rT += rawFt; if (rT > 1200) { rT = 0;
       if (!fps30) { if (ftE > 21 && rLv < RLV.length - 1) { rLv++; resize(); goodT = 0; } else if (ftE > 21) { lagT += 1.2; if (lagT > 2.4) { fps30 = true; lagT = 0; goodT = 0; } } else if (ftE < 15.5) { lagT = 0; goodT += 1.2; if (goodT > 6 && rLv > 0) { rLv--; resize(); goodT = 0; } } else { goodT = 0; lagT = 0; } }
       else { if (ftE < 36 && workE < 9) { goodT += 1.2; if (goodT > 8) { fps30 = false; goodT = 0; } } else goodT = 0; } } } budget = Math.max(0, budget - 2);
-  { let t = 0; for (const v of touches.values()) t += v; if (keys.ArrowRight || keys.KeyD || keys.ArrowDown || keys.Space) t += 1; if (keys.ArrowLeft || keys.KeyA || keys.ArrowUp) t -= 1; if (!window.__forceTurn) turn = clamp(t, -1, 1); hold = turn !== 0; }
+  { let t = 0; for (const v of touches.values()) t += v; if (keys.ArrowRight || keys.KeyD || keys.ArrowDown || keys.Space) t += 1; if (keys.ArrowLeft || keys.KeyA || keys.ArrowUp) t -= 1; if (!window.__forceTurn) turn = clamp(t, -1, 1); hold = turn !== 0; boostOn = !!(bstHeld || keys.KeyW); }
   if (slowT > 0) { slowT -= rd; TS = 0.33; } else TS = Math.min(1, TS + rd * 2.5);
   if (D && D.dead && endPending) deadT += rd;
   if (D) { if (!paused && (run || ev.length || (endPending && deadT < 8))) { acc += rd * TS; let n = 0; while (acc >= STEP && n < 12) { D.px = D.x; D.py = D.y; D.pa = D.ang; step(STEP); acc -= STEP; n++; } if (n === 12) acc = 0; } if (!paused) updateFX(rd * TS); if (run && !paused && (misT += rd) > 0.25) { misT = 0; checkMissions(); } }
   try { musicTick(); runTileJobs(run ? 3 : 8); renderI(); hud(); if (AC) sound(); } catch (e) { errN++; lastErr = String(e && e.message || e).slice(0, 60); if (errN < 5) console.error(e); try { evictTiles(cam.x, cam.y, true); } catch (e2) {} } }
 function frame(now) { if (fps30 && run && !paused && (++fpsTick & 1)) { requestAnimationFrame(frame); return; } const w0 = performance.now(); if (SV.set.fps) { const ft = now - (frame.l || now); frame.l = now; fpsN++; fpsAcc += ft; fpsW = Math.max(fpsW, ft); if (fpsAcc > 1000) { fpsShow = `${Math.round(fpsN * 1000 / fpsAcc)} fps · worst ${Math.round(fpsW)} ms · work ${workE.toFixed(1)} ms · res ${RLV[Math.max(rLv, SV.set.q ? 0 : 2)]}${fps30 ? ' · 30-mode' : ''} · tiles ${tileCount}`; fpsN = 0; fpsAcc = 0; fpsW = 0; } } try { frameInner(now); } catch (e) { errN++; if (errN < 5) console.error(e); } workE += (performance.now() - w0 - workE) * 0.05; requestAnimationFrame(frame); }
 function frameOld(now) { try { frameInner(now); } catch (e) { errN++; if (errN < 5) console.error(e); } requestAnimationFrame(frame); }
+{ const b = document.getElementById('bst'); if (b) { b.addEventListener('pointerdown', e => { audio(); bstHeld = true; b.classList.add('on'); e.preventDefault(); }); const off = () => { bstHeld = false; b.classList.remove('on'); }; b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); } }
 const down = e => { audio(); if (e.target.closest && e.target.closest('button')) return; if (endPending) { showEnd(); return; } touches.set(e.pointerId, e.clientX > innerWidth / 2 ? 1 : -1); };
 const up = e => { touches.delete(e.pointerId); };
 window.addEventListener('pointerdown', down); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up); window.addEventListener('blur', () => touches.clear());
-const keys = {}; window.addEventListener('keydown', e => { if (['Space', 'ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD'].includes(e.code)) { keys[e.code] = true; audio(); e.preventDefault(); if (endPending && e.code === 'Space') showEnd(); else if (!run && !$('ovEnd').hidden && e.code === 'Space') reset(MODE === 'daily'); } if (e.code === 'Escape' || e.code === 'KeyP') { paused ? resume() : pause(); } });
+const keys = {}; let boostOn = false, bstHeld = false; window.addEventListener('keydown', e => { if (['Space', 'ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'KeyW'].includes(e.code)) { keys[e.code] = true; audio(); e.preventDefault(); if (endPending && e.code === 'Space') showEnd(); else if (!run && !$('ovEnd').hidden && e.code === 'Space') reset(MODE === 'daily'); } if (e.code === 'Escape' || e.code === 'KeyP') { paused ? resume() : pause(); } });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 const OVS = ['ovStart', 'ovEnd', 'ovHow', 'ovShop', 'ovSet', 'ovMus']; let backTo = 'ovStart';
 function show(id) { for (const o of OVS) $(o).hidden = o !== id; }
