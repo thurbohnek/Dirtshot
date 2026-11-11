@@ -74,7 +74,16 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 .musg img { width: 40px; height: 40px; flex: none; }
 .musg div.no img { filter: brightness(0) opacity(.35); }
 .musg small { display: block; font: 700 11px var(--f-b); opacity: .7; }
-.dep { font: 800 12px var(--f-b); opacity: .95; letter-spacing: .06em; }
+.dep { font: 800 12px var(--f-b); opacity: .95; letter-spacing: .06em; white-space: nowrap; }
+.dep span { display: inline-block; vertical-align: top; min-height: 1em; }
+.dist.long { font-size: 27px; line-height: 34px; }
+#dDep { width: 74px; } #dSpd { width: 92px; } #dMach { width: 90px; }
+/* fixed HUD slots: numbers change, nothing moves */
+.hud { display: block !important; height: 80px; }
+.hud > div:first-child { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); }
+.hud .gems { position: absolute; left: 47%; top: max(10px, calc(env(safe-area-inset-top, 0px) + 2px)); white-space: nowrap; }
+.hud .bars { position: absolute; right: max(12px, env(safe-area-inset-right, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); width: 31%; max-width: 220px; margin: 0; }
+.dist, .gems, .dep, .dist small { font-variant-numeric: tabular-nums; }
 #intro { position: fixed; inset: 0; z-index: 30; background: #0E1330; display: grid; place-items: center; transition: opacity .5s ease; cursor: pointer; }
 #intro.out { opacity: 0; pointer-events: none; }
 #intro .in { display: flex; flex-direction: column; align-items: center; gap: 14px; }
@@ -93,7 +102,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 <body>
 <canvas id="cv"></canvas>
 <div class="hud">
-  <div><div class="dist" id="dist">0 m<small id="best">Best 0 m</small><small class="dep" id="dep"></small></div></div>
+  <div><div class="dist" id="dist">0 m<small id="best">Best 0 m</small><small class="dep" id="dep"><span id="dDep"></span><span id="dSpd"></span><span id="dMach"></span></small></div></div>
   <div class="gems" id="gems">◆ 0</div>
   <div class="bars">
     <div class="bar" style="display:none"><span>FUEL</span><i id="fuel"><b></b></i></div>
@@ -1033,7 +1042,8 @@ function updateFX(dt) { stepShocks(dt); if (run) stepWater(dt); for (const p of 
   { let j = 0; for (let i = 0; i < parts.length; i++) { const p = parts[i]; if (p.t < p.life) parts[j++] = p; } parts.length = j; } const PC = (SV.set.q ? 900 : 350) * (D && D.dead ? 1.8 : 1); if (parts.length > PC) parts.splice(0, parts.length - PC);
   for (const r of rings) r.t += dt; rings = rings.filter(r => r.t < r.d); for (const m of msgs) m.life += dt; msgs = msgs.filter(m => m.life < 1.4);
   shake *= Math.pow(0.004, dt); quake *= Math.exp(-0.9 * dt); if (quake < 0.01) quake = 0; for (const w of warps) w.t += dt; warps = warps.filter(w => w.t < w.d); if (!warps.length && wb) { wb.width = wb.height = 0; wb = null; } flash *= Math.exp(-6 * dt); }
-function hud() { if (!D) return; $('dist').firstChild.nodeValue = Math.max(0, Math.round(D.maxX / 10)) + ' m'; $('best').textContent = (MODE === 'daily' ? 'Daily best ' + (SV.daily ? SV.daily.best : 0) : 'Best ' + best) + ' m · deep ' + SV.deep + ' m'; { const dd = run ? Math.round((D.y - surf(D.x)) / 10) : 0; const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; $('dep').textContent = (dd > 2 ? '↓ ' + dd + ' m  ' : '') + (run ? Math.round(sp * 0.36) + ' km/h' + (sp > MACH1 * 0.8 ? '  · MACH ' + (sp / MACH1).toFixed(1) : '') : ''); } $('gems').textContent = '◆ ' + gems;
+const hudC = ['', '', ''];
+function hud() { if (!D) return; { const dm = Math.max(0, Math.round(D.maxX / 10)); $('dist').firstChild.nodeValue = dm + ' m'; $('dist').classList.toggle('long', dm > 99999); } $('best').textContent = (MODE === 'daily' ? 'Daily best ' + (SV.daily ? SV.daily.best : 0) : 'Best ' + best) + ' m · deep ' + SV.deep + ' m'; { const dd = run ? Math.round((D.y - surf(D.x)) / 10) : 0; const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; const t1 = dd > 2 ? '↓ ' + dd + ' m' : '', t2 = run ? Math.round(sp * 0.36) + ' km/h' : '', t3 = run && sp > MACH1 * 0.8 ? '· MACH ' + (sp / MACH1).toFixed(1) : ''; if (hudC[0] !== t1) $('dDep').textContent = hudC[0] = t1; if (hudC[1] !== t2) $('dSpd').textContent = hudC[1] = t2; if (hudC[2] !== t3) $('dMach').textContent = hudC[2] = t3; } $('gems').textContent = '◆ ' + gems;
   $('fuel').firstChild.style.width = (D.fuel * 100) + '%'; $('heat').firstChild.style.width = (clamp(D.heat, 0, 1) * 100) + '%'; $('hull').firstChild.style.width = (clamp(D.hull / HM, 0, 1) * 100) + '%'; }
 let sndHold = 0, sndSp = 0, rumbleS = 0; const GRIND = [0, 450, 600, 900, 1500, 1800, 0, 300, 250, 700, 1700, 380, 330, 520, 160, 1900, 2400, 1300];
 function sound() { if (!hum || !D) return; const tA = AC.currentTime; const under = run && !paused && !D.air && !D.dead && !D.lying; const sp = under ? D.s : 0; const m = D.mat || SOIL, hard = DRAG[m] || 0.1;
