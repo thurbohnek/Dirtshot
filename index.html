@@ -81,8 +81,9 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 /* fixed HUD slots: numbers change, nothing moves */
 .hud { display: block !important; height: 80px; }
 .hud > div:first-child { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); }
-.hud .gems { position: absolute; left: 47%; top: max(10px, calc(env(safe-area-inset-top, 0px) + 2px)); white-space: nowrap; }
-.hud .bars { position: absolute; right: max(12px, env(safe-area-inset-right, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); width: 31%; max-width: 220px; margin: 0; }
+.hud .gems { position: absolute; left: 42%; top: max(10px, calc(env(safe-area-inset-top, 0px) + 2px)); white-space: nowrap; }
+.hud .bars { position: absolute; right: max(12px, env(safe-area-inset-right, 0px)); top: max(6px, env(safe-area-inset-top, 0px)); width: 40%; max-width: 280px; margin: 0; gap: 7px !important; }
+.hud .bar { font-size: 11px; } .hud .bar span { width: 38px; } .hud .bar i { height: 17px; border-radius: 9px; border-width: 2.5px; } .hud .bar i b { border-radius: 6px; }
 .dist, .gems, .dep, .dist small { font-variant-numeric: tabular-nums; }
 #intro { position: fixed; inset: 0; z-index: 30; background: #0E1330; display: grid; place-items: center; transition: opacity .5s ease; cursor: pointer; }
 #intro.out { opacity: 0; pointer-events: none; }
