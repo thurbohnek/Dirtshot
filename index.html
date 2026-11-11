@@ -586,12 +586,13 @@ function gasHere(x, y, dt) { for (const F of featsNear(x)) for (const g of F.gas
 function enterSolid() { const va = Math.atan2(D.vy, D.vx), sp = Math.hypot(D.vx, D.vy), mis = Math.abs(angDiff(D.ang, va));
   D.x = D.px; D.y = D.py;
   if (mis > 1.0) { layDown(null); return; }
+  if (mis > 0.5 && sp > 1500) { const cd = (mis - 0.5) * Math.pow(sp / 4000, 1.6) * 0.55 / Math.sqrt(HM); D.hull -= cd; if (cd > 0.06) { SFX.clang(); say('CROOKED HIT!', '#ffb08a', true); breakChain(); } }
   D.air = false; D.av = 0; D.gav = 0;
   { D.s = sp * (mis < 0.35 ? 0.98 : 0.92 - 0.25 * mis / 1.15); if (sp > 380 && thr("es", 0.7)) SFX.thump(sp / 1600); shake = Math.max(shake, 4 + sp / 260); if (D.flips > 0) { D.s = D.s * (1 + 0.18 * D.flips) + 150 * D.flips; gems += D.flips; S.flips += D.flips; addChain(D.flips); say(D.flips > 1 ? `${D.flips}× FLIP LANDED!` : 'FLIP LANDED!', '#7df9ff', true); } }
   D.ang = va; D.flips = 0; D.flipAcc = 0; dirt(D.x, D.y, 18, colOf(mat(D.x + Math.cos(va) * 30, D.y + Math.sin(va) * 30))[2]); }
 function dropIntoCavity() { if (featsNear(D.x).some(F => F.caves.some(c => inEll(c, D.x, D.y, 30)))) S.cav++; D.air = true; D.vx = Math.cos(D.ang) * D.s; D.vy = Math.sin(D.ang) * D.s; D.av = 0; D.flips = 0; D.flipAcc = 0; D.airT = 0; if (D.s > 250 && thr('cav', 0.8)) say('Cavern!', '#d8c8ff'); }
 function layDown(sa) { breakChain(); const sp = Math.hypot(D.vx, D.vy); D.lying = true; D.air = false; D.s = 0; D.onSurf = sa !== null; D.av = 0; D.gav = 0; D.combo = 0; D.flips = 0; D.flipAcc = 0;
-  D.hull -= Math.min(0.08, sp / 25000); if (D.onSurf) { const tx = Math.cos(sa), ty = Math.sin(sa); D.lv = (D.vx * tx + D.vy * ty) * 0.45; D.y = restY(D.x, D.ang); } else { D.lv = 0; D.vx = D.vy = 0; }
+  const sdm = Math.pow(sp / 2700, 1.7) * 0.42 / Math.sqrt(HM); D.hull -= sdm; if (sdm > 0.25) { SFX.clang(); say('SIDE IMPACT!', '#ff6a5a', true); shake = Math.max(shake, 20 + sp / 200); flash = Math.max(flash, Math.min(0.5, sdm * 0.4)); } if (D.onSurf) { const tx = Math.cos(sa), ty = Math.sin(sa); D.lv = (D.vx * tx + D.vy * ty) * 0.45; D.y = restY(D.x, D.ang); } else { D.lv = 0; D.vx = D.vy = 0; }
   SFX.thunk(); shake = Math.max(shake, 7 + sp / 300); buzz([40, 20, 60]); say('THUNK!', '#ffd0b0', true); dirt(D.x, D.y + 8, 22, MCOL[1][2]); }
 function restY(x, ang) { const c = Math.cos(ang), sn = Math.sin(ang); let y = 1e9; for (let t = -56; t <= 38; t += 6) { const px = x + c * t; y = Math.min(y, surf(px) - sn * t - (t > 28 ? 6 : 17)); } return y; }
 function stepLying(dt) { D.fin = Math.max(0, D.fin - dt * 6);
@@ -613,6 +614,7 @@ function enterGround() {
   const rel = Math.atan2(vin, along); // >0 = into the ground
   const mis = Math.abs(angDiff(D.ang, va));
   if (rel >= 0.08 && mis > 1.0) { layDown(sa); return; }
+  if (mis > 0.5 && sp > 1500) { const cd = (mis - 0.5) * Math.pow(sp / 4000, 1.6) * 0.55 / Math.sqrt(HM); D.hull -= cd; if (cd > 0.06) { SFX.clang(); say('CROOKED HIT!', '#ffb08a', true); breakChain(); } }
   if (false) {
     D.hull -= 0.14; breakChain(); D.combo = 0; D.flips = 0; D.flipAcc = 0; D.av = 0; D.gav = 0; const fwd = D.vx >= 0 ? 1 : -1; D.air = false; D.fin = 0; D.s = Math.max(160, sp * 0.35); D.ang = clampAng(fwd > 0 ? sa + 0.6 : Math.PI + sa - 0.6); D.y = surf(D.x) + 4; say('CRASH!', '#ff6a5a', true); SFX.clang(); buzz([50, 30, 80]); shake = Math.max(shake, 9); dirt(D.x, D.y, 24, MCOL[1][2]); return; }
   if (rel < 0.08 && sp > 320) { // skims: bounce like a stone
