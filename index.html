@@ -873,12 +873,12 @@ function step(dt) {
   D.px = D.x; D.py = D.y;
   if (D.lying) { stepLying(dt); if (D.hull <= 0) die('Hull destroyed'); return; }
   if (D.air) {
-    D.airT += dt; D.fin = D.y < surf(D.x) - 4 ? Math.min(1, D.fin + dt * 5) : Math.max(0, D.fin - dt * 6); if (D.solidT > 0) D.solidT -= dt;
+    D.airT += dt; const atm = isMoon(D.x) ? 0 : Math.max(0, Math.exp(-Math.max(0, surf(D.x) - D.y) / 3000) - 0.02) / 0.98; D.atm = atm; const fT = D.y < surf(D.x) - 4 ? Math.min(1, atm * 4) : 0; D.fin = D.fin < fT ? Math.min(fT, D.fin + dt * 5) : Math.max(fT, D.fin - dt * (fT > 0 ? 6 : 1.5)); if (D.solidT > 0) D.solidT -= dt;
     let va = Math.atan2(D.vy, D.vx), sp = Math.hypot(D.vx, D.vy);
-    const want = turn ? turn * 6.8 * (1 + 0.08 * U('fin')) : angDiff(va, D.ang) * 4; D.av += (want - D.av) * Math.min(1, dt * 5.5);
+    const want = turn ? turn * 6.8 * (1 + 0.08 * U('fin')) : angDiff(va, D.ang) * 4 * atm + D.av * (1 - atm) * 0.98; D.av += (want - D.av) * Math.min(1, dt * 5.5);
     const prevA = D.ang; D.ang += D.av * dt;
     const dA = D.ang - prevA; D.flipAcc += dA; if (Math.abs(D.flipAcc) >= TAU - 0.3) { D.flipAcc -= Math.sign(D.flipAcc) * TAU; D.flips++; say(D.flips > 1 ? `FLIP ×${D.flips}!` : 'FLIP!', '#7df9ff'); SFX.flip(D.flips); addChain(1); }
-    const atm = Math.exp(-Math.max(0, surf(D.x) - D.y) / 6000); D.atm = atm; const dd = angDiff(D.ang, va); if (Math.abs(dd) < 1.9) va += clamp(dd, -1, 1) * 1.5 * (1 + 0.12 * U('fin')) * D.fin * atm * dt; sp *= Math.exp(-(0.01 + 0.05 * Math.abs(Math.sin(dd)) * D.fin) * atm * dt);
+    const dd = angDiff(D.ang, va); if (Math.abs(dd) < 1.9) va += clamp(dd, -1, 1) * 1.5 * (1 + 0.12 * U('fin')) * D.fin * atm * dt; sp *= Math.exp(-(0.01 + 0.05 * Math.abs(Math.sin(dd)) * D.fin) * atm * dt);
     D.vx = Math.cos(va) * sp; D.vy = Math.sin(va) * sp; { const [ax, ay] = airAcc(D.x, D.y, D.vx, D.vy); D.vx += ax * dt; D.vy += ay * dt; }
     D.x += D.vx / kAt(D.x, D.y) * dt; D.y += D.vy * dt; if (coreCross()) return; frameCheck(); D.heat = Math.max(0, D.heat + HEAT[AIR] * dt);
     if (D.airT > 0.2 && D.y < surf(D.x) - 2) { const c = Math.cos(D.ang), sn = Math.sin(D.ang); for (const t of [-56, -36, -16]) { const px = D.x + c * t, py = D.y + sn * t; if (py > surf(px) + 2) { const sa = Math.atan2(surf(px + 6) - surf(px - 6), 12), vin = -D.vx * Math.sin(sa) + D.vy * Math.cos(sa); if (vin > 0) { layDown(sa); return; } } } }
