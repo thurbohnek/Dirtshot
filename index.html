@@ -315,12 +315,13 @@ function towerStep(dt) { const tw = D.tower; tw.t += dt; D.x = D.px = 0; D.y = D
 let TWR = { dead: false, pc: [] };
 function towerHit() { if (TWR.dead || D.tower || D.fromTower || !D.air || D.dead) return; const gy = surf(0), top = gy - TOWER_H;
   for (let i = 0; i <= 3; i++) { const px = D.px + (D.x - D.px) * i / 3, py = D.py + (D.y - D.py) * i / 3; if (py < top - 90 || py > gy - 8) continue; const f = clamp((py - top - 40) / (gy - top - 40), 0, 1), hw = py < top + 40 ? 120 : 75 + 100 * f; if (Math.abs(px) < hw) { towerBreak(px, py); return; } } }
-function towerBreak(hx, hy) { TWR.dead = true; const gy = surf(0), top = gy - TOWER_H, vx = D.vx, vy = D.vy, sp = Math.hypot(vx, vy), pc = TWR.pc = [];
+function towerBreak(hx, hy, fall) { TWR.dead = true; TWR.gone = !!fall; const gy = surf(0), top = gy - TOWER_H, vx = fall ? 0 : D.vx, vy = fall ? 0 : D.vy, sp = Math.hypot(vx, vy), pc = TWR.pc = [];
   const add = (x0, y0, x1, y1, w, c) => { const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, d = Math.hypot(cx - hx, cy - hy), q = Math.exp(-d / 450) * 0.4; pc.push({ x: cx, y: cy, a: Math.atan2(y1 - y0, x1 - x0), L: Math.hypot(x1 - x0, y1 - y0), w, c, vx: vx * q + (rnd() - 0.5) * 260, vy: vy * q - rnd() * 260, va: (rnd() - 0.5) * 6, rest: false }); };
-  const lh = gy - top - 40; for (const sg of [-1, 1]) for (let i = 1; i < 4; i++) { const f0 = i / 4, f1 = (i + 1) / 4; add(sg * (170 - 100 * f0), gy - lh * f0, sg * (170 - 100 * f1), gy - lh * f1, 12, '#5a5f6a'); }
+  const lh = gy - top - 40; for (const sg of [-1, 1]) for (let i = fall ? 0 : 1; i < 4; i++) { const f0 = i / 4, f1 = (i + 1) / 4; add(sg * (170 - 100 * f0), gy - lh * f0, sg * (170 - 100 * f1), gy - lh * f1, 12, '#5a5f6a'); }
   for (let i = 0; i < 7; i++) { const f = 0.15 + 0.8 * rnd(), y = gy - lh * f, w = 170 - 100 * f; add(-w, y, w, y - 90, 5, '#7a808c'); }
-  for (let y = top + 20; y < gy - 140; y += 130) add(0, y, 0, Math.min(y + 130, gy - 130), 44, '#8a929c');
+  for (let y = top + 20; y < gy - (fall ? 10 : 140); y += 130) add(0, y, 0, Math.min(y + 130, gy - (fall ? 0 : 130)), 44, '#8a929c');
   add(-110, top - 5, 110, top - 5, 50, '#e8402a'); add(0, top - 70, 0, top - 28, 24, '#2a2d34');
+  if (fall) { dust(0, gy, 20, '#a89880', 260); SFX.thump(0.8); shake = Math.max(shake, 10); return; } /* the ground under it was blown away: it just falls */
   explode(hx, hy, 110, 1, 'end'); SFX.boom(1); SFX.clang(); shake = Math.max(shake, 22); flash = Math.max(flash, 0.35); buzz([60, 40, 120]);
   for (let i = 0; i < 26; i++) parts.push({ k: 'spark', x: hx, y: hy, vx: (rnd() - 0.5) * 900 + vx * 0.2, vy: (rnd() - 0.7) * 700, t: 0, life: 0.6, s: 2 });
   const dmg = (0.08 + Math.min(0.32, sp / 7000)) / Math.sqrt(HM); D.hull -= dmg; D.vx *= 0.72; D.vy *= 0.72; S.tower = 1;
@@ -430,7 +431,8 @@ function towerDebris(dt) { stepBodies(dt); if (!TWR.dead && !DEB.length) return;
   const ext = Math.abs(Math.sin(p.a)) * p.L / 2 + p.w / 2; if (!OPEN(mat(p.x, p.y + ext))) { p.y = Math.min(oy, p.y); const fl = Math.round(p.a / Math.PI) * Math.PI; p.a += (fl - p.a) * 0.12;
     if (p.vy > 220) { p.vy *= -0.22; p.vx *= 0.6; p.va *= 0.5; if (thr('twrthud', 0.08)) { SFX.thump(0.25); dust(p.x, p.y + 4, 6, '#a89080', 120); } } else { p.vy = 0; p.vx *= 0.85; p.va *= 0.7; if (Math.abs(p.vx) < 5 && Math.abs(fl - p.a) < 0.01) { p.a = fl; p.rest = true; } } } } }
 function drawTower(x, s) { const gy = surf(0), top = gy - TOWER_H; if (cam.x > 3000 || cam.x < -3000) return; const k = kAt(0, gy); x.save();
-  if (TWR.dead) { x.strokeStyle = '#4a4e58'; x.lineWidth = 12; x.lineCap = 'round'; x.beginPath(); x.moveTo(-170 / k, gy + 6); x.lineTo(-145 / k, gy - 200); x.moveTo(170 / k, gy + 6); x.lineTo(145 / k, gy - 190); x.stroke(); barrel(x, gy - 130, gy + 6, k, false);
+  if (!TWR.dead && (frameNo % 6) === 0) { let o = 0; for (const fx of [-150, 0, 150]) if (OPEN(mat(fx, gy + 14))) o++; if (o >= 2) towerBreak(0, gy - 200, true); }
+  if (TWR.dead) { if (!TWR.gone) { x.strokeStyle = '#4a4e58'; x.lineWidth = 12; x.lineCap = 'round'; x.beginPath(); x.moveTo(-170 / k, gy + 6); x.lineTo(-145 / k, gy - 200); x.moveTo(170 / k, gy + 6); x.lineTo(145 / k, gy - 190); x.stroke(); barrel(x, gy - 130, gy + 6, k, false); }
     x.lineCap = 'butt'; for (const p of TWR.pc) { x.save(); x.translate(p.x, p.y); x.rotate(p.a); x.fillStyle = p.c; x.fillRect(-p.L / 2, -p.w / 2, p.L, p.w); x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(-p.L / 2, p.w * 0.15, p.L, p.w * 0.35); x.restore(); } x.restore(); return; }
   // legs + bracing
   x.strokeStyle = '#5a5f6a'; x.lineWidth = 12; x.lineCap = 'round'; x.beginPath(); x.moveTo(-170 / k, gy + 6); x.lineTo(-70 / k, top + 40); x.moveTo(170 / k, gy + 6); x.lineTo(70 / k, top + 40); x.stroke();
@@ -1266,7 +1268,7 @@ function viewGeom(s) { const Rb = bodyR(cam.x), rc = Rb - cam.y, pcx = VW / 2, p
   let uL, uspan; if (full) { uL = cam.x - Rb * Math.PI; uspan = TAU * Rb; } else { const sp = thmax - thmin, pad = sp * 0.03 + 0.002; uL = cam.x + (thmin - pad) * Rb; uspan = (sp + 2 * pad) * Rb; }
   const yspan = Math.max(50, rmax - rmin); return { s, Rb, rc, pcx, pcy, uL, uspan, rmax, yT: Rb - rmax, yspan, full, sx: VW / uspan, sy: VH / yspan }; }
 function W2S(u, y) { const G2 = GV; if (!G2) return [0, 0]; const th = (u - cam.x) / G2.Rb, r = G2.Rb - y, X = G2.pcx + Math.sin(th) * r * G2.s, Y = G2.pcy - Math.cos(th) * r * G2.s, cr = Math.cos(camRot), sr = Math.sin(camRot), dx = X - VW / 2, dy = Y - VH / 2; return [VW / 2 + cr * dx - sr * dy, VH / 2 + sr * dx + cr * dy]; }
-const VER = 'v88';
+const VER = 'v89';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
