@@ -204,7 +204,7 @@ let SEED = 1;
 const H1C = new Map(), SC = new Map(); const h1 = i => { let v = H1C.get(i); if (v === undefined) { const s = Math.sin(i * 127.1 + SEED * 311.7) * 43758.5453; v = s - Math.floor(s); if (H1C.size > 400000) H1C.clear(); H1C.set(i, v); } return v; };
 const vn = x => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return h1(i) + (h1(i + 1) - h1(i)) * u; };
 /* ===== GLOBE: the flat world (u along the surface, y = depth) wraps around a planet; y = R is the centre ===== */
-const CPL = 2048 * 80, RPL = CPL / TAU, M0U = 1e9, CMN = 2048 * 20, RMN = CMN / TAU;
+const CPL = 2048 * 80, RPL = CPL / TAU, M0U = 16777216 /* 2^24: keeps moon coordinates small enough for float32 canvas/GPU math */, CMN = 2048 * 20, RMN = CMN / TAU;
 const isMoon = x => x > M0U / 2;
 function per(f, x, C) { const u = x - C * Math.round(x / C), d = C / 2 - Math.abs(u); if (d >= 5000) return f(u); const w = 0.5 * (1 - d / 5000); return f(u) * (1 - w) + f(u - Math.sign(u || 1) * C) * w; }
 const earthS = x => { const amp = 1.35 - 0.35 * Math.cos(x * TAU / CPL * 4); return -30 + amp * (95 * Math.sin(x / 560 + 1.3) * (0.55 + 0.45 * vn(x / 1700)) + 80 * (vn(x / 340) - 0.5)) + 18 * (vn(x / 95) - 0.5); };
