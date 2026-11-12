@@ -162,7 +162,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
     <button class="tog" id="tQ">Graphics <span></span></button>
     <button class="tog" id="tCave">Cave-ins <span></span></button>
     <button class="tog" id="tFps">Show FPS <span></span></button>
-    <button class="tog" id="tPock">Gas &amp; water pockets <span></span></button><button class="tog" id="tFlat">Round world <span></span></button><button class="tog" id="tRend">Graphics engine <span></span></button><button class="tog" id="tPf">Performance meter <span></span></button><button class="tog" id="tRep">Copy performance report <span></span></button><button class="tog" id="tBench">Run benchmark (40 s) <span></span></button><button class="tog" id="tReset" style="color:#ff8a7a">Reset all progress <span></span></button>
+    <button class="tog" id="tPock">Gas &amp; water pockets <span></span></button><button class="tog" id="tFlat">Round world <span></span></button><button class="tog" id="tRend">Graphics engine <span></span></button><button class="tog" id="tTcpu">Tile painting <span></span></button><button class="tog" id="tPf">Performance meter <span></span></button><button class="tog" id="tRep">Copy performance report <span></span></button><button class="tog" id="tBench">Run benchmark (55 s) <span></span></button><button class="tog" id="tReset" style="color:#ff8a7a">Reset all progress <span></span></button>
   </div>
   <button class="btn" id="bResume">RESUME</button>
   <button class="link" id="bQuit">Quit to menu</button>
@@ -479,13 +479,14 @@ function getTile(ch, k, lazy) { let t = ch.tiles[k]; if (t) return t; if (lazy &
   if (ch.polys) for (const P of ch.polys) { if (P.y1 < t.top || P.y0 > t.top + t.H) continue; for (const [c, k2] of [[t.ctx, 1], ...(P.open && t.bg ? [[t.bg.getContext('2d'), 0.5]] : [])]) { c.save(); c.globalCompositeOperation = 'destination-out'; c.fillStyle = '#000'; c.globalAlpha = 1; c.beginPath(); P.pts.forEach(([a, b], i) => i ? c.lineTo((a - ch.x0) * k2, (b - t.top) * k2) : c.moveTo((a - ch.x0) * k2, (b - t.top) * k2)); c.closePath(); c.fill(); c.restore(); } }
   (ch.built || (ch.built = new Uint8Array(NT)))[k] = 1; return t; }
 function addPoly(pts, open) { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const [a, b] of pts) { x0 = Math.min(x0, a); x1 = Math.max(x1, a); y0 = Math.min(y0, b); y1 = Math.max(y1, b); } const P = { pts, open, y0, y1 }; for (let ci = Math.floor(x0 / CW); ci <= Math.floor(x1 / CW); ci++) (getChunk(ci).polys || (getChunk(ci).polys = [])).push(P); }
-function ensureBg(t) { if (t.bg) return t.bg; const W = CW, H = t.H, kr = t.kr || 1; const bg = document.createElement('canvas'); bg.width = Math.ceil(W * kr / 2); bg.height = Math.ceil(H / 2); const bx = bg.getContext('2d'); if (!bx) { evictTiles(cam.x, cam.y, true); return null; } bx.drawImage(t.fg, 0, 0, bg.width, H / 2); bx.globalCompositeOperation = 'source-atop'; bx.fillStyle = 'rgba(28,14,8,0.62)'; bx.fillRect(0, 0, W, H); bx.globalCompositeOperation = 'source-over'; bx.setTransform(kr, 0, 0, 1, 0, 0); t.bg = bg; return bg; }
+function ensureBg(t) { if (t.bg) return t.bg; const W = CW, H = t.H, kr = t.kr || 1; const bg = document.createElement('canvas'); bg.width = Math.ceil(W * kr / 2); bg.height = Math.ceil(H / 2); const bx = bg.getContext('2d', TCO()); if (!bx) { evictTiles(cam.x, cam.y, true); return null; } bx.drawImage(t.fg, 0, 0, bg.width, H / 2); bx.globalCompositeOperation = 'source-atop'; bx.fillStyle = 'rgba(28,14,8,0.62)'; bx.fillRect(0, 0, W, H); bx.globalCompositeOperation = 'source-over'; bx.setTransform(kr, 0, 0, 1, 0, 0); t.bg = bg; return bg; }
 function freeTile(ch, k) { const t = ch.tiles[k]; if (!t) return; t.fg.width = t.fg.height = 0; if (t.bg) t.bg.width = t.bg.height = 0; ch.tiles[k] = undefined; tileCount -= t.kr || 1; }
 function evictTiles(cx, cy, force) { if (!force && tileCount <= MAXT) return; const goal = force ? Math.floor(tileCount * 0.6) : MAXT - 20; const L = []; for (const ch of chunks.values()) for (let k = 0; k < NT; k++) { const t = ch.tiles[k]; if (t && t.used < frameNo - 2) L.push([Math.hypot(ch.x0 + CW / 2 - cx, t.top + TH / 2 - cy), ch, k]); } L.sort((a, b) => b[0] - a[0]); for (const [, ch, k] of L) { if (tileCount <= goal) break; freeTile(ch, k); } }
 let frameNo = 0;
 // one 256×256 texture per material, made once and tiled seamlessly across the world (fast tile building)
-const MTEX = {};
-function matTex(m) { if (MTEX[m]) return MTEX[m]; const W = 256, c = document.createElement('canvas'); c.width = c.height = W; const x = c.getContext('2d'), C = MCOL[m]; if (!x) { evictTiles(cam.x, cam.y, true); return null; } let sd = m * 977 + 13; const R = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+const MTEX = {}; const TCO = () => SV.set.tgpu ? undefined : { willReadFrequently: true }; /* terrain tiles are painted on the CPU by default: the GPU path stalled for 15-20 ms whenever a new tile was first shown */
+function resetTiles() { for (const ch of chunks.values()) ch.tiles = new Array(NT); tileCount = 0; for (const k in MTEX) delete MTEX[k]; }
+function matTex(m) { if (MTEX[m]) return MTEX[m]; const W = 256, c = document.createElement('canvas'); c.width = c.height = W; const x = c.getContext('2d', TCO()), C = MCOL[m]; if (!x) { evictTiles(cam.x, cam.y, true); return null; } let sd = m * 977 + 13; const R = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
   x.fillStyle = C[0]; x.fillRect(0, 0, W, W);
   const wrap = f => { for (const dx of [-W, 0, W]) for (const dy of [-W, 0, W]) { x.save(); x.translate(dx, dy); f(); x.restore(); } };
   const N = m === 3 ? 240 : 130; for (let i = 0; i < N; i++) { const px = R() * W, py = R() * W, sz = m === 3 ? 2 + R() * 5 : 1 + R() * 2.5, col = R() < 0.5 ? C[1] : C[2], rot = R() * 3; wrap(() => { x.fillStyle = col; x.globalAlpha = 0.55; x.beginPath(); if (m === 3) x.ellipse(px, py, sz, sz * 0.75, rot, 0, TAU); else x.arc(px, py, sz, 0, TAU); x.fill(); }); }
@@ -500,7 +501,7 @@ const texPat = (x, m) => { const t = matTex(m); return t ? x.createPattern(t, 'r
 const tileRes = (x, y) => { const k = kAt(x, y); return k > 0.72 ? 1 : k > 0.36 ? 0.5 : 0.25; };
 function buildTile(ch, k) { try { return buildTile0(ch, k); } catch (e) { errN++; lastErr = 'tile: ' + String(e && e.message).slice(0, 90); return null; } }
 function buildTile0(ch, k) {
-  const x0 = ch.x0, top = Y0 + k * TH, H = Math.min(TH, Y1 - top), W = CW, kr = tileRes(x0, top + H / 2); const fg = document.createElement('canvas'); fg.width = Math.ceil(W * kr); fg.height = H; const x = fg.getContext('2d'); if (!x) return null; x.setTransform(kr, 0, 0, 1, 0, 0);
+  const x0 = ch.x0, top = Y0 + k * TH, H = Math.min(TH, Y1 - top), W = CW, kr = tileRes(x0, top + H / 2); const fg = document.createElement('canvas'); fg.width = Math.ceil(W * kr); fg.height = H; const x = fg.getContext('2d', TCO()); if (!x) return null; x.setTransform(kr, 0, 0, 1, 0, 0);
   const R = rngFor(ch.ci * 37 + k * 101 + 7777), xs = []; for (let px = -8; px <= W + 8; px += 8) xs.push(x0 + px);
   const poly = (topF, botF) => { x.beginPath(); xs.forEach((wx, i) => { const y = topF(wx) - top; i ? x.lineTo(wx - x0, y) : x.moveTo(wx - x0, y); }); for (let i = xs.length - 1; i >= 0; i--) x.lineTo(xs[i] - x0, botF(xs[i]) - top); x.closePath(); };
   const ss = xs.map(surf), sMin = Math.min(...ss), sMax = Math.max(...ss);
@@ -1130,7 +1131,7 @@ function viewGeom(s) { const Rb = bodyR(cam.x), rc = Rb - cam.y, pcx = VW / 2, p
   let uL, uspan; if (full) { uL = cam.x - Rb * Math.PI; uspan = TAU * Rb; } else { const sp = thmax - thmin, pad = sp * 0.03 + 0.002; uL = cam.x + (thmin - pad) * Rb; uspan = (sp + 2 * pad) * Rb; }
   const yspan = Math.max(50, rmax - rmin); return { s, Rb, rc, pcx, pcy, uL, uspan, rmax, yT: Rb - rmax, yspan, full, sx: VW / uspan, sy: VH / yspan }; }
 function W2S(u, y) { const G2 = GV; if (!G2) return [0, 0]; const th = (u - cam.x) / G2.Rb, r = G2.Rb - y, X = G2.pcx + Math.sin(th) * r * G2.s, Y = G2.pcy - Math.cos(th) * r * G2.s, cr = Math.cos(camRot), sr = Math.sin(camRot), dx = X - VW / 2, dy = Y - VH / 2; return [VW / 2 + cr * dx - sr * dy, VH / 2 + sr * dx + cr * dy]; }
-const VER = 'v74';
+const VER = 'v75';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -1141,7 +1142,7 @@ const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], n
 const PFK = ['sim', 'fx', 'jobs', 'sky', 'terrain', 'ents', 'dark', 'warp', 'overlay', 'hud', 'sound'];
 function glInfo() { try { const c = document.createElement('canvas'), g = c.getContext('webgl'); if (!g) return 'no webgl'; const e = g.getExtension('WEBGL_debug_renderer_info'); return e ? g.getParameter(e.UNMASKED_RENDERER_WEBGL) : g.getParameter(g.RENDERER); } catch (e) { return 'err'; } }
 function perfReport() { const a = PF.ft.slice().sort((p, q) => p - q), pc = f => a.length ? +a[Math.min(a.length - 1, Math.floor(a.length * f))].toFixed(1) : 0, r = v => +(v || 0).toFixed(2);
-  return JSON.stringify({ game: 'Dirtshot', ver: VER, ua: navigator.userAgent, dpr: devicePixelRatio, css: [VW, VH], canvas: [cv.width, cv.height], resLevel: RLV[Math.max(rLv, SV.set.q ? 0 : 2)], fps30, renderer: SV.set.flat ? 'flat' : SV.set.rend === 'gl' ? 'classic-gl' : 'fast', gpu: glInfo(), cores: navigator.hardwareConcurrency, mem: navigator.deviceMemory,
+  return JSON.stringify({ game: 'Dirtshot', ver: VER, ua: navigator.userAgent, dpr: devicePixelRatio, css: [VW, VH], canvas: [cv.width, cv.height], resLevel: RLV[Math.max(rLv, SV.set.q ? 0 : 2)], fps30, renderer: SV.set.flat ? 'flat' : SV.set.rend === 'gl' ? 'classic-gl' : 'fast', tiles: SV.set.tgpu ? 'gpu' : 'cpu', gpu: glInfo(), cores: navigator.hardwareConcurrency, mem: navigator.deviceMemory,
     frameMs: { n: a.length, p50: pc(0.5), p90: pc(0.9), p99: pc(0.99), max: pc(1) }, avgMs: Object.fromEntries(['frame', 'cpu', ...PFK, 'tileBuild', 'chunkGen'].map(k => [k, r(PF.a[k])])), maxMs: Object.fromEntries(['cpu', ...PFK, 'tileBuild', 'chunkGen'].map(k => [k, r(PF.mx[k])])),
     counts: { tiles: tileCount, chunks: chunks.size, parts: parts.length, jobs: tileJobs.length, wreck: wreck.length }, settings: SV.set, longFrames: PF.long }, null, 1); }
 // ===== replay: the run is sampled 20 times a second; after a crash the best 5 seconds play back (and are filmed if the browser can) =====
@@ -1176,7 +1177,7 @@ function affM(u0, y0, wk) { const G = GV, th = (u0 - cam.x) / G.Rb, r = Math.max
 function setAffL(x, u0, y0, wk) { const m = affM(u0, y0, wk); x.setTransform(m[0] * dpr, m[1] * dpr, m[2] * dpr, m[3] * dpr, m[4] * dpr, m[5] * dpr); }
 function setAff(x, u0, y0) { const m = affM(u0, y0); x.setTransform(m[0] * dpr, m[1] * dpr, m[2] * dpr, m[3] * dpr, (m[4] - m[0] * u0 - m[2] * y0) * dpr, (m[5] - m[1] * u0 - m[3] * y0) * dpr); }
 // one terrain tile image, in horizontal strips so the curved (wedge-shaped) tile has no gaps; drawn with a local origin so big coordinates never reach the canvas
-function tileImg(x, img, uc, top, H) { const G = GV, S = G.s, yc = top + H / 2, r = Math.max(1, G.Rb - yc), wpx = CW * S * r / G.Rb, n = Math.min(6, Math.max(1, Math.ceil(wpx * H / r / 1.5))), sh = img.height / n, hh = H / n, o = 1.2 / S;
+function tileImg(x, img, uc, top, H) { const G = GV, S = G.s, yc = top + H / 2, r = Math.max(1, G.Rb - yc), wpx = CW * S * r / G.Rb, n = Math.min(4, Math.max(1, Math.ceil(wpx * H / r / 4))), sh = img.height / n, hh = H / n, o = 1.2 / S;
   for (let i = 0; i < n; i++) { const ym = top + (i + 0.5) * hh, rm = Math.max(1, G.Rb - ym); setAffL(x, uc, ym, (rm + hh / 2) / rm); x.drawImage(img, 0, i * sh, img.width, sh, -CW / 2, -hh / 2, CW + o, hh + o); } }
 function drawTilesF(x, left, right, k0, k1) { const S = GV.s, vis = [], rad = TH * S * 1.05;
   for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = getChunk(ci), uc = ch.x0 + CW / 2;
@@ -1456,13 +1457,14 @@ function renderShop() { $('shopBank').textContent = '◆ ' + SV.bank; $('shopLis
 function openShop(from) { backTo = from; renderShop(); show('ovShop'); }
 $('shopList').addEventListener('click', e => { const b = e.target.closest('button[data-skin]'); if (!b || b.disabled) return; const k = SKINS.find(q => q.k === b.dataset.skin); if (!k) return; SV.skins = SV.skins || {}; if (k.c && !SV.skins[k.k]) { if (SV.bank < k.c) return; SV.bank -= k.c; SV.skins[k.k] = 1; SFX.gem(3); } SV.skin = k.k; saveSV(); audio(); buzz(20); renderShop(); });
 $('shopList').onclick = e => { const b = e.target.closest('button[data-k]'); if (!b || b.disabled) return; const k = b.dataset.k, l = U(k); if (l >= UMAX || SV.bank < COST[l]) return; SV.bank -= COST[l]; SV.up[k] = l + 1; saveSV(); audio(); SFX.gem(2); buzz(20); renderShop(); };
-function setLbl() { $('tSnd').lastChild.textContent = SV.set.snd ? 'On' : 'Off'; $('tVib').lastChild.textContent = SV.set.vib ? 'On' : 'Off'; $('tQ').lastChild.textContent = SV.set.q ? 'High' : 'Low (faster)'; $('tCave').lastChild.textContent = SV.set.cave ? 'On' : 'Off (faster)'; $('tFps').lastChild.textContent = SV.set.fps ? 'On' : 'Off'; $('tPock').lastChild.textContent = SV.set.nopock ? 'Hidden (test)' : 'Shown'; $('tFlat').lastChild.textContent = SV.set.flat ? 'Off (faster)' : 'On'; $('tRend').lastChild.textContent = SV.set.rend === 'gl' ? 'Classic (WebGL)' : 'Fast (direct)'; $('tPf').lastChild.textContent = SV.set.pf ? 'On' : 'Off'; }
+function setLbl() { $('tSnd').lastChild.textContent = SV.set.snd ? 'On' : 'Off'; $('tVib').lastChild.textContent = SV.set.vib ? 'On' : 'Off'; $('tQ').lastChild.textContent = SV.set.q ? 'High' : 'Low (faster)'; $('tCave').lastChild.textContent = SV.set.cave ? 'On' : 'Off (faster)'; $('tFps').lastChild.textContent = SV.set.fps ? 'On' : 'Off'; $('tPock').lastChild.textContent = SV.set.nopock ? 'Hidden (test)' : 'Shown'; $('tFlat').lastChild.textContent = SV.set.flat ? 'Off (faster)' : 'On'; $('tRend').lastChild.textContent = SV.set.rend === 'gl' ? 'Classic (WebGL)' : 'Fast (direct)'; $('tPf').lastChild.textContent = SV.set.pf ? 'On' : 'Off'; $('tTcpu').lastChild.textContent = SV.set.tgpu ? 'GPU' : 'CPU'; }
 function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').textContent = inGame ? 'RESUME' : 'BACK'; $('bQuit').hidden = !inGame; show('ovSet'); }
 function pause() { if (!run || paused || !D || D.dead) return; paused = true; touches.clear(); $('pz').hidden = true; openSet(true); }
 function resume() { if (!paused) { if (!$('ovSet').hidden) showMenu(); return; } paused = false; touches.clear(); last = performance.now(); show(null); $('pz').hidden = false; }
 $('tSnd').onclick = () => { SV.set.snd = SV.set.snd ? 0 : 1; SOUND = !!SV.set.snd; if (master) master.gain.value = SOUND ? 0.8 : 0; if (SOUND) audio(); saveSV(); setLbl(); };
 $('tVib').onclick = () => { SV.set.vib = SV.set.vib ? 0 : 1; saveSV(); setLbl(); buzz(30); };
 $('tRend').onclick = () => { SV.set.rend = SV.set.rend === 'gl' ? 'fast' : 'gl'; saveSV(); setLbl(); PF.a = {}; PF.mx = {}; PF.ft = []; PF.long = []; };
+$('tTcpu').onclick = () => { SV.set.tgpu = SV.set.tgpu ? 0 : 1; saveSV(); setLbl(); resetTiles(); PF.a = {}; PF.mx = {}; PF.ft = []; PF.long = []; };
 $('tPf').onclick = () => { SV.set.pf = SV.set.pf ? 0 : 1; saveSV(); setLbl(); };
 $('bReplay').onclick = () => { audio(); startReplay(); }; $('bClip').onclick = () => shareClip();
 $('tRep').onclick = () => showReport(perfReport(), 'Performance report');
@@ -1511,16 +1513,16 @@ function runBench() { if (BENCH) return; let saved = null; try { saved = { v2: l
     ['deep caves', D => { D.air = false; D.x = 20000; D.y = surf(20000) + 9000; D.ang = 0.2; D.s = 1800; }, D => { D.s = Math.max(D.s, 1700); }],
     ['high flight', D => { const r = RP + 15000; D.air = true; D.x = 3000; D.y = surf(3000) - 15000; D.vx = Math.sqrt(1650 * RP * RP / r); D.vy = 0; D.ang = 0; }],
     ['moon', D => { D.air = false; D.x = M0U + 8000; D.y = surf(M0U + 8000) + 250; D.ang = 0.15; D.s = 2600; }, D => { D.s = Math.max(D.s, 2500); }]];
-  const engines = ['fast', 'gl'], rend0 = SV.set.rend, res = []; BENCH = { done: false }; for (const id of OVS) $(id).hidden = true;
-  let ei = 0, si = 0; const runOne = () => { if (ei >= engines.length) return finish(); SV.set.rend = engines[ei]; hold = false; reset(false); paused = false; const sc = SC[si], d = window.__T ? __T.D : D;
+  const engines = [['fast', 0], ['fast', 1], ['gl', 0]], rend0 = SV.set.rend, tg0 = SV.set.tgpu, res = []; BENCH = { done: false }; for (const id of OVS) $(id).hidden = true;
+  let ei = 0, si = 0; const runOne = () => { if (ei >= engines.length) return finish(); if (SV.set.rend !== engines[ei][0] || (SV.set.tgpu || 0) !== engines[ei][1]) { SV.set.rend = engines[ei][0]; SV.set.tgpu = engines[ei][1]; resetTiles(); } hold = false; reset(false); paused = false; const sc = SC[si], d = window.__T ? __T.D : D;
     setTimeout(() => { const D0 = __T.D; D0.tower = null; D0.fromTower = false; D0.lying = false; sc[1](D0); D0.px = D0.x; D0.py = D0.y; cam.x = D0.x; cam.y = D0.y; const fts = []; let lastT = performance.now(), on = true;
       const keep = setInterval(() => { const Dk = __T.D; if (!Dk || Dk.dead) return; Dk.hull = 1; Dk.heat = 0; if (sc[2]) sc[2](Dk); if (Dk.air) { const dd = angDiff(Math.atan2(Dk.vy, Dk.vx), Dk.ang); window.__forceTurn = true; turn = dd > 0.05 ? 1 : dd < -0.05 ? -1 : 0; } else { window.__forceTurn = false; } }, 30);
       const rec = () => { if (!on) return; const n = performance.now(); fts.push(n - lastT); lastT = n; requestAnimationFrame(rec); }; setTimeout(() => { lastT = performance.now(); requestAnimationFrame(rec); }, 800);
       setTimeout(() => { on = false; clearInterval(keep); window.__forceTurn = false; const a = fts.slice(2).sort((p, q) => p - q), pc = f => a.length ? +a[Math.min(a.length - 1, Math.floor(a.length * f))].toFixed(1) : 0;
-        res.push({ engine: engines[ei], scene: sc[0], fps: a.length ? +(1000 / (a.reduce((p, q) => p + q, 0) / a.length)).toFixed(1) : 0, p50: pc(0.5), p90: pc(0.9), max: pc(1), cpu: +(PF.a.cpu || 0).toFixed(1), terrain: +(PF.a.terrain || 0).toFixed(1), warp: +(PF.a.warp || 0).toFixed(1), tiles: tileCount });
-        si++; if (si >= SC.length) { si = 0; ei++; } runOne(); }, 4000); }, 400); };
-  const finish = () => { SV.set.rend = rend0; run = false; try { if (saved) { if (saved.v2 !== null) localStorage.setItem('dirtshot.v2', saved.v2); if (saved.best !== null) localStorage.setItem('dirtshot.best', saved.best); } } catch (e) {} BENCH.done = true;
-    const tab = res.map(r => `${r.engine.padEnd(5)} ${r.scene.padEnd(17)} ${String(r.fps).padStart(5)} fps  p90 ${r.p90}ms  max ${r.max}ms  cpu ${r.cpu}  terrain ${r.terrain}  warp ${r.warp}`).join('\n');
+        res.push({ engine: engines[ei][0] + '/' + (engines[ei][1] ? 'gpu' : 'cpu'), scene: sc[0], fps: a.length ? +(1000 / (a.reduce((p, q) => p + q, 0) / a.length)).toFixed(1) : 0, p50: pc(0.5), p90: pc(0.9), max: pc(1), cpu: +(PF.a.cpu || 0).toFixed(1), terrain: +(PF.a.terrain || 0).toFixed(1), warp: +(PF.a.warp || 0).toFixed(1), tiles: tileCount });
+        si++; if (si >= SC.length) { si = 0; ei++; } runOne(); }, 3000); }, 400); };
+  const finish = () => { SV.set.rend = rend0; SV.set.tgpu = tg0; resetTiles(); run = false; try { if (saved) { if (saved.v2 !== null) localStorage.setItem('dirtshot.v2', saved.v2); if (saved.best !== null) localStorage.setItem('dirtshot.best', saved.best); } } catch (e) {} BENCH.done = true;
+    const tab = res.map(r => `${r.engine.padEnd(8)} ${r.scene.padEnd(17)} ${String(r.fps).padStart(5)} fps  p90 ${r.p90}ms  max ${r.max}ms  cpu ${r.cpu}  terrain ${r.terrain}  warp ${r.warp}`).join('\n');
     showReport(tab + '\n\n' + perfReport(), 'Benchmark done'); };
   runOne(); }
 })();
