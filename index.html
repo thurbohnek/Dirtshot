@@ -252,8 +252,8 @@ const GRAIN = (() => { const c = document.createElement('canvas'); c.width = c.h
 function rngFor(ci) { let s = (ci * 9301 + 49297 + SEED * 7717) % 233280; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
 const NCE = CPL / CW, NCM = CMN / CW, MCI = M0U / CW;
 function genFeatures(ci) { const moon = ci > MCI / 2, cm = moon ? (((ci - MCI) % NCM) + NCM) % NCM : ((ci % NCE) + NCE) % NCE, R = rngFor(moon ? cm + 90000 : cm), x0 = ci * CW, bio = biome(x0 + CW / 2), F = { bio, gas: [], water: [], coal: [], nitro: [], gems: [], caves: [], sand: [], lava: [], shafts: [], fos: [] };
-  const RB = moon ? RMN : RPL, kd = d => Math.max(0.12, (RB - d) / RB); // flat features get wider with depth so they stay round on the globe
-  if (moon) { for (let ci2 = 0; ci2 < 3; ci2++) if (R() < 0.45) { const x = x0 + R() * CW, d = 150 + R() * 5600, sc = 1 + d / 3000; F.caves.push({ x, y: surf(x) + d, rx: (70 + R() * 90) * sc / kd(d), ry: (40 + R() * 45) * sc, ph: R() * 6 }); }
+  const RB = moon ? RMN : RPL, kd = d => Math.max(0.12, (RB - d) / RB), CAP = 1400; // flat features get wider with depth so they stay round on the globe
+  if (moon) { for (let ci2 = 0; ci2 < 3; ci2++) if (R() < 0.45) { const x = x0 + R() * CW, d = 150 + R() * 5600, sc = 1 + d / 3000; F.caves.push({ x, y: surf(x) + d, rx: Math.min(CAP, (70 + R() * 90) * sc / kd(d)), ry: (40 + R() * 45) * sc, ph: R() * 6 }); }
     const nE = 5 + (R() * 6 | 0); for (let i = 0; i < nE; i++) { const x = x0 + R() * CW, d = 40 + R() * 5800; F.gems.push({ x, y: surf(x) + d, k: d < 400 ? 2 : 3, alive: true, ph: R() * 6 }); }
     F.mst = []; if (R() < 0.3) { const x = x0 + R() * CW, d = 120 + R() * 4800; F.mst.push({ x, y: surf(x) + d, alive: true, ph: R() * 6 }); }
     if (R() < 0.3) { const x = x0 + R() * CW, d = 200 + R() * 4000; F.fos.push({ x, y: surf(x) + d, id: [5, 8, 9][R() * 3 | 0], alive: true, ph: R() * 6 }); }
@@ -261,7 +261,7 @@ function genFeatures(ci) { const moon = ci > MCI / 2, cm = moon ? (((ci - MCI) %
   if (cm < 2 || cm >= NCE - 2) return F;
   const nG = 2 + (R() < 0.45 ? 1 : 0); for (let i = 0; i < nG; i++) { const x = x0 + R() * CW, d = 120 + R() * 20000, sc = 1 + d / 9000; F.gas.push({ x, y: surf(x) + d, rx: (48 + R() * 55) * sc / kd(d), ry: (30 + R() * 30) * sc, gas: 1, ph: R() * 6 }); }
   for (let wi = 0; wi < 2; wi++) if (R() < 0.42) { const x = x0 + R() * CW, d = 160 + R() * (wi ? 11000 : 2400), sc = 1 + d / 8000; F.water.push({ x, y: surf(x) + d, rx: (50 + R() * 50) * sc / kd(d), ry: (28 + R() * 22) * sc, ph: R() * 6 }); }
-  F.caves = []; for (let ci2 = 0; ci2 < 4; ci2++) if (R() < 0.42) { const x = x0 + R() * CW, d = 180 + R() * 22500, sc = 1 + d / 8000; F.caves.push({ x, y: surf(x) + d, rx: (70 + R() * 90) * sc / kd(d), ry: (40 + R() * 45) * sc, ph: R() * 6 }); }
+  F.caves = []; for (let ci2 = 0; ci2 < 4; ci2++) if (R() < 0.42) { const x = x0 + R() * CW, d = 180 + R() * 22500, sc = 1 + d / 8000; F.caves.push({ x, y: surf(x) + d, rx: Math.min(CAP, (70 + R() * 90) * sc / kd(d)), ry: (40 + R() * 45) * sc, ph: R() * 6 }); }
   if (R() < 0.6) { const x = x0 + R() * CW, d = 300 + R() * 9000; F.coal.push({ x, y: surf(x) + d, rx: (120 + R() * 110) / kd(d), ry: 13 + R() * 9, rot: (R() - 0.5) * 0.4, burnt: false }); }
   const nN = 1 + (R() < 0.5 ? 1 : 0); for (let i = 0; i < nN; i++) { let x = x0 + R() * CW, y = surf(x) + 70 + R() * 20000; if (F.gas.length && R() < 0.4) { const g = F.gas[0]; x = g.x + g.rx * 0.9; y = g.y; } if (!F.caves.some(c => inEll(c, x, y, 30))) F.nitro.push({ x, y, alive: true, ph: R() * 6, rot: (R() - 0.5) * 1.6 }); }
   const nE = 20 + (R() * 12 | 0); for (let i = 0; i < nE; i++) { const x = x0 + R() * CW, d = 50 + R() * 23000; const k = d < 600 ? 0 : d < 2400 ? 1 : d < 7000 ? 2 : 3; F.gems.push({ x, y: surf(x) + d, k, alive: true, ph: R() * 6 }); }
@@ -282,14 +282,14 @@ const inDome = (L, x, y) => { if (y >= L.y) return false; const dx = (x - L.x) /
 function lakePath(x, L, ox, oy, k) { x.beginPath(); for (let i = 0; i <= 40; i++) { const a = Math.PI + i / 40 * Math.PI, f = domeF(L, a), px = L.x + Math.cos(a) * L.rx * 1.04 * f, py = L.y + Math.sin(a) * L.dh * f; i ? x.lineTo((px - ox) * k, (py - oy) * k) : x.moveTo((px - ox) * k, (py - oy) * k); } for (let i = 0; i <= 30; i++) { const a = i / 30 * Math.PI, px = L.x + Math.cos(a) * L.rx, py = L.y + Math.sin(a) * L.ry; x.lineTo((px - ox) * k, (py - oy) * k); } x.closePath(); }
 const caveSh = (cv, a) => 1 + 0.18 * Math.sin(a * 3 + cv.ph) + 0.1 * Math.sin(a * 7 + cv.ph * 2);
 let tileBudget = 99, tileDeadline = 0;
-const CAVC = new Map(); function cavesOf(ci) { let c = CAVC.get(ci); if (!c) { c = genFeatures(ci).caves; CAVC.set(ci, c); if (CAVC.size > 400) CAVC.delete(CAVC.keys().next().value); } return c; }
+const CAVC = new Map(); function cavesOf(ci) { let c = CAVC.get(ci); if (!c) { c = genFeatures(ci).caves; CAVC.set(ci, c); if (CAVC.size > 3000) CAVC.delete(CAVC.keys().next().value); } return c; }
 function getChunk(ci) { let ch = chunks.get(ci); if (ch) return ch; const x0 = ci * CW, F = genFeatures(ci); const NB = [genFeatures(ci - 1), F, genFeatures(ci + 1)];
   const cols = []; for (let cc = 0; cc < MCOLS; cc++) { const wx = x0 + cc * CELL + 4; cols.push([surf(wx), B1(wx), B2(wx), B3(wx), B4(wx), bed(wx), B5(wx), B6(wx), B7(wx)]); }
   ch = { ci, x0, F, NB, cols, bio: F.bio, LM: LAYM[isMoon(x0) ? 2 : 1], mask: new Uint8Array(MCOLS * MROWS), cm: new Uint8Array(MCOLS * MROWS), band: new Uint8Array(NT), tiles: new Array(NT) }; chunks.set(ci, ch); return ch; }
 function ensureBand(ch, k) { if (k < 0 || k >= NT || ch.band[k]) return; ch.band[k] = 1; const r0 = k * RPT, r1 = Math.min(MROWS, r0 + RPT), yA = Y0 + r0 * CELL, yB = Y0 + r1 * CELL, mid = ch.x0 + CW / 2;
   const lks = lakesNear(mid).filter(L => L.y + L.ry > yA && L.y - L.dh * 1.2 < yB && Math.abs(L.x - mid) < L.rx * 1.1 + CW), near = [], caves = [], shs = []; for (const FF of ch.NB) { for (const sh of FF.shafts) if (sh.xb > ch.x0 - 30 && sh.xa < ch.x0 + CW + 30) shs.push(sh); for (const e of FF.sand || []) if (Math.abs(e.x - mid) < CW / 2 + e.rx + 8 && e.y + e.rx > yA && e.y - e.rx < yB) near.push([e, SAND]); for (const e of FF.coal) if (Math.abs(e.x - mid) < CW / 2 + e.rx + 8 && e.y + e.rx > yA && e.y - e.rx < yB) near.push([e, COAL]);
   }
-  for (let cj = ch.ci - 3; cj <= ch.ci + 3; cj++) for (const cv of cavesOf(cj)) if (Math.abs(cv.x - mid) < CW / 2 + cv.rx * 1.3 + 8 && cv.y + cv.ry * 1.3 > yA && cv.y - cv.ry * 1.3 < yB) caves.push(cv);
+  for (let cj = ch.ci - 8; cj <= ch.ci + 8; cj++) for (const cv of cavesOf(cj)) if (Math.abs(cv.x - mid) < CW / 2 + cv.rx * 1.3 + 8 && cv.y + cv.ry * 1.3 > yA && cv.y - cv.ry * 1.3 < yB) caves.push(cv);
   for (let cc = 0; cc < MCOLS; cc++) { const [s0, b1, b2, b3, b4, bd, b5, b6, b7] = ch.cols[cc], wx = ch.x0 + cc * CELL + 4;
     for (let rr = r0; rr < r1; rr++) { const wy = Y0 + rr * CELL + 4, i = rr * MCOLS + cc; if (wy < s0) continue; const d = wy - s0; const LM = ch.LM; let m = d < b1 ? TOPM[ch.bio] : d < b2 ? LM[0] : d < b3 ? LM[1] : d < b4 ? LM[2] : d < b5 ? LM[3] : d < b6 ? LM[4] : d < b7 ? LM[5] : LM[6];
       for (const [e, mm] of near) if (inEll(e, wx, wy, 0)) m = mm; ch.cm[i] = m;
@@ -489,7 +489,7 @@ function buildTile0(ch, k) {
     bx.strokeStyle = '#a8adb5'; bx.lineWidth = 2.5; bx.beginPath(); bx.moveTo(sh.xa - x0, cy(sh.xa) + sh.h / 2 - 7); bx.lineTo(sh.xb - x0, cy(sh.xb) + sh.h / 2 - 7); bx.stroke();
     bx.strokeStyle = '#e8c070'; bx.lineWidth = 1.5; bx.beginPath(); for (let X = sh.xa + 40; X < sh.xb; X += 112) { bx.moveTo(X - x0, cy(X) - sh.h / 2 + 7); bx.lineTo(X - x0, cy(X) - sh.h / 2 + 15); } bx.stroke(); bx.restore(); }
   for (const L of lakesNear(x0 + CW / 2)) { if (Math.abs(L.x - (x0 + CW / 2)) > L.rx * 1.2 + CW || L.y + L.ry < top || L.y - L.dh * 1.25 > top + H) continue; mkBg(); x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; lakePath(x, L, x0, top, 1); x.fill(); x.restore(); }
-  for (const FF of ch.NB) for (const cv of FF.caves || []) { if (Math.abs(cv.x - (x0 + CW / 2)) > CW / 2 + cv.rx * 1.3 + 4 || cv.y + cv.ry * 1.3 < top || cv.y - cv.ry * 1.3 > top + H) continue; mkBg();
+  for (let cj = ch.ci - 8; cj <= ch.ci + 8; cj++) for (const cv of cavesOf(cj)) { if (Math.abs(cv.x - (x0 + CW / 2)) > CW / 2 + cv.rx * 1.3 + 4 || cv.y + cv.ry * 1.3 < top || cv.y - cv.ry * 1.3 > top + H) continue; mkBg();
     x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; x.beginPath(); for (let i = 0; i <= 40; i++) { const a = i / 40 * TAU, f = caveSh(cv, a); const px = cv.x - x0 + Math.cos(a) * cv.rx * f, py = cv.y - top + Math.sin(a) * cv.ry * f; i ? x.lineTo(px, py) : x.moveTo(px, py); } x.closePath(); x.fill(); x.restore(); }
   return T0; }
 let tileJobs = [];
