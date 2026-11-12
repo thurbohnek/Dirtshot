@@ -137,7 +137,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 <div class="ov" id="ovHow" hidden><div class="card">
   <div class="logo" style="font-size:44px">How to play</div>
   <div class="how">
-    Hold the <b>right side</b> to turn clockwise ↻, the <b>left side</b> to turn the other way ↺. Let go and the drill goes straight.<br>The drill only bites when there's earth ahead – in <b>caverns</b> it falls like a rock. Soft ground <b>caves in</b> behind you.<br>In the air, fins pop out – keep holding to <b>flip</b>. Land nose-first along the slope for a <b>perfect dive</b>; land sideways and you lie there until you rotate the nose down.<br>
+    Hold the <b>right side</b> to turn clockwise ↻, the <b>left side</b> to turn the other way ↺. Let go and the drill goes straight.<br>The drill only bites when there's earth ahead – in <b>caverns</b> it falls like a rock. Soft ground <b>caves in</b> behind you.<br>In the air, keep holding to <b>flip</b>. Buy <b>wings</b> in the workshop to steer your flight. Land nose-first along the slope for a <b>perfect dive</b>; land sideways and you lie there until you rotate the nose down.<br>
     The earth eats your speed – pop out and fly to get it back. <b>Old bombs</b> blow you sky-high, a hot drill ignites <b>gas</b>, <b>water</b> cools you.<br>Spend gems in the <b>Workshop</b>. The <b>Daily run</b> is the same ground for everyone today – race your own ghost.
   </div>
   <button class="btn" id="bHowOk">GOT IT</button>
@@ -195,7 +195,7 @@ const SV = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('dirts
   if (fresh) { try { o.best = +localStorage.getItem('dirtshot.best') || 0; if (localStorage.getItem('dirtshot.snd') === '0') o.set.snd = 0; } catch (e) {} }
   return o; })();
 function saveSV() { try { localStorage.setItem('dirtshot.v2', JSON.stringify(SV)); } catch (e) {} }
-const UPS = [{ k: 'tip', n: 'Diamond tip', d: 'Bites through rock and clay faster' }, { k: 'eng', n: 'Engine', d: 'More thrust underground' }, { k: 'cool', n: 'Cooling', d: 'Heats up slower' }, { k: 'hull', n: 'Hull', d: 'Thicker armour – survive more hits' }, { k: 'fin', n: 'Fins', d: 'Faster flips and more air control' }, { k: 'lamp', n: 'Lamp', d: 'Lights up the deep, pulls in gems' }, { k: 'boost', n: 'Boost rocket', d: 'A BOOST button – thrust that works even in space' }];
+const UPS = [{ k: 'tip', n: 'Diamond tip', d: 'Bites through rock and clay faster' }, { k: 'eng', n: 'Engine', d: 'More thrust underground' }, { k: 'cool', n: 'Cooling', d: 'Heats up slower' }, { k: 'hull', n: 'Hull', d: 'Thicker armour – survive more hits' }, { k: 'fin', n: 'Wings', d: 'Fold-out wings: steer your flight through the air. Useless in vacuum' }, { k: 'lamp', n: 'Lamp', d: 'Lights up the deep, pulls in gems' }, { k: 'boost', n: 'Boost rocket', d: 'A BOOST button – thrust that works even in space' }];
 const COST = [25, 60, 120, 220, 380], UMAX = 5; const U = k => SV.up[k] || 0;
 const dayNo = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
 
@@ -937,12 +937,12 @@ function step(dt) {
   D.px = D.x; D.py = D.y;
   if (D.lying) { stepLying(dt); if (D.hull <= 0) die('Hull destroyed'); return; }
   if (D.air) {
-    D.airT += dt; const atm = isMoon(D.x) ? 0 : Math.max(0, Math.exp(-Math.max(0, surf(D.x) - D.y) / 3000) - 0.02) / 0.98; D.atm = atm; const fT = D.y < surf(D.x) - 4 ? Math.min(1, atm * 4) : 0; D.fin = D.fin < fT ? Math.min(fT, D.fin + dt * 5) : Math.max(fT, D.fin - dt * (fT > 0 ? 6 : 1.5)); if (D.solidT > 0) D.solidT -= dt;
+    D.airT += dt; const atm = isMoon(D.x) ? 0 : Math.max(0, Math.exp(-Math.max(0, surf(D.x) - D.y) / 3000) - 0.02) / 0.98; D.atm = atm; const fT = U('fin') && D.y < surf(D.x) - 4 ? Math.min(1, atm * 4) : 0; D.fin = D.fin < fT ? Math.min(fT, D.fin + dt * 5) : Math.max(fT, D.fin - dt * (fT > 0 ? 6 : 1.5)); if (D.solidT > 0) D.solidT -= dt;
     let va = Math.atan2(D.vy, D.vx), sp = Math.hypot(D.vx, D.vy);
-    const vac = 1 - atm, want = turn ? turn * 6.8 * (1 + 0.08 * U('fin')) * (1 - 0.68 * vac) : angDiff(va, D.ang) * 4 * atm; D.av += (want - D.av) * Math.min(1, dt * 5.5 * (1 - 0.6 * vac)); /* in vacuum: slower, gentler rotation that settles when you let go */
+    const vac = 1 - atm, want = turn ? turn * 6.8 * (1 + 0.08 * U('fin')) * (1 - 0.68 * vac) : angDiff(va, D.ang) * (U('fin') ? 4 : 2.2) * atm; D.av += (want - D.av) * Math.min(1, dt * 5.5 * (1 - 0.6 * vac)); /* in vacuum: slower, gentler rotation that settles when you let go */
     const prevA = D.ang; D.ang += D.av * dt;
     const dA = D.ang - prevA; D.flipAcc += dA; if (Math.abs(D.flipAcc) >= TAU - 0.3) { D.flipAcc -= Math.sign(D.flipAcc) * TAU; D.flips++; say(D.flips > 1 ? `FLIP ×${D.flips}!` : 'FLIP!', '#7df9ff'); SFX.flip(D.flips); addChain(1); }
-    const dd = angDiff(D.ang, va); sp *= Math.exp(-reentryStep(dt, atm, dd, sp) * 0.22 * dt); if (Math.abs(dd) < 1.9) va += clamp(dd, -1, 1) * 1.5 * (1 + 0.12 * U('fin')) * D.fin * atm * dt; sp *= Math.exp(-(0.01 + 0.05 * Math.abs(Math.sin(dd)) * D.fin) * atm * dt);
+    const dd = angDiff(D.ang, va); sp *= Math.exp(-reentryStep(dt, atm, dd, sp) * 0.22 * dt); if (Math.abs(dd) < 1.9) va += clamp(dd, -1, 1) * (1.1 + 0.25 * U('fin')) * D.fin * atm * dt; sp *= Math.exp(-(0.01 + 0.05 * Math.abs(Math.sin(dd)) * D.fin) * atm * dt);
     D.vx = Math.cos(va) * sp; D.vy = Math.sin(va) * sp; { const [ax, ay] = airAcc(D.x, D.y, D.vx, D.vy); D.vx += ax * dt; D.vy += ay * dt; }
     { const dx = D.vx / kAt(D.x, D.y) * dt; D.x += dx; D.ang -= dx / bodyR(D.x); } D.y += D.vy * dt; if (coreCross()) return; frameCheck(); D.heat = Math.max(0, D.heat + HEAT[AIR] * dt);
     if (D.airT > 0.2 && D.y < surf(D.x) - 2) { const c = Math.cos(D.ang), sn = Math.sin(D.ang); for (const t of [-56, -36, -16]) { const px = D.x + c * t, py = D.y + sn * t; if (py > surf(px) + 2) { const sa = Math.atan2(surf(px + 6) - surf(px - 6), 12), vin = -D.vx * Math.sin(sa) + D.vy * Math.cos(sa); if (vin > 0) { layDown(sa); return; } } } }
