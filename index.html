@@ -162,7 +162,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
     <button class="tog" id="tQ">Graphics <span></span></button>
     <button class="tog" id="tCave">Cave-ins <span></span></button>
     <button class="tog" id="tFps">Show FPS <span></span></button>
-    <button class="tog" id="tPock">Gas &amp; water pockets <span></span></button><button class="tog" id="tFlat">Round world <span></span></button>
+    <button class="tog" id="tPock">Gas &amp; water pockets <span></span></button><button class="tog" id="tFlat">Round world <span></span></button><button class="tog" id="tReset" style="color:#ff8a7a">Reset all progress <span></span></button>
   </div>
   <button class="btn" id="bResume">RESUME</button>
   <button class="link" id="bQuit">Quit to menu</button>
@@ -297,6 +297,28 @@ function ensureBand(ch, k) { if (k < 0 || k >= NT || ch.band[k]) return; ch.band
       for (const L of lks) if (inPool(L, wx, wy) || inDome(L, wx, wy)) ch.mask[i] = 1;
       for (const cv of caves) { const dx = wx - cv.x, dy = wy - cv.y, f = caveSh(cv, Math.atan2(dy / cv.ry, dx / cv.rx)); if ((dx * dx) / ((cv.rx * f - 3) ** 2) + (dy * dy) / ((cv.ry * f - 3) ** 2) < 1) ch.mask[i] = 1; } } } }
 let tileCount = 0, tilesBuilt = 0, phMiss = 0; const MAXT = 140;
+// ===== launch tower: hold to charge, release to fire straight down the tube
+const TOWER_H = 900;
+function towerStep(dt) { const tw = D.tower; tw.t += dt; D.x = D.px = 0; D.y = D.py = surf(0) - TOWER_H + 60 + Math.sin(tw.t * 2) * 2; D.ang = Math.PI / 2; D.vx = D.vy = 0; D.air = true;
+  const press = hold || touches.size > 0 || boostOn; if (press) { tw.held = true; tw.pow += tw.dir * dt * 0.75; if (tw.pow >= 1) { tw.pow = 1; tw.dir = -1; } if (tw.pow <= 0) { tw.pow = 0; tw.dir = 1; } if (thr('twr', 0.06)) tone({ type: 'triangle', f0: 180 + tw.pow * 700, dur: 0.05, gain: 0.03 }); }
+  else if (tw.held && tw.t > 0.3) { const p = tw.pow, v = 500 + p * 3600; D.tower = null; D.fromTower = true; D.vy = v; D.vx = 0; S.launchP = p; SFX.boom(); shake = Math.max(shake, 8 + 20 * p); buzz([30, 30, 60]);
+    for (let i = 0; i < 30; i++) parts.push({ k: 'smoke', x: (rnd() - 0.5) * 30, y: D.y - 40, vx: (rnd() - 0.5) * 200, vy: -100 - rnd() * 300, t: 0, life: 1.4, s: 18 + rnd() * 20, c: '#d8d0c8' });
+    if (p > 0.93) { gems += 25; say('PERFECT LAUNCH!  ◆+25', '#ffe14d', true); addChain(2); } else say(`LAUNCH ${Math.round(p * 100)}%`, '#ffffff', true); } }
+function drawTower(x, s) { const gy = surf(0), top = gy - TOWER_H; if (cam.x > 3000 || cam.x < -3000) return; const k = kAt(0, gy); x.save(); x.scale(1, 1);
+  // legs + bracing
+  x.strokeStyle = '#5a5f6a'; x.lineWidth = 12; x.lineCap = 'round'; x.beginPath(); x.moveTo(-170 / k, gy + 6); x.lineTo(-70 / k, top + 40); x.moveTo(170 / k, gy + 6); x.lineTo(70 / k, top + 40); x.stroke();
+  x.strokeStyle = '#7a808c'; x.lineWidth = 5; x.beginPath(); for (let i = 0; i < 8; i++) { const y0 = top + 40 + (gy - top - 40) * i / 8, y1 = top + 40 + (gy - top - 40) * (i + 1) / 8, w0 = (70 + 100 * i / 8) / k, w1 = (70 + 100 * (i + 1) / 8) / k; x.moveTo(-w0, y0); x.lineTo(w1, y1); x.moveTo(w0, y0); x.lineTo(-w1, y1); x.moveTo(-w1, y1); x.lineTo(w1, y1); } x.stroke();
+  // the tube down to the ground
+  const tw = 34 / k; x.fillStyle = 'rgba(160,200,230,0.18)'; x.fillRect(-tw, top + 20, tw * 2, gy - top - 14); x.strokeStyle = '#3c4048'; x.lineWidth = 6; x.beginPath(); x.moveTo(-tw, top + 20); x.lineTo(-tw, gy + 6); x.moveTo(tw, top + 20); x.lineTo(tw, gy + 6); x.stroke();
+  x.strokeStyle = '#ffcf3a'; x.lineWidth = 4; for (let y = top + 60; y < gy; y += 90) { x.beginPath(); x.moveTo(-tw - 4, y); x.lineTo(tw + 4, y); x.stroke(); }
+  // top cabin with clamp
+  x.fillStyle = '#e8402a'; x.fillRect(-110 / k, top - 30, 220 / k, 50); x.fillStyle = '#ffffff'; x.fillRect(-110 / k, top - 30, 220 / k, 8); x.fillStyle = '#2a2d34'; x.fillRect(-12 / k, top - 70, 24 / k, 42);
+  x.fillStyle = (T * 2 % 1) < 0.5 ? '#ff3030' : '#501010'; x.beginPath(); x.arc(0, top - 76, 7, 0, TAU); x.fill(); x.restore(); }
+function drawPower(x) { const tw = D && D.tower; if (!tw) return; const bx = VW - 46, by = VH * 0.3, bh = VH * 0.36, p = tw.pow;
+  x.fillStyle = 'rgba(0,0,0,0.45)'; x.fillRect(bx - 4, by - 4, 30, bh + 8); const g = x.createLinearGradient(0, by + bh, 0, by); g.addColorStop(0, '#4ad04a'); g.addColorStop(0.6, '#ffd040'); g.addColorStop(0.93, '#ff5030'); g.addColorStop(1, '#ffffff'); x.fillStyle = g; x.fillRect(bx, by + bh * (1 - p), 22, bh * p);
+  x.strokeStyle = '#fff'; x.lineWidth = 2; x.strokeRect(bx - 4, by - 4, 30, bh + 8); x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(bx - 8, by + bh * 0.07 - 1, 38, 2);
+  x.font = '900 13px Nunito, sans-serif'; x.textAlign = 'center'; x.fillStyle = '#fff'; x.fillText(Math.round(p * 100) + '%', bx + 11, by - 12);
+  x.font = '800 15px Nunito, sans-serif'; x.globalAlpha = 0.75 + 0.25 * Math.sin(T * 4); x.fillText(tw.held ? 'RELEASE TO LAUNCH' : 'HOLD TO CHARGE', VW / 2, VH * 0.72); x.globalAlpha = 1; }
 // ===== asteroids & satellites circling the planet (positions follow from the run clock)
 let ORB = [];
 function mkOrbits() { const o = []; let sd = 4242; const R = () => (sd = (sd * 16807) % 2147483647) / 2147483647; for (let i = 0; i < 40; i++) { const r = RPL + 2600 + R() * 26000, sat = R() < 0.25; o.push({ r, th0: R() * TAU, w: Math.sqrt(G * RPL * RPL / (r * r * r)) * (R() < 0.8 ? 1 : -1), sat, sz: sat ? 46 : 34 + R() * 70, spin: (R() - 0.5) * 1.2, ph: R() * 6, dead: -1, seed: i }); } return o; }
@@ -667,7 +689,7 @@ function checkMissions() { if (!D || !S.perf && S.perf !== 0) return; for (const
 const misHTML = () => '<h3>Missions</h3>' + SV.mis.map(m => `<div class="${m.ok ? 'ok' : ''}"><i>${m.ok ? '✓' : ''}</i><span>${MIS[m.k].t(m.n)}</span><em>◆ ${m.r}</em></div>`).join('');
 function reset(daily) { CAVC.clear(); CB = { p: 0, lv: 0, t: 0, pulse: 0, red: 0, bank: 0 }; FLY = []; POP = []; MU.on = false; tileJobs = []; shocks = []; LKN.clear(); H1C.clear(); SC.clear(); endPending = null; LAKES.clear(); warps = []; quake = 0; for (const ch of chunks.values()) for (let q = 0; q < NT; q++) freeTile(ch, q); tileCount = 0; fillMissions(); MODE = daily ? 'daily' : 'free'; const dn = dayNo(); SEED = daily ? 1000 + (dn * 7919) % 8000 : 1 + (Math.random() * 1000 | 0); if (SV.daily && SV.daily.day !== dn) SV.daily = null; ghost = daily && SV.daily ? SV.daily.ghost : null; ghostRec = []; ghostT = 0; S = { perf: 0, flips: 0, bombs: 0, water: 0, coal: 0, alt: 0, depth: 0, cav: 0 }; runReward = 0; paused = false; lastBio = 0; lavaT = 0; HM = 1 + 0.25 * U('hull'); tut = SV.tut ? null : { st: 0, t: 0 }; touches.clear(); chunks.clear(); segs = []; wreck = []; boulders = []; active.clear(); clods = []; SURFC.clear(); fallEv = []; pieces = []; structQ = []; D_lastStruct = 0; parts = []; rings = []; msgs = []; ev = []; gems = 0; T = 0; shake = 0; flash = 0;
   const x = -200; D = { x, y: surf(x) - 330, vx: 700, vy: -160, ang: -0.2, air: true, s: 0, fuel: 1, heat: 0, hull: 1, px: x, py: surf(x) - 330, maxX: 0, mat: AIR, why: '', dead: false, spin: 0, lastMat: AIR, airT: 0, fin: 1, flips: 0, flipAcc: 0, av: 0, gav: 0, crashT: 0, segX: 0, segY: 0, solidT: 0 };
-  zoomMul = 1; D.hull = HM; D.boostF = D.boostM = U('boost') ? 3 + 1.5 * U('boost') : 0; D.runT = 0; D.lapU0 = D.x; D.lapT0 = 0; D.mstone = 0; D.reMax = 0; ORB = mkOrbits(); $('bst').hidden = !U('boost'); cam.x = D.x + 200; cam.y = D.y + 150; cam.vh = 900; run = true; show(null); $('pz').hidden = false; }
+  D.x = D.px = 0; D.y = D.py = surf(0) - TOWER_H + 60; D.vx = D.vy = 0; D.ang = Math.PI / 2; D.fin = 0; D.tower = { pow: 0, dir: 1, held: false, t: 0 }; zoomMul = 1; D.hull = HM; D.boostF = D.boostM = U('boost') ? 3 + 1.5 * U('boost') : 0; D.runT = 0; D.lapU0 = D.x; D.lapT0 = 0; D.mstone = 0; D.reMax = 0; ORB = mkOrbits(); $('bst').hidden = !U('boost'); cam.x = D.x; cam.y = D.y + TOWER_H / 2; cam.vh = TOWER_H * 1.9; run = true; show(null); $('pz').hidden = false; }
 const norm = a => { a = ((a + Math.PI) % TAU + TAU) % TAU - Math.PI; return a; };
 const angDiff = (a, b) => norm(a - b);
 function clampAng(a) { a = norm(a); if (Math.cos(a) >= 0) return clamp(a, -1.45, 1.45); let am = norm(Math.PI - a); am = clamp(am, -1.45, 1.45); return norm(Math.PI - am); }
@@ -710,7 +732,7 @@ function enterGround() { D.orbU = 0; D.orbX = undefined; if (isMoon(D.x)) D.mLan
     D.hull -= 0.14; breakChain(); D.combo = 0; D.flips = 0; D.flipAcc = 0; D.av = 0; D.gav = 0; const fwd = D.vx >= 0 ? 1 : -1; D.air = false; D.fin = 0; D.s = Math.max(160, sp * 0.35); D.ang = clampAng(fwd > 0 ? sa + 0.6 : Math.PI + sa - 0.6); D.y = surf(D.x) + 4; say('CRASH!', '#ff6a5a', true); SFX.clang(); buzz([50, 30, 80]); shake = Math.max(shake, 9); dirt(D.x, D.y, 24, MCOL[1][2]); return; }
   if (rel < 0.08 && sp > 320) { // skims: bounce like a stone
     const n = sa - Math.PI / 2; const nx = Math.cos(n), ny = Math.sin(n); const dot = D.vx * nx + D.vy * ny; D.vx -= 1.6 * dot * nx; D.vy -= 1.6 * dot * ny; D.vx *= 0.97; D.y = surf(D.x) - 2; say('Skip!', '#fff'); SFX.dive(0); dirt(D.x, D.y, 8, MCOL[1][2]); return; }
-  let q, f; if (rel < 0.45) { q = 2; D.combo = (D.combo || 0) + 1; f = 1.18 + 0.04 * Math.min(D.combo, 6); say(D.combo > 1 ? `PERFECT ×${D.combo}!` : 'PERFECT DIVE!', '#ffe14d', true); buzz(25); S.perf++; addChain(2); } else if (rel < 1.15) { q = 1; f = 1.08; } else { q = 0; f = 0.92; D.combo = 0; say('Thud!', '#ffd0b0'); buzz(40); }
+  let q, f; if (rel < 0.45) { q = 2; D.combo = (D.combo || 0) + 1; f = 1.18 + 0.04 * Math.min(D.combo, 6); say(D.combo > 1 ? `PERFECT ×${D.combo}!` : 'PERFECT DIVE!', '#ffe14d', true); buzz(25); S.perf++; addChain(2); } else if (rel < 1.15) { q = 1; f = 1.08; } else if (D.fromTower) { q = 1; f = 1; } else { q = 0; f = 0.92; D.combo = 0; say('Thud!', '#ffd0b0'); buzz(40); } D.fromTower = false;
   { const g = clamp(((D.runT || 0) - (D.lastEnt === undefined ? -9 : D.lastEnt)) / 1.4, 0.08, 1); if (f > 1) f = 1 + (f - 1) * g; D.lastEnt = D.runT || 0; } /* quick skips along the surface give only a little */
   D.air = false; D.s = sp * f * (q === 2 ? 1 : Math.max(0.7, Math.cos(mis * 0.7))); if (q === 2 && D.airT > 1.4) { D.s *= 1.12; say('BIG AIR!', '#9ff0ff'); } D.ang = clampAng(va);
   if (D.flips > 0) { D.s = D.s * (1 + 0.18 * D.flips) + 150 * D.flips; gems += D.flips; S.flips += D.flips; addChain(D.flips); say(D.flips > 1 ? `${D.flips}× FLIP LANDED!` : 'FLIP LANDED!', '#7df9ff', true); } D.flips = 0; D.flipAcc = 0;
@@ -932,7 +954,7 @@ const TUTX = ['Hold the RIGHT side of the screen to rotate ↻', 'Let go to fly 
 
 function step(dt) {
   T += dt; if (!SV.set.cave) { fallEv.length = 0; structQ.length = 0; } updateFalls(dt); if (SV.set.cave && D && !D.dead && T - D_lastStruct > 0.5) { D_lastStruct = T; if (D.y > surf(D.x) + 20) structCheck(D.x - Math.cos(D.ang) * 120, D.y - Math.sin(D.ang) * 120); } if (structQ.length) { const q = structQ.shift(); structCheck(q[0], q[1]); } if (ev.length) { const due = ev.filter(e => e.t <= T); if (due.length) { ev = ev.filter(e => e.t > T); due.forEach(e => e.fn()); } }
-  if (D.dead) return; chainTick(dt); stepFly(dt); D.runT = (D.runT || 0) + dt; boostStep(dt); if (isMoon(D.x) && !D.air) { D.mLand = true; if (!S.moonLand) { S.moonLand = 1; gems += 500; say('MOON LANDING!  ◆+500', '#ffffff', true); SFX.bank(); flash = Math.max(flash, 0.4); addChain(6); } } stepOrbits(); reentryCheck();
+  if (D.dead) return; if (D.tower) { towerStep(dt); return; } chainTick(dt); stepFly(dt); D.runT = (D.runT || 0) + dt; boostStep(dt); if (isMoon(D.x) && !D.air) { D.mLand = true; if (!S.moonLand) { S.moonLand = 1; gems += 500; say('MOON LANDING!  ◆+500', '#ffffff', true); SFX.bank(); flash = Math.max(flash, 0.4); addChain(6); } } stepOrbits(); reentryCheck();
   if (!isMoon(D.x) && D.x - D.lapU0 >= CPL) { const lt = D.runT - D.lapT0; S.laps = (S.laps || 0) + 1; D.lapU0 += CPL; D.lapT0 = D.runT; const rc = SV.rec || (SV.rec = { lap: 0, laps: 0, core: 0 }), fm = Math.floor(lt / 60) + ':' + String(Math.floor(lt % 60)).padStart(2, '0'); if (!rc.lap || lt < rc.lap) { rc.lap = lt; saveSV(); say(`LAP ${S.laps}  ${fm}  NEW RECORD!`, '#c6ff3d', true); } else say(`LAP ${S.laps}  ${fm}`, '#e8f8ff', true); gems += 100; addChain(4); } { const vx = D.air ? D.vx : Math.cos(D.ang) * D.s, vy = D.air ? D.vy : Math.sin(D.ang) * D.s, k = 1 - dt * 3; D.mvx = (D.mvx || 0) * k; D.mvy = (D.mvy || 0) * k; if (vx * vx + vy * vy > D.mvx * D.mvx + D.mvy * D.mvy) { D.mvx = vx; D.mvy = vy; } }
   D.px = D.x; D.py = D.y;
   if (D.lying) { stepLying(dt); if (D.hull <= 0) die('Hull destroyed'); return; }
@@ -1161,7 +1183,7 @@ function render() {
     x.fillStyle = 'rgba(255,250,200,0.85)'; for (let i = 0; i < 6; i++) { const k = (t * 0.6 + i / 6 + L.ph) % 1, px = L.x + Math.sin(i * 2.7 + L.ph) * L.rx * 0.8; x.globalAlpha = 1 - k; x.beginPath(); x.arc(px, L.y - k * 14, 3 + 6 * k, 0, TAU); x.fill(); } x.globalAlpha = 1; x.restore();
     if (rnd() < 0.25) parts.push({ k: 'fire', x: L.x + (rnd() - 0.5) * L.rx * 1.8, y: L.y - 4, vx: (rnd() - 0.5) * 30, vy: -40 - rnd() * 80, t: 0, life: 0.8 + rnd() * 0.6, s: 8 + rnd() * 10 }); }
   // launch ramp
-  if (cam.x < 800) { const rx = -260, ry = surf(-260); x.fillStyle = '#7a4a2a'; x.beginPath(); x.moveTo(rx - 60, ry + 4); x.lineTo(rx + 40, ry - 90); x.lineTo(rx + 52, ry - 84); x.lineTo(rx - 30, ry + 6); x.closePath(); x.fill(); }
+  if (D && Math.abs(cam.x) < 3000 && !isMoon(cam.x)) drawTower(x, s);
   // particles (behind drill)
   for (const p of parts) { const k = p.t / p.life;
     if (p.k === 'smoke') { x.globalAlpha = (1 - k) * 0.45; x.fillStyle = '#6b5e58'; x.beginPath(); x.arc(p.x, p.y, p.s * (1 + k), 0, TAU); x.fill(); }
@@ -1171,7 +1193,7 @@ function render() {
     else if (p.k === 'wat') { x.globalAlpha = Math.min(1, (1 - k) * 4) * 0.85; x.fillStyle = '#5aaaf0'; x.beginPath(); x.arc(p.x, p.y, p.s, 0, TAU); x.fill(); x.fillStyle = '#c8ecff'; x.fillRect(p.x - p.s * 0.4, p.y - p.s * 0.5, p.s * 0.5, p.s * 0.35); }
     else if (p.k === 'dust') { x.globalAlpha = Math.min(k * 6, 1) * (1 - k) * 0.22; x.fillStyle = p.c; x.beginPath(); x.arc(p.x, p.y, p.s * (1 + k * 1.5), 0, TAU); x.fill(); } }
   x.globalAlpha = 1;
-  if (D && run && D.air && !D.dead && D.y < surf(D.x) - 50) { let px = D.x, py = D.y, vx = D.vx, vy = D.vy, hit = null; const pts = [];
+  if (D && run && D.air && !D.dead && !D.tower && D.y < surf(D.x) - 50) { let px = D.x, py = D.y, vx = D.vx, vy = D.vy, hit = null; const pts = [];
     for (let i = 0; i < 140; i++) { const dt = 1 / 40, [ax, ay] = airAcc(px, py, vx, vy); vx += ax * dt; vy += ay * dt; px += vx / kAt(px, py) * dt; py += vy * dt; if (i % 2) pts.push(px, py); if (py >= surf(px)) { hit = [px, surf(px), vx, vy]; break; } }
     if (hit) { const sa = Math.atan2(surf(hit[0] + 6) - surf(hit[0] - 6), 12), tx = Math.cos(sa), ty = Math.sin(sa); const vin = -hit[2] * ty + hit[3] * tx, along = Math.abs(hit[2] * tx + hit[3] * ty), rel = Math.atan2(vin, along), va = Math.atan2(hit[3], hit[2]), mis = Math.abs(angDiff(D.ang, va)), sp = Math.hypot(hit[2], hit[3]);
       const [col, lbl] = rel < 0.08 && sp > 320 ? ['#ffffff', 'SKIP'] : mis > 1.0 ? ['#ff5a4a', 'THUNK'] : rel < 0.45 ? ['#7ee05a', 'PERFECT'] : rel < 1.15 ? ['#ffd34e', 'GOOD'] : ['#ff9a3a', 'STEEP'];
@@ -1236,7 +1258,7 @@ function render() {
     for (const w of warps) { if (w.t <= 0) continue; const k = w.t / w.d, a = 1 - k, r = w.R * s * (1 - Math.pow(1 - k, 2.2)), band = (50 + 90 * k), [cx, cy] = W2S(w.x, w.y);
       for (const [r0, r1, sc] of [[r - band, r, 1 + 0.09 * a], [r, r + band * 0.55, 1 - 0.05 * a]]) { if (r1 <= 1) continue; x.save(); x.beginPath(); x.arc(cx, cy, r1, 0, TAU); if (r0 > 0) x.arc(cx, cy, r0, 0, TAU, true); x.clip('evenodd'); x.translate(cx, cy); x.scale(sc, sc); x.translate(-cx, -cy); x.drawImage(wb, 0, 0, VW, VH); x.restore(); }
       x.globalAlpha = 0.45 * a; x.strokeStyle = '#fff8e8'; x.lineWidth = 2 + 4 * a; x.beginPath(); x.arc(cx, cy, Math.max(1, r), 0, TAU); x.stroke(); x.globalAlpha = 0.15 * a; x.lineWidth = band * 0.5; x.strokeStyle = '#ffffff'; x.beginPath(); x.arc(cx, cy, Math.max(1, r - band * 0.4), 0, TAU); x.stroke(); x.globalAlpha = 1; } }
-  drawCombo(x);
+  drawCombo(x); drawPower(x);
   // overheating vignette
   if (D && run && D.heat > 0.8) { const a = clamp((D.heat - 0.8) * 2.5, 0, 0.6) * (0.75 + 0.25 * Math.sin(T * 14)); x.globalAlpha = a; x.drawImage(VIG, 0, 0, VW, VH); x.globalAlpha = 1; }
   if (flash > 0.01) { x.fillStyle = `rgba(255,190,120,${flash * 0.5})`; x.fillRect(0, 0, VW, VH); }
@@ -1249,7 +1271,7 @@ function render() {
       x.strokeStyle = on ? '#fff' : 'rgba(60,25,10,0.7)'; x.lineWidth = 4; x.lineCap = 'round'; x.beginPath(); if (sd > 0) x.arc(cx, cy, 12, -2.4, 1.4); else x.arc(cx, cy, 12, Math.PI - 1.4, Math.PI + 2.4, true); x.stroke();
       const ea = sd > 0 ? 1.4 : Math.PI - 1.4, ex = cx + Math.cos(ea) * 12, ey = cy + Math.sin(ea) * 12; x.beginPath(); x.moveTo(ex - 6 * sd, ey - 3); x.lineTo(ex, ey); x.lineTo(ex - 1 * sd, ey - 8); x.stroke(); } x.globalAlpha = 1; }
   if (D && !D.dead && tut && !D.lying && run) { const tt = TUTX[tut.st]; x.font = '400 22px "Lilita One", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; const w = Math.min(VW - 24, x.measureText(tt).width + 36); x.fillStyle = 'rgba(40,20,10,0.55)'; x.beginPath(); x.roundRect ? x.roundRect(VW / 2 - w / 2, VH * 0.8 - 22, w, 44, 22) : x.rect(VW / 2 - w / 2, VH * 0.8 - 22, w, 44); x.fill(); x.fillStyle = '#fff'; x.fillText(tt, VW / 2, VH * 0.8, VW - 40); x.font = '900 11px Nunito, sans-serif'; x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillText('TUTORIAL ' + (tut.st + 1) + '/4', VW / 2, VH * 0.8 - 34); x.textBaseline = 'alphabetic'; }
-  else if (D && !D.dead && (T < 6 || D.lying) && run) { x.font = '800 15px Nunito, sans-serif'; x.textAlign = 'center'; x.fillStyle = 'rgba(255,255,255,0.95)'; x.strokeStyle = 'rgba(60,25,10,0.6)'; x.lineWidth = 4; const tt = D.lying ? 'On its side – rotate the nose down to dig in' : D.air ? (turn ? 'Keep holding to flip!' : 'Hold right ↻ or left ↺ to rotate') : (turn ? 'Keep holding to swing round' : 'Right side turns ↻ · left side turns ↺'); x.strokeText(tt, VW / 2, VH * 0.82); x.fillText(tt, VW / 2, VH * 0.82); }
+  else if (D && !D.dead && !D.tower && (T < 6 || D.lying) && run) { x.font = '800 15px Nunito, sans-serif'; x.textAlign = 'center'; x.fillStyle = 'rgba(255,255,255,0.95)'; x.strokeStyle = 'rgba(60,25,10,0.6)'; x.lineWidth = 4; const tt = D.lying ? 'On its side – rotate the nose down to dig in' : D.air ? (turn ? 'Keep holding to flip!' : 'Hold right ↻ or left ↺ to rotate') : (turn ? 'Keep holding to swing round' : 'Right side turns ↻ · left side turns ↺'); x.strokeText(tt, VW / 2, VH * 0.82); x.fillText(tt, VW / 2, VH * 0.82); }
 }
 function updateFX(dt) { stepShocks(dt); if (run) stepWater(dt); for (const p of parts) if (p.k === 'wat') moveWat(p, dt); if (wreck.length) stepWreck(dt); if (boulders.length) stepBoulders(dt); for (const p of parts) { p.t += dt; if (p.k === 'wat') continue; p.vy += (p.g || 0) * dt; if (p.k === 'smoke' || p.k === 'fire') { p.vx *= Math.exp(-1.5 * dt); } else if (p.k === 'dust') { p.vx *= Math.exp(-0.8 * dt); p.vy *= Math.exp(-0.8 * dt); } p.x += p.vx * dt; p.y += p.vy * dt; if (p.vr) p.rot += p.vr * dt; }
   { let j = 0; for (let i = 0; i < parts.length; i++) { const p = parts[i]; if (p.t < p.life) parts[j++] = p; } parts.length = j; } const PC = (SV.set.q ? 900 : 350) * (D && D.dead ? 1.8 : 1); if (parts.length > PC) parts.splice(0, parts.length - PC);
@@ -1307,6 +1329,7 @@ function pause() { if (!run || paused || !D || D.dead) return; paused = true; to
 function resume() { if (!paused) { if (!$('ovSet').hidden) showMenu(); return; } paused = false; touches.clear(); last = performance.now(); show(null); $('pz').hidden = false; }
 $('tSnd').onclick = () => { SV.set.snd = SV.set.snd ? 0 : 1; SOUND = !!SV.set.snd; if (master) master.gain.value = SOUND ? 0.8 : 0; if (SOUND) audio(); saveSV(); setLbl(); };
 $('tVib').onclick = () => { SV.set.vib = SV.set.vib ? 0 : 1; saveSV(); setLbl(); buzz(30); };
+{ let armT = 0; $('tReset').onclick = () => { const now = Date.now(); if (now - armT > 3000) { armT = now; $('tReset').lastChild.textContent = 'Tap again to erase'; setTimeout(() => { if ($('tReset')) $('tReset').lastChild.textContent = ''; }, 3000); return; } try { for (const k of ['dirtshot.v2', 'dirtshot.best', 'dirtshot.snd']) localStorage.removeItem(k); } catch (e) {} location.reload(); }; }
 $('tFlat').onclick = () => { SV.set.flat = SV.set.flat ? 0 : 1; saveSV(); setLbl(); }; $('tPock').onclick = () => { SV.set.nopock = SV.set.nopock ? 0 : 1; saveSV(); setLbl(); };
 $('tFps').onclick = () => { SV.set.fps = SV.set.fps ? 0 : 1; saveSV(); setLbl(); };
 $('tCave').onclick = () => { SV.set.cave = SV.set.cave ? 0 : 1; saveSV(); setLbl(); };
