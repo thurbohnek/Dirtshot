@@ -174,7 +174,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
   <div class="sub2" id="endGems"></div>
   <div class="sub2" id="endRec"></div>
   <div class="mis" id="misE"></div>
-  <div class="row"><button class="btn2" id="bReplay">▶ REPLAY BEST 5 S</button><button class="btn2" id="bClip" hidden>SHARE CLIP</button></div>
+  <div class="row" hidden><button class="btn2" id="bReplay">▶ REPLAY BEST 5 S</button><button class="btn2" id="bClip" hidden>SHARE CLIP</button></div>
   <button class="btn" id="bAgain">AGAIN</button>
   <div class="row"><button class="btn2" id="bShop2">WORKSHOP</button><button class="btn2" id="bMenu">MENU</button></div>
 </div></div>
@@ -1268,7 +1268,7 @@ function viewGeom(s) { const Rb = bodyR(cam.x), rc = Rb - cam.y, pcx = VW / 2, p
   let uL, uspan; if (full) { uL = cam.x - Rb * Math.PI; uspan = TAU * Rb; } else { const sp = thmax - thmin, pad = sp * 0.03 + 0.002; uL = cam.x + (thmin - pad) * Rb; uspan = (sp + 2 * pad) * Rb; }
   const yspan = Math.max(50, rmax - rmin); return { s, Rb, rc, pcx, pcy, uL, uspan, rmax, yT: Rb - rmax, yspan, full, sx: VW / uspan, sy: VH / yspan }; }
 function W2S(u, y) { const G2 = GV; if (!G2) return [0, 0]; const th = (u - cam.x) / G2.Rb, r = G2.Rb - y, X = G2.pcx + Math.sin(th) * r * G2.s, Y = G2.pcy - Math.cos(th) * r * G2.s, cr = Math.cos(camRot), sr = Math.sin(camRot), dx = X - VW / 2, dy = Y - VH / 2; return [VW / 2 + cr * dx - sr * dy, VH / 2 + sr * dx + cr * dy]; }
-const VER = 'v93';
+const VER = 'v94';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -1284,7 +1284,7 @@ function perfReport() { const a = PF.ft.slice().sort((p, q) => p - q), pc = f =>
     counts: { tiles: tileCount, chunks: chunks.size, parts: parts.length, jobs: tileJobs.length, wreck: wreck.length }, settings: SV.set, longFrames: PF.long }, null, 1); }
 // ===== replay: the run is sampled 20 times a second; after a crash the best 5 seconds play back (and are filmed if the browser can) =====
 let REC = [], recAcc = 0, recEv = 0, RPY = null, CLIP = null;
-function recTick(dt) { recAcc += dt; if (recAcc < 0.05) return; recAcc -= 0.05; const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; REC.push([D.x, D.y, D.ang, D.air ? 1 : 0, D.vx, D.vy, D.s, sp + recEv, D.fin || 0]); recEv = 0; if (REC.length > 7200) REC.splice(0, 1200); }
+function recTick(dt) { return; /* replay removed */ recAcc += dt; if (recAcc < 0.05) return; recAcc -= 0.05; const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; REC.push([D.x, D.y, D.ang, D.air ? 1 : 0, D.vx, D.vy, D.s, sp + recEv, D.fin || 0]); recEv = 0; if (REC.length > 7200) REC.splice(0, 1200); }
 function bestWin() { const W = 100, n = REC.length; if (n < 30) return null; if (n <= W) return 0; let sum = 0, best = -1, bi = 0; for (let i = 0; i < n; i++) { sum += REC[i][7]; if (i >= W) sum -= REC[i - W][7]; if (i >= W - 1 && sum > best) { best = sum; bi = i - W + 1; } } return bi; }
 function startReplay() { if (RPY || !D) return; const i0 = bestWin(); if (i0 === null) { say('Run too short to replay', '#fff'); return; } for (const o of OVS) $(o).hidden = true;
   RPY = { i0, i1: Math.min(REC.length - 1, i0 + 100), t: 0, save: Object.assign({}, D), rec: null }; try { unfillPath(RPY.i0, RPY.i1); } catch (e) {} RPY.rec = recStart(); D.dead = false; D.tower = null; D.lying = false; replaySet(i0); cam.x = D.x; cam.y = D.y; msgs.length = 0; }
