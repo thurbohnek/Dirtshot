@@ -941,7 +941,7 @@ function step(dt) {
     const dA = D.ang - prevA; D.flipAcc += dA; if (Math.abs(D.flipAcc) >= TAU - 0.3) { D.flipAcc -= Math.sign(D.flipAcc) * TAU; D.flips++; say(D.flips > 1 ? `FLIP ×${D.flips}!` : 'FLIP!', '#7df9ff'); SFX.flip(D.flips); addChain(1); }
     const dd = angDiff(D.ang, va); sp *= Math.exp(-reentryStep(dt, atm, dd, sp) * 0.22 * dt); if (Math.abs(dd) < 1.9) va += clamp(dd, -1, 1) * 1.5 * (1 + 0.12 * U('fin')) * D.fin * atm * dt; sp *= Math.exp(-(0.01 + 0.05 * Math.abs(Math.sin(dd)) * D.fin) * atm * dt);
     D.vx = Math.cos(va) * sp; D.vy = Math.sin(va) * sp; { const [ax, ay] = airAcc(D.x, D.y, D.vx, D.vy); D.vx += ax * dt; D.vy += ay * dt; }
-    D.x += D.vx / kAt(D.x, D.y) * dt; D.y += D.vy * dt; if (coreCross()) return; frameCheck(); D.heat = Math.max(0, D.heat + HEAT[AIR] * dt);
+    { const dx = D.vx / kAt(D.x, D.y) * dt; D.x += dx; D.ang -= dx / bodyR(D.x); } D.y += D.vy * dt; if (coreCross()) return; frameCheck(); D.heat = Math.max(0, D.heat + HEAT[AIR] * dt);
     if (D.airT > 0.2 && D.y < surf(D.x) - 2) { const c = Math.cos(D.ang), sn = Math.sin(D.ang); for (const t of [-56, -36, -16]) { const px = D.x + c * t, py = D.y + sn * t; if (py > surf(px) + 2) { const sa = Math.atan2(surf(px + 6) - surf(px - 6), 12), vin = -D.vx * Math.sin(sa) + D.vy * Math.cos(sa); if (vin > 0) { layDown(sa); return; } } } }
     const m0 = mat(D.x, D.y); D.mat = m0; if (m0 === GAS) gasHere(D.x, D.y, dt);
     if (!OPEN(m0)) {
@@ -967,7 +967,7 @@ function step(dt) {
     if (m === WATER && D.lastMat !== WATER && thr('cool', 1.5)) { SFX.splash(); say('Cooled', '#9fdcff'); }
     D.lastMat = m;
     if (D.heat > 0.55 && rnd() < dt * 30 * (D.heat - 0.4)) parts.push({ k: 'haze', x: D.x + (rnd() - 0.5) * 30, y: D.y + (rnd() - 0.5) * 20, vx: (rnd() - 0.5) * 20, vy: -40 - rnd() * 40, t: 0, life: 0.6 + rnd() * 0.4, s: 8 + rnd() * 10, g: 0 });
-    D.x += Math.cos(D.ang) * D.s * dt / kAt(D.x, D.y); D.y += Math.sin(D.ang) * D.s * dt; if (coreCross()) return;
+    { const dx = Math.cos(D.ang) * D.s * dt / kAt(D.x, D.y); D.x += dx; D.ang -= dx / bodyR(D.x); } D.y += Math.sin(D.ang) * D.s * dt; if (coreCross()) return;
     { const tr = D.trail || (D.trail = []), n = tr.length; if (!n || Math.abs(D.x - tr[n - 2]) * kAt(D.x, D.y) + Math.abs(D.y - tr[n - 1]) > 70) { tr.push(D.x, D.y); if (tr.length > 8000) tr.splice(0, 2000); } }
     { const rc = bodyR(D.x) - D.y; if (rc < 3200 && !isMoon(D.x)) { D.heat += 0.5 * dt; if (thr('icore', 2)) say('INNER CORE!', '#ffb030', true); } }
     carve(D.px, D.py, TR, D.x, D.y); if (Math.hypot(D.x - D.segX, D.y - D.segY) > 34) { D.segX = D.x; D.segY = D.y; const L = FALL[m]; if (L) fallEv.push({ x: D.x + (rnd() - 0.5) * 16, y: D.y, t: T + L.d * (0.6 + rnd() * 0.9), gen: 0 }); }
