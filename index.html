@@ -1068,10 +1068,10 @@ let MUSH = null, BGS = 0, SFCS = null; const PUFS = [];
 function pufSprite(h) { const q = Math.round(clamp(h, 0, 1) * 20); if (PUFS[q]) return PUFS[q]; const c = document.createElement('canvas'); c.width = c.height = 96; const x = c.getContext('2d'), hh = q / 20, g = x.createRadialGradient(40, 38, 5, 48, 48, 48); g.addColorStop(0, heatCol(Math.min(1, hh + 0.12), 1)); g.addColorStop(0.65, heatCol(hh, 0.9)); g.addColorStop(1, heatCol(Math.max(0, hh - 0.15), 0)); x.fillStyle = g; x.fillRect(0, 0, 96, 96); return PUFS[q] = c; }
 function mushStart(x, gy, surface) { const R = rngFor(Math.floor(x) + 31337), P = []; const add = (k, n) => { for (let i = 0; i < n; i++) P.push({ k, a: R() * TAU, r: R(), s: R(), h: R(), o: R() }); }; add('cap', 64); add('stem', 26); add('base', 22); MUSH = { x, y: gy, t: 0, P, sf: surface ? 1 : 0.55 }; }
 function heatCol(h, a) { const st = [[0, [72, 60, 58]], [0.18, [120, 70, 50]], [0.38, [196, 70, 26]], [0.6, [255, 140, 40]], [0.8, [255, 214, 110]], [1, [255, 250, 225]]]; let i = 0; while (i < st.length - 2 && h > st[i + 1][0]) i++; const [h0, c0] = st[i], [h1, c1] = st[i + 1], f = clamp((h - h0) / (h1 - h0), 0, 1); return `rgba(${c0.map((v, j) => Math.round(v + (c1[j] - v) * f)).join(',')},${a})`; }
-function drawMush(x) { const M = MUSH; if (!M) return; M.t += camDt; const t = M.t; if (t > 11) { MUSH = null; return; } const sf = M.sf, e1 = 1 - Math.exp(-t / 1.3), e2 = 1 - Math.exp(-t / 0.9), fade = clamp((11 - t) / 3, 0, 1);
+function drawMush(x) { const M = MUSH; if (!M) return; M.t += camDt; const t = M.t; if (t > 10) { MUSH = null; return; } const ex = Math.max(0, t - 2.8), gr = 1 + ex * 0.22, sp = 1 + ex * 0.12, sf = M.sf, e1 = 1 - Math.exp(-t / 1.3), e2 = 1 - Math.exp(-t / 0.9), fade = Math.pow(clamp(1 - ex / 6.8, 0, 1), 1.3); /* after the fireball cools the cloud swells, drifts apart and fades away */
   const capY = -(260 + 1500 * e1) * sf, Rw = (180 + 560 * e2) * sf, Rh = Rw * 0.42, roll = t * 0.7;
   x.save(); if (FAST) setAffL(x, M.x, M.y); else x.translate(M.x, M.y);
-  const puff = (px, py, r, h, al) => { if (al <= 0.01 || r <= 1) return; x.globalAlpha = al; x.drawImage(pufSprite(h), px - r, py - r, r * 2, r * 2); x.globalAlpha = 1; };
+  const puff = (px, py, r, h, al) => { if (al <= 0.01 || r <= 1) return; px *= sp; py = py * (1 + ex * 0.04) - ex * 40 * sf; r *= gr; x.globalAlpha = al; x.drawImage(pufSprite(h), px - r, py - r, r * 2, r * 2); x.globalAlpha = 1; };
   // ground surge spreading out along the surface
   for (const p of M.P) if (p.k === 'base') { const side = p.a < Math.PI ? -1 : 1, d = (120 + (500 + 600 * p.r) * e2) * sf, h = clamp(0.7 - t / 3 + p.h * 0.15, 0, 1); puff(side * d * (0.3 + 0.7 * p.s), -60 - 50 * p.o * e2, (120 + 90 * p.s) * (0.6 + 0.6 * e2) * sf, h, 0.88 * fade); }
   // stem from the ground up into the cap
@@ -1268,7 +1268,7 @@ function viewGeom(s) { const Rb = bodyR(cam.x), rc = Rb - cam.y, pcx = VW / 2, p
   let uL, uspan; if (full) { uL = cam.x - Rb * Math.PI; uspan = TAU * Rb; } else { const sp = thmax - thmin, pad = sp * 0.03 + 0.002; uL = cam.x + (thmin - pad) * Rb; uspan = (sp + 2 * pad) * Rb; }
   const yspan = Math.max(50, rmax - rmin); return { s, Rb, rc, pcx, pcy, uL, uspan, rmax, yT: Rb - rmax, yspan, full, sx: VW / uspan, sy: VH / yspan }; }
 function W2S(u, y) { const G2 = GV; if (!G2) return [0, 0]; const th = (u - cam.x) / G2.Rb, r = G2.Rb - y, X = G2.pcx + Math.sin(th) * r * G2.s, Y = G2.pcy - Math.cos(th) * r * G2.s, cr = Math.cos(camRot), sr = Math.sin(camRot), dx = X - VW / 2, dy = Y - VH / 2; return [VW / 2 + cr * dx - sr * dy, VH / 2 + sr * dx + cr * dy]; }
-const VER = 'v89';
+const VER = 'v90';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
