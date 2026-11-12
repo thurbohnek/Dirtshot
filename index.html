@@ -253,15 +253,15 @@ function rngFor(ci) { let s = (ci * 9301 + 49297 + SEED * 7717) % 233280; return
 const NCE = CPL / CW, NCM = CMN / CW, MCI = M0U / CW;
 function genFeatures(ci) { const moon = ci > MCI / 2, cm = moon ? (((ci - MCI) % NCM) + NCM) % NCM : ((ci % NCE) + NCE) % NCE, R = rngFor(moon ? cm + 90000 : cm), x0 = ci * CW, bio = biome(x0 + CW / 2), F = { bio, gas: [], water: [], coal: [], nitro: [], gems: [], caves: [], sand: [], lava: [], shafts: [], fos: [] };
   const RB = moon ? RMN : RPL, kd = d => Math.max(0.12, (RB - d) / RB), CAP = 1400; // flat features get wider with depth so they stay round on the globe
-  if (moon) { for (let ci2 = 0; ci2 < 3; ci2++) if (R() < 0.45) { const x = x0 + R() * CW, d = 150 + R() * 5600, sc = 1 + d / 3000; F.caves.push({ x, y: surf(x) + d, rx: Math.min(CAP, (70 + R() * 90) * sc / kd(d)), ry: (40 + R() * 45) * sc, ph: R() * 6 }); }
+  if (moon) { for (let ci2 = 0; ci2 < 3; ci2++) if (R() < 0.45) { const x = x0 + R() * CW, d = 150 + R() * 5600, sc = 1 + d / 6000; F.caves.push({ x, y: surf(x) + d, rx: Math.min(CAP, (70 + R() * 90) * sc / kd(d)), ry: (40 + R() * 45) * sc, ph: R() * 6 }); }
     const nE = 5 + (R() * 6 | 0); for (let i = 0; i < nE; i++) { const x = x0 + R() * CW, d = 40 + R() * 5800; F.gems.push({ x, y: surf(x) + d, k: d < 400 ? 2 : 3, alive: true, ph: R() * 6 }); }
     F.mst = []; if (R() < 0.3) { const x = x0 + R() * CW, d = 120 + R() * 4800; F.mst.push({ x, y: surf(x) + d, alive: true, ph: R() * 6 }); }
     if (R() < 0.3) { const x = x0 + R() * CW, d = 200 + R() * 4000; F.fos.push({ x, y: surf(x) + d, id: [5, 8, 9][R() * 3 | 0], alive: true, ph: R() * 6 }); }
     return F; }
   if (cm < 2 || cm >= NCE - 2) return F;
-  const nG = 2 + (R() < 0.45 ? 1 : 0); for (let i = 0; i < nG; i++) { const x = x0 + R() * CW, d = 120 + R() * 20000, sc = 1 + d / 9000; F.gas.push({ x, y: surf(x) + d, rx: (48 + R() * 55) * sc / kd(d), ry: (30 + R() * 30) * sc, gas: 1, ph: R() * 6 }); }
-  for (let wi = 0; wi < 2; wi++) if (R() < 0.42) { const x = x0 + R() * CW, d = 160 + R() * (wi ? 11000 : 2400), sc = 1 + d / 8000; F.water.push({ x, y: surf(x) + d, rx: (50 + R() * 50) * sc / kd(d), ry: (28 + R() * 22) * sc, ph: R() * 6 }); }
-  F.caves = []; for (let ci2 = 0; ci2 < 4; ci2++) if (R() < 0.42) { const x = x0 + R() * CW, d = 180 + R() * 22500, sc = 1 + d / 8000; F.caves.push({ x, y: surf(x) + d, rx: Math.min(CAP, (70 + R() * 90) * sc / kd(d)), ry: (40 + R() * 45) * sc, ph: R() * 6 }); }
+  const nG = 2 + (R() < 0.45 ? 1 : 0); for (let i = 0; i < nG; i++) { const x = x0 + R() * CW, d = 120 + R() * 20000, sc = 1 + d / 16000; F.gas.push({ x, y: surf(x) + d, rx: (48 + R() * 55) * sc / kd(d), ry: (30 + R() * 30) * sc, gas: 1, ph: R() * 6 }); }
+  for (let wi = 0; wi < 2; wi++) if (R() < 0.42) { const x = x0 + R() * CW, d = 160 + R() * (wi ? 11000 : 2400), sc = 1 + d / 15000; F.water.push({ x, y: surf(x) + d, rx: (50 + R() * 50) * sc / kd(d), ry: (28 + R() * 22) * sc, ph: R() * 6 }); }
+  F.caves = []; for (let ci2 = 0; ci2 < 4; ci2++) if (R() < 0.42) { const x = x0 + R() * CW, d = 180 + R() * 22500, sc = 1 + d / 15000; F.caves.push({ x, y: surf(x) + d, rx: Math.min(CAP, (70 + R() * 90) * sc / kd(d)), ry: (40 + R() * 45) * sc, ph: R() * 6 }); }
   if (R() < 0.6) { const x = x0 + R() * CW, d = 300 + R() * 9000; F.coal.push({ x, y: surf(x) + d, rx: (120 + R() * 110) / kd(d), ry: 13 + R() * 9, rot: (R() - 0.5) * 0.4, burnt: false }); }
   const nN = 1 + (R() < 0.5 ? 1 : 0); for (let i = 0; i < nN; i++) { let x = x0 + R() * CW, y = surf(x) + 70 + R() * 20000; if (F.gas.length && R() < 0.4) { const g = F.gas[0]; x = g.x + g.rx * 0.9; y = g.y; } if (!F.caves.some(c => inEll(c, x, y, 30))) F.nitro.push({ x, y, alive: true, ph: R() * 6, rot: (R() - 0.5) * 1.6 }); }
   const nE = 20 + (R() * 12 | 0); for (let i = 0; i < nE; i++) { const x = x0 + R() * CW, d = 50 + R() * 23000; const k = d < 600 ? 0 : d < 2400 ? 1 : d < 7000 ? 2 : 3; F.gems.push({ x, y: surf(x) + d, k, alive: true, ph: R() * 6 }); }
@@ -430,7 +430,7 @@ function phTile(x, ch, ty) { const bot = Math.min(ty + TH, Y1), xs = []; for (le
   const bb = xs.map(w => Math.max(ty, Math.min(bot, bed(w)))); if (bb.some(v => v < bot)) { x.beginPath(); x.moveTo(xs[0], bb[0]); for (let j = 1; j < xs.length; j++) x.lineTo(xs[j], bb[j]); x.lineTo(xs[xs.length - 1], bot); x.lineTo(xs[0], bot); x.closePath(); x.fillStyle = MCOL[BED][0]; x.fill(); } }
 function getTile(ch, k, lazy) { let t = ch.tiles[k]; if (t) return t; if (lazy && tileBudget <= 0 && performance.now() > tileDeadline) return null; tileBudget--; tilesBuilt++; ensureBand(ch, k); t = buildTile(ch, k); if (!t) { evictTiles(cam.x, cam.y, true); return null; } ch.tiles[k] = t; tileCount += t.kr || 1; t.used = frameNo; if (tileCount > MAXT + 25) evictTiles(cam.x, cam.y);
   if ((ch.built && ch.built[k]) || (ch.dug && ch.dug[k])) { ensureBg(t); const x = t.ctx, r0 = k * RPT, r1 = Math.min(MROWS, r0 + RPT); x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; x.beginPath(); for (let rr = r0; rr < r1; rr++) for (let cc = 0; cc < MCOLS; cc++) if (ch.mask[rr * MCOLS + cc] === 1) { const cx = cc * CELL + 4, cy = Y0 + rr * CELL + 4 - t.top; x.moveTo(cx + 7.5, cy); x.arc(cx, cy, 7.5, 0, TAU); } x.fill(); x.restore(); }
-  if (ch.built && ch.built[k] && ch.polys) for (const P of ch.polys) { if (P.y1 < t.top || P.y0 > t.top + t.H) continue; for (const [c, k2] of [[t.ctx, 1], ...(P.open && t.bg ? [[t.bg.getContext('2d'), 0.5]] : [])]) { c.save(); c.globalCompositeOperation = 'destination-out'; c.fillStyle = '#000'; c.globalAlpha = 1; c.beginPath(); P.pts.forEach(([a, b], i) => i ? c.lineTo((a - ch.x0) * k2, (b - t.top) * k2) : c.moveTo((a - ch.x0) * k2, (b - t.top) * k2)); c.closePath(); c.fill(); c.restore(); } }
+  if (ch.polys) for (const P of ch.polys) { if (P.y1 < t.top || P.y0 > t.top + t.H) continue; for (const [c, k2] of [[t.ctx, 1], ...(P.open && t.bg ? [[t.bg.getContext('2d'), 0.5]] : [])]) { c.save(); c.globalCompositeOperation = 'destination-out'; c.fillStyle = '#000'; c.globalAlpha = 1; c.beginPath(); P.pts.forEach(([a, b], i) => i ? c.lineTo((a - ch.x0) * k2, (b - t.top) * k2) : c.moveTo((a - ch.x0) * k2, (b - t.top) * k2)); c.closePath(); c.fill(); c.restore(); } }
   (ch.built || (ch.built = new Uint8Array(NT)))[k] = 1; return t; }
 function addPoly(pts, open) { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const [a, b] of pts) { x0 = Math.min(x0, a); x1 = Math.max(x1, a); y0 = Math.min(y0, b); y1 = Math.max(y1, b); } const P = { pts, open, y0, y1 }; for (let ci = Math.floor(x0 / CW); ci <= Math.floor(x1 / CW); ci++) (getChunk(ci).polys || (getChunk(ci).polys = [])).push(P); }
 function ensureBg(t) { if (t.bg) return t.bg; const W = CW, H = t.H, kr = t.kr || 1; const bg = document.createElement('canvas'); bg.width = Math.ceil(W * kr / 2); bg.height = Math.ceil(H / 2); const bx = bg.getContext('2d'); if (!bx) { evictTiles(cam.x, cam.y, true); return null; } bx.drawImage(t.fg, 0, 0, bg.width, H / 2); bx.globalCompositeOperation = 'source-atop'; bx.fillStyle = 'rgba(28,14,8,0.62)'; bx.fillRect(0, 0, W, H); bx.globalCompositeOperation = 'source-over'; bx.setTransform(kr, 0, 0, 1, 0, 0); t.bg = bg; return bg; }
@@ -660,7 +660,8 @@ const MIS = {
   mstone: { t: n => `Bring ${n} moonstone${n > 1 ? 's' : ''} back to Earth`, n: l => 1 + Math.min(4, l / 6 | 0), v: () => S.mdel || 0 },
   moonthru: { t: () => 'Drill straight through the moon', n: () => 1, v: () => S.moonCore || 0 },
   bio: { t: n => `Reach the ${BIO[n].toLowerCase()}`, n: l => 1 + Math.min(2, l / 4 | 0), v: () => { const b = biome(D.x); return b >= 1 ? b : 0; } } };
-function newMission(excl) { const ks = Object.keys(MIS).filter(k => !excl.includes(k)); const k = ks[Math.random() * ks.length | 0]; const l = SV.mlv; return { k, n: MIS[k].n(l), r: 15 + 8 * Math.min(l, 20), ok: 0 }; }
+const MIS_MIN = { space: 4, orbit: 8, core: 8, moon: 12, mstone: 14, moonthru: 16 };
+function newMission(excl) { const ks = Object.keys(MIS).filter(k => !excl.includes(k) && (SV.mlv || 0) >= (MIS_MIN[k] || 0)); const k = ks[Math.random() * ks.length | 0]; const l = SV.mlv; return { k, n: MIS[k].n(l), r: (15 + 8 * Math.min(l, 20)) * (MIS_MIN[k] ? 3 : 1), ok: 0 }; }
 function fillMissions() { SV.mis = (SV.mis || []).filter(m => MIS[m.k] && !m.ok); while (SV.mis.length < 3) SV.mis.push(newMission(SV.mis.map(m => m.k))); saveSV(); }
 function checkMissions() { if (!D || !S.perf && S.perf !== 0) return; for (const m of SV.mis) if (!m.ok && MIS[m.k].v() >= m.n) { m.ok = 1; runReward += m.r; SV.bank += m.r; SV.mlv++; saveSV(); say('MISSION DONE  ◆+' + m.r, '#c6ff3d', true); SFX.gem(3); buzz([20, 30, 20]); } }
 const misHTML = () => '<h3>Missions</h3>' + SV.mis.map(m => `<div class="${m.ok ? 'ok' : ''}"><i>${m.ok ? '✓' : ''}</i><span>${MIS[m.k].t(m.n)}</span><em>◆ ${m.r}</em></div>`).join('');
@@ -695,7 +696,7 @@ function stepLying(dt) { D.fin = Math.max(0, D.fin - dt * 6);
   // nesa ned i fast masse + man presser = bor seg ned
   const tx = D.x + Math.cos(D.ang) * (TIP + 18), ty = D.y + Math.sin(D.ang) * (TIP + 18); const down = Math.sin(D.ang);
   if (!OPEN(mat(tx, ty)) && down > 0.35 && turn !== 0) { D.lying = false; D.air = false; D.s = Math.max(200, Math.abs(D.lv || 0)); D.solidT = 0.15; D.fin = 0; SFX.thump(0.3); dirt(D.x, D.y + 8, 14, MCOL[1][2]); }
-  if (!isMoon(D.x)) D.maxX = Math.max(D.maxX, D.x); D.heat = Math.max(0, D.heat - 0.2 * dt); }
+  if (!isMoon(D.x)) D.maxX = Math.max(D.maxX, D.x - (D.xo || 0)); D.heat = Math.max(0, D.heat - 0.2 * dt); }
 function say(t, col, big) { msgs.push({ t, col: col || '#fff', big: !!big, life: 0 }); if (msgs.length > 3) msgs.shift(); }
 function at(d, fn) { ev.push({ t: T + d, fn }); }
 function enterGround() { D.orbU = 0; D.orbX = undefined; if (isMoon(D.x)) D.mLand = true; if (!isMoon(D.x) && D.mstone > 0) { const v = D.mstone * 120; gems += v; S.mdel = (S.mdel || 0) + D.mstone; say(`MOONSTONES DELIVERED ×${D.mstone}  ◆+${v}`, '#d8b8ff', true); SFX.bank(); addChain(5); D.mstone = 0; } 
@@ -716,6 +717,7 @@ function enterGround() { D.orbU = 0; D.orbX = undefined; if (isMoon(D.x)) D.mLan
   SFX.dive(q); SFX.thump(sp / 1500); { const C = colOf(TOPM[biome(D.x)]), k = clamp(sp / 2200, 0.2, 1), sy = surf(D.x); spray(D.x, sy, -Math.PI / 2 - Math.cos(va) * 0.5, 1.6, 26 + 30 * k, 220, 420 + 500 * k, [C[0], C[1], C[2]], 5, 10 + 9 * k); dust(D.x, sy - 10, 10, C[2], 200); rings.push({ x: D.x, y: sy, r: 70 + 90 * k, t: 0, d: 0.3 }); { const mx = D.x; at(0.06, () => mound(mx, k, false)); } D.entX = D.x; D.entT = T; if ((D.mach || 0) >= 1) supImpact(D.x, sy, va, false); } shake = Math.max(shake, 6 + sp / 200); D.gav = 0; buzz(35); }
 let camRot = 0;
 function coreCross() { const Rb = bodyR(D.x); if (D.y < Rb - 18 || (D.air ? D.vy : Math.sin(D.ang)) <= 0) return false; const C = bodyC(D.x), mir = o => { o.x += C / 2; o.y = 2 * Rb - o.y; };
+  if (!isMoon(D.x)) { D.xo = (D.xo || 0) + C / 2; D.lapU0 += C / 2; D.orbX = undefined; }
   mir(D); D.ang = norm(D.ang + Math.PI); D.vx = -D.vx; D.vy = -D.vy; D.px = D.x; D.py = D.y; D.segX = D.x; D.segY = D.y; mir(cam); camRot += Math.PI;
   for (const p of parts) { mir(p); p.vx = -p.vx; p.vy = -p.vy; } FLY.forEach(f => f.a += Math.PI); rings.length = 0; shocks.length = 0; warps.length = 0;
   S.coreN = (S.coreN || 0) + (isMoon(D.x) ? 0 : 1); if (isMoon(D.x)) S.moonCore = 1; else grabCore();
@@ -884,11 +886,11 @@ function clearIn(cx, cy, rx, ry) { const inside = (px, py, pr) => { const dx = (
     for (const o of F.fos) if (o.alive && inside(o.x, o.y, 0)) o.alive = false;
     for (const c of F.coal) if (!c.burnt && inside(c.x, c.y, 0)) c.burnt = true; }
   for (let r = Math.floor((cx - rx) / LAKEW) - 1; r <= Math.floor((cx + rx) / LAKEW) + 1; r++) { const L = lakeOf(r); if (L && !L.gone && inside(L.x, L.y, L.rx * 0.5)) { L.gone = true; for (let i = 0; i < 40; i++) parts.push({ k: 'fire', x: L.x + (rnd() - 0.5) * L.rx * 1.6, y: L.y + rnd() * L.ry * 0.5, vx: (rnd() - 0.5) * 900, vy: -200 - rnd() * 900, t: 0, life: 1 + rnd(), s: 20 + rnd() * 30, g: 900 }); } } }
-function bigCrater(cx, cy, rx, ry, open, smooth) { if (!smooth) clearIn(cx, cy, rx, ry); const pts = []; for (let i = 0; i < 64; i++) { const a = i / 64 * TAU, j = smooth ? 0.85 : 0.88 + 0.2 * rnd(); pts.push([cx + Math.cos(a) * rx * j, cy + Math.sin(a) * ry * j]); } addPoly(pts, open);
+function bigCrater(cx, cy, rx, ry, open, smooth) { if (!smooth) clearIn(cx, cy, rx, ry); const pts = []; for (let i = 0; i < 64; i++) { const a = i / 64 * TAU, j = smooth ? 0.85 : 0.84 + 0.08 * rnd(); pts.push([cx + Math.cos(a) * rx * j, cy + Math.sin(a) * ry * j]); } addPoly(pts, open);
   const path = (x, ox, oy, k) => { x.beginPath(); pts.forEach(([a, b], i) => i ? x.lineTo((a - ox) * k, (b - oy) * k) : x.moveTo((a - ox) * k, (b - oy) * k)); x.closePath(); };
   forTilesLater(cx - rx * 1.3, cx + rx * 1.3, cy - ry * 1.3, cy + ry * 1.3, (x, ox, oy, ch, t) => { x.save(); if (!smooth) { x.globalCompositeOperation = 'source-atop'; path(x, ox, oy, 1); x.strokeStyle = 'rgba(25,12,6,0.75)'; x.lineWidth = 70; x.stroke(); x.strokeStyle = 'rgba(60,30,12,0.5)'; x.lineWidth = 130; x.stroke(); } x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; path(x, ox, oy, 1); x.fill(); x.restore();
     if (open && t && t.bg) { const b = t.bg.getContext('2d'); b.save(); b.globalCompositeOperation = 'destination-out'; b.fillStyle = '#000'; b.globalAlpha = 1; path(b, ox, oy, 0.5); b.fill(); b.restore(); } });
-  for (let gy = Math.floor((cy - ry - Y0) / CELL); gy <= Math.floor((cy + ry - Y0) / CELL); gy++) for (let gx = Math.floor((cx - rx) / CELL); gx <= Math.floor((cx + rx) / CELL); gx++) { const c = cellAt(gx, gy); if (!c) continue; const dx = (gx * CELL + 4 - cx) / rx, dy = (Y0 + gy * CELL + 4 - cy) / ry; if (dx * dx + dy * dy < 0.8) (c.ch.mask[c.i] = 1, (c.ch.dug || (c.ch.dug = {}))[(c.i / MCOLS / RPT) | 0] = 1); } }
+  for (let gy = Math.floor((cy - ry - Y0) / CELL); gy <= Math.floor((cy + ry - Y0) / CELL); gy++) for (let gx = Math.floor((cx - rx) / CELL); gx <= Math.floor((cx + rx) / CELL); gx++) { const c = cellAt(gx, gy); if (!c) continue; const dx = (gx * CELL + 4 - cx) / rx, dy = (Y0 + gy * CELL + 4 - cy) / ry; if (dx * dx + dy * dy < 0.774) (c.ch.mask[c.i] = 1, (c.ch.dug || (c.ch.dug = {}))[(c.i / MCOLS / RPT) | 0] = 1); } }
 // the fuel cells go up: a small nuclear blast with a mushroom cloud and a huge crater
 let warps = [], quake = 0, wb = null, C_dir = 0;
 function nuke(x, y) { const sy = surf(x), nearSurf = y - sy < 700, C = colOf(mat(x, y + 40) || ROCK), RX = 1150, RY = nearSurf ? 700 : 820, cy = nearSurf ? sy : y;
@@ -988,7 +990,7 @@ function step(dt) {
   if (MODE === 'daily') { ghostT += dt; if (ghostT >= 0.1 && ghostRec.length < 14000) { ghostT -= 0.1; ghostRec.push(Math.round(D.x), Math.round(D.y)); } }
   if (tut) stepTut(dt);
   { const v = D.air ? Math.hypot(D.vx, D.vy) : D.s; D.mach = D.air && !(D.atm > 0.03) ? 0 : v / MACH1; /* no air, no sound barrier */ if (!D.sup && D.mach >= 1) { D.sup = true; sonicBoom(); } else if (D.sup && D.mach < 0.93) D.sup = false; const ml = D.mach >= 3 ? 3 : D.mach >= 2 ? 2 : 1; if (ml > (D.mlv || 1)) { D.mlv = ml; machBoom(ml); } else if ((D.mlv || 1) > 1 && D.mach < D.mlv - 0.15) D.mlv--; if (D.vapor > 0) D.vapor -= dt; }
-  if (!isMoon(D.x)) D.maxX = Math.max(D.maxX, D.x); D.spin += (D.air ? 6 : 10 + D.s / 40) * dt;
+  if (!isMoon(D.x)) D.maxX = Math.max(D.maxX, D.x - (D.xo || 0)); D.spin += (D.air ? 6 : 10 + D.s / 40) * dt;
   if (!D.air && thr('boost', 0.1)) {}
 }
 const GEMC = [['#ffb347', '#fff1c9'], ['#3ee08f', '#d9ffe9'], ['#c070ff', '#f5e3ff'], ['#bff4ff', '#ffffff']];
@@ -1074,7 +1076,7 @@ function drawLOD(x, left, right, vtop, vbot) { const n = 240, st = (right - left
       x.beginPath(); x.moveTo(us[j0], top(j0)); for (let j = j0 + 1; j <= j1; j++) x.lineTo(us[j], top(j)); for (let j = j1; j >= j0; j--) x.lineTo(us[j], bot(j)); x.closePath(); x.fillStyle = MCOL[m][0]; x.fill(); j0 = j1; } }
   // grass/snow rim
   x.strokeStyle = 'rgba(255,255,255,0.18)'; x.lineWidth = 6 / GV.sy; x.beginPath(); for (let j = 0; j <= n; j++) j ? x.lineTo(us[j], ss[j]) : x.moveTo(us[j], ss[j]); x.stroke();
-  if (right - left < 30000) { x.fillStyle = 'rgba(20,10,6,0.9)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) for (const cv of cavesOf(ci)) { if (cv.y + cv.ry < vtop || cv.y - cv.ry > vbot) continue; x.beginPath(); x.ellipse(cv.x, cv.y, cv.rx, cv.ry, 0, 0, TAU); x.fill(); } }
+  if (right - left < 30000) { x.fillStyle = 'rgba(28,14,8,0.6)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) for (const cv of cavesOf(ci)) { if (cv.y + cv.ry < vtop || cv.y - cv.ry > vbot) continue; x.beginPath(); x.ellipse(cv.x, cv.y, cv.rx, cv.ry, 0, 0, TAU); x.fill(); } }
   if (D && D.trail && D.trail.length > 3) { x.strokeStyle = 'rgba(22,12,8,0.95)'; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = Math.max(TR * 2, 3 / GV.sy); x.beginPath(); for (let i = 0; i < D.trail.length; i += 2) { const px = D.trail[i], py = D.trail[i + 1]; if (i === 0 || Math.abs(px - D.trail[i - 2]) > 3000) x.moveTo(px, py); else x.lineTo(px, py); } x.stroke(); } }
 // the moon hangs fixed in space; the planet's centre is the origin
 const MDIST = RPL * 4.2, MANG = 0.42, MCX = Math.sin(MANG) * MDIST, MCY = -Math.cos(MANG) * MDIST;
@@ -1200,7 +1202,7 @@ function render() {
   // screen-space
   x.setTransform(dpr, 0, 0, dpr, 0, 0);
   // darkness deep down / at night, with the drill's lamp
-  { const zf = clamp((s - 0.05) / 0.1, 0, 1), cf = clamp((bodyR(cam.x) - cam.y - 2600) / 4000, 0.3, 1), nA = 0.55 * nightF * zf, sY0 = (surf(cam.x) - GV.yT) * sY, yA = sY0 + 160 * sY, yB = sY0 + 1500 * sY;
+  { const zf = clamp((s - 0.05) / 0.1, 0, 1), cf = clamp((bodyR(cam.x) - cam.y - 1200) / 2500, 0.35, 1), nA = 0.55 * nightF * zf, sY0 = (surf(cam.x) - GV.yT) * sY, yA = sY0 + 160 * sY, yB = sY0 + 1500 * sY;
     if (zf > 0.01 && (nA > 0.02 || yA < VH)) { const q = 0.4, W = Math.ceil(VW * q), H = Math.ceil(VH * q); if (dk.width !== W || dk.height !== H) { dk.width = W; dk.height = H; }
       const d = dkx; d.setTransform(q, 0, 0, q, 0, 0); d.globalCompositeOperation = 'copy'; const gg = d.createLinearGradient(0, yA, 0, yB); gg.addColorStop(0, `rgba(6,5,14,${nA})`); gg.addColorStop(1, `rgba(6,5,14,${Math.max(nA, 0.8 * zf * cf)})`); d.fillStyle = gg; d.fillRect(0, 0, VW, VH);
       d.globalCompositeOperation = 'destination-out'; d.fillStyle = '#000'; d.globalAlpha = 1; const SX = wx => wx * sX + ox, SY = wy => wy * sY + oy;
