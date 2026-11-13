@@ -1008,12 +1008,14 @@ function enterGround() { D.orbU = 0; D.orbX = undefined; if (isMoon(D.x)) D.mLan
   SFX.dive(q); SFX.thump(sp / 1500); { const C = colOf(TOPM[biome(D.x)]), k = clamp(sp / 2200, 0.2, 1), sy = surf(D.x); spray(D.x, sy, -Math.PI / 2 - Math.cos(va) * 0.5, 1.6, 26 + 30 * k, 220, 420 + 500 * k, [C[0], C[1], C[2]], 5, 10 + 9 * k); dust(D.x, sy - 10, 10, C[2], 200); rings.push({ x: D.x, y: sy, r: 70 + 90 * k, t: 0, d: 0.3 }); { const mx = D.x; at(0.06, () => mound(mx, k, false)); } D.entX = D.x; D.entT = T; if ((D.mach || 0) >= 1) supImpact(D.x, sy, va, false); } shake = Math.max(shake, 6 + sp / 200); D.gav = 0; buzz(35); }
 let camRot = 0;
 /* near the centre the flat world wraps tightly round the core, so any sideways motion makes the drill whirl round it. Inside the inner core the drill is drawn straight through the centre instead */
+/* a nearly straight dive (no steering) is kept dead straight, so it goes through the centre and out straight on the far side */
+function radialAssist(dt, rc) { if (turn || D.air || rc <= 0) return; const Rb = bodyR(D.x), lim = rc < Rb * 0.6 ? 0.6 : 0.35, k = Math.min(1, dt * 1.6); for (const tgt of [Math.PI / 2, -Math.PI / 2]) { const d = angDiff(tgt, D.ang); if (Math.abs(d) < lim) { D.ang = norm(D.ang + d * k); return; } } }
 function coreFunnel(dt, rc) { if (rc > 2600 || rc < 0) return; const f = 1 - rc / 2600, k = Math.min(1, dt * (1.2 + 9 * f * f));
   if (!D.air) { if (Math.sin(D.ang) > -0.3) { D.ang = norm(D.ang + angDiff(Math.PI / 2, D.ang) * k); D.gav *= 1 - k; } }
   else { const sp = Math.hypot(D.vx, D.vy); if (D.vy > -sp * 0.3) { const va = Math.atan2(D.vy, D.vx), na = va + angDiff(Math.PI / 2, va) * k; D.vx = Math.cos(na) * sp; D.vy = Math.sin(na) * sp; D.ang = norm(D.ang + angDiff(na, D.ang) * k); } } }
-function coreCross() { const Rb = bodyR(D.x); if (D.y < Rb - 18 || (D.air ? D.vy : Math.sin(D.ang)) <= 0) return false; const C = bodyC(D.x), mir = o => { o.x += C / 2; o.y = 2 * Rb - o.y; };
+function coreCross() { const Rb = bodyR(D.x), inw = D.air ? D.vy / (Math.hypot(D.vx, D.vy) || 1) : Math.sin(D.ang); if (D.y < Rb - (inw > 0.75 ? 420 : 18) || inw <= 0) return false; const radial = inw > 0.75 && !turn; const C = bodyC(D.x), mir = o => { o.x += C / 2; o.y = 2 * Rb - o.y; };
   if (!isMoon(D.x)) { D.xo = (D.xo || 0) + C / 2; D.lapU0 += C / 2; D.orbX = undefined; }
-  mir(D); D.ang = norm(D.ang + Math.PI); D.vx = -D.vx; D.vy = -D.vy; D.px = D.x; D.py = D.y; D.segX = D.x; D.segY = D.y; mir(cam); camRot += Math.PI; camHold = true;
+  mir(D); D.ang = norm(D.ang + Math.PI); D.vx = -D.vx; D.vy = -D.vy; if (radial) { /* a straight dive goes straight through and straight out the far side */ const sp = Math.hypot(D.vx, D.vy); D.ang = -Math.PI / 2; if (D.air) { D.vx = 0; D.vy = -sp; } } D.px = D.x; D.py = D.y; D.segX = D.x; D.segY = D.y; mir(cam); camRot += Math.PI; camHold = true;
   for (const p of parts) { mir(p); p.vx = -p.vx; p.vy = -p.vy; } FLY.forEach(f => f.a += Math.PI); rings.length = 0; shocks.length = 0; warps.length = 0;
   S.coreN = (S.coreN || 0) + (isMoon(D.x) ? 0 : 1); if (isMoon(D.x)) S.moonCore = 1; else grabCore();
   if (!S.core) { S.core = 1; gems += 250; say('CORE PIERCED!  ◆+250', '#ffd040', true); SFX.mach(3, true); flash = Math.max(flash, 0.6); } else say('THROUGH THE CORE!', '#ffd040', true); shake = Math.max(shake, 30); buzz([60, 40, 90]); addChain(4); return true; }
@@ -1328,7 +1330,7 @@ function step(dt) {
     if (D.heat > 0.55 && rnd() < dt * 30 * (D.heat - 0.4)) parts.push({ k: 'haze', x: D.x + (rnd() - 0.5) * 30, y: D.y + (rnd() - 0.5) * 20, vx: (rnd() - 0.5) * 20, vy: -40 - rnd() * 40, t: 0, life: 0.6 + rnd() * 0.4, s: 8 + rnd() * 10, g: 0 });
     { const dx = Math.cos(D.ang) * D.s * dt / kAt(D.x, D.y); D.x += dx; D.ang -= dx / bodyR(D.x); } D.y += Math.sin(D.ang) * D.s * dt; if (coreCross()) return;
     { const tr = D.trail || (D.trail = []), n = tr.length; if (!n || Math.abs(D.x - tr[n - 2]) * kAt(D.x, D.y) + Math.abs(D.y - tr[n - 1]) > 70) { tr.push(D.x, D.y); if (tr.length > 8000) tr.splice(0, 2000); } }
-    { const rc = bodyR(D.x) - D.y; if (rc < 3200 && !isMoon(D.x)) { D.heat += 0.5 * dt; if (thr('icore', 2)) say('INNER CORE!', '#ffb030', true); } coreFunnel(dt, rc); }
+    { const rc = bodyR(D.x) - D.y; if (rc < 3200 && !isMoon(D.x)) { D.heat += 0.5 * dt; if (thr('icore', 2)) say('INNER CORE!', '#ffb030', true); } coreFunnel(dt, rc); radialAssist(dt, rc); }
     carve(D.px, D.py, TR, D.x, D.y); if (Math.hypot(D.x - D.segX, D.y - D.segY) > 34) { D.segX = D.x; D.segY = D.y; const L = FALL[m]; if (L) fallEv.push({ x: D.x + (rnd() - 0.5) * 16, y: D.y, t: T + L.d * (0.6 + rnd() * 0.9), gen: 0 }); }
     if (rnd() < 0.8) { const C = m === WATER ? ['#7cc8ff', '#7cc8ff', '#c8ecff'] : m === COAL ? ['#2a2220', '#2a2220', '#555'] : colOf(m); const a = D.ang + Math.PI + (rnd() - 0.5) * 1.2, v = 100 + rnd() * 200; parts.push({ k: m === WATER ? 'bub' : 'rock', x: D.x - Math.cos(D.ang) * 30, y: D.y - Math.sin(D.ang) * 30, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: 0.5 + rnd() * 0.4, s: 1.5 + rnd() * 3, c: C[rnd() < 0.5 ? 0 : 2], rot: 0, vr: 0, g: m === WATER ? -200 : 700 }); }
     if (D.entT !== undefined && T - D.entT < 0.5) { const C = colOf(TOPM[biome(D.entX)]), f = 1 - (T - D.entT) / 0.5; if (rnd() < f) spray(D.entX, surf(D.entX) - 2, -Math.PI / 2, 1.0, 2, 150, 380 * f + 120, [C[0], C[2]], 4, 9); }
@@ -1654,7 +1656,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v135';
+const VER = 'v136';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
