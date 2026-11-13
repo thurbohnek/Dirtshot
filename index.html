@@ -104,6 +104,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 .bpcap { padding: 6px 10px 8px; text-align: left; font: 700 12px/1.35 var(--f-b); color: #cfe6ff; border-top: 1px solid rgba(200,230,255,.35); } .bpcap b { font: 400 16px var(--f-d); color: #ffd25a; letter-spacing: .5px; } .bpcap span { font: 900 11px var(--f-b); color: #9fc4ee; } .bpcap .now { color: #fff; margin-top: 3px; } .bpcap .nx { color: #7dff9a; }
 .up[data-sel] { cursor: pointer; } .up.upsel { outline: 3px solid #ffb02e; outline-offset: -1px; }
 #ovShop .shop { max-height: 42vh; }
+#cargo { font: 900 11px/1.25 var(--f-b); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7); margin-top: 3px; } #cargo:empty { display: none; } #cargo i { font-style: normal; } #cargo .up { all: unset; color: #c6ff3d; animation: cgp .8s ease-in-out infinite alternate; } @keyframes cgp { to { opacity: .45; } }
 .pips { display: flex; gap: 3px; grid-column: 1; }
 .pips i { width: 9px; height: 6px; border-radius: 3px; background: #e2d2c0; }
 .pips i.on { background: #ff9a2e; }
@@ -148,7 +149,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 <body>
 <canvas id="cv"></canvas>
 <div class="hud">
-  <div><div class="dist" id="dist">0 m<small id="best">Best 0 m</small><small class="dep" id="dep"><span id="dDep"></span><span id="dSpd"></span><span id="dMach"></span></small></div></div>
+  <div><div class="dist" id="dist">0 m<small id="best">Best 0 m</small><small class="dep" id="dep"><span id="dDep"></span><span id="dSpd"></span><span id="dMach"></span></small><div id="cargo"></div></div></div>
   <div class="gems" id="gems">◆ 0</div>
   <div class="bars">
     <div class="bar" style="display:none"><span>FUEL</span><i id="fuel"><b></b></i></div>
@@ -170,7 +171,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
   <div class="bpwrap menu" id="bpMenu"></div>
   <div class="stats"><div><b id="sBest">0 m</b>Best</div><div><b id="sDeep">0 m</b>Deepest</div><div><b id="sBank">◆ 0</b>Gems</div></div>
   <div class="rankS" id="rankS"></div>
-  <div class="mis" id="misS"></div>
+  <div class="mis" id="misS" style="display:none"></div>
   <button class="btn" id="bGo">DRILL!</button>
   <div class="row"><button class="btn2 daily" id="bDaily">DAILY RUN</button><button class="btn2" id="bShop">WORKSHOP</button></div>
   <button class="btn2 rkBtn" id="bGoal">ROCKET &amp; RANK <span id="goalDot"></span></button>
@@ -926,7 +927,7 @@ function newMission(excl) { const ks = Object.keys(MIS).filter(k => !excl.includ
 function fillMissions() { SV.mis = (SV.mis || []).filter(m => MIS[m.k] && !m.ok); while (SV.mis.length < 3) SV.mis.push(newMission(SV.mis.map(m => m.k))); saveSV(); }
 function checkMissions() { if (!D || !S.perf && S.perf !== 0) return; for (const m of SV.mis) if (!m.ok && MIS[m.k].v() >= m.n) { m.ok = 1; runReward += m.r; SV.bank += m.r; SV.mlv++; saveSV(); say('MISSION DONE  ◆+' + m.r, '#c6ff3d', true); SFX.gem(3); buzz([20, 30, 20]); } }
 const misHTML = () => '<h3>Missions</h3>' + SV.mis.map(m => `<div class="${m.ok ? 'ok' : ''}"><i>${m.ok ? '✓' : ''}</i><span>${MIS[m.k].t(m.n)}</span><em>◆ ${m.r}</em></div>`).join('');
-function reset(daily) { CRB = null; MUSH = null; CTR = []; MSH = { t: -1, n: 1 }; BDEAD = new Set(); DEB = []; BOD = []; BLDC.clear(); PUNCH = -1; REC = []; recAcc = 0; CLIP = null; $('bClip').hidden = true; CAVC.clear(); VENT = null; GASC = []; DPATH = []; EXH = []; flameL = 0; segs = []; sandLast = null; CB = { p: 0, lv: 0, t: 0, pulse: 0, red: 0, bank: 0 }; FLY = []; POP = []; MU.on = false; tileJobs = []; shocks = []; LKN.clear(); H1C.clear(); SC.clear(); endPending = null; LAKES.clear(); warps = []; quake = 0; for (const ch of chunks.values()) for (let q = 0; q < NT; q++) freeTile(ch, q); tileCount = 0; fillMissions(); MODE = daily ? 'daily' : 'free'; const dn = dayNo(); SEED = daily ? 1000 + (dn * 7919) % 8000 : 1 + (Math.random() * 1000 | 0); if (SV.daily && SV.daily.day !== dn) SV.daily = null; ghost = daily && SV.daily ? SV.daily.ghost : null; ghostRec = []; ghostT = 0; S = { perf: 0, flips: 0, bombs: 0, water: 0, coal: 0, alt: 0, depth: 0, cav: 0 }; runReward = 0; paused = false; lastBio = 0; lavaT = 0; HM = (1 + 0.25 * U('hull')) * DTY().hull * PL().hull; tut = SV.tut ? null : { st: 0, t: 0 }; touches.clear(); chunks.clear(); segs = []; wreck = []; boulders = []; active.clear(); clods = []; SURFC.clear(); fallEv = []; pieces = []; structQ = []; D_lastStruct = 0; parts = []; rings = []; msgs = []; ev = []; gems = 0; T = 0; shake = 0; flash = 0; xReset(); thrV = 1; steerV = 0; slL = slR = null;
+function reset(daily) { CRB = null; MUSH = null; CTR = []; MSH = { t: -1, n: 1 }; BDEAD = new Set(); DEB = []; BOD = []; BLDC.clear(); PUNCH = -1; REC = []; recAcc = 0; CLIP = null; $('bClip').hidden = true; CAVC.clear(); VENT = null; GASC = []; setTimeout(cargoHUD); DPATH = []; EXH = []; flameL = 0; segs = []; sandLast = null; CB = { p: 0, lv: 0, t: 0, pulse: 0, red: 0, bank: 0 }; FLY = []; POP = []; MU.on = false; tileJobs = []; shocks = []; LKN.clear(); H1C.clear(); SC.clear(); endPending = null; LAKES.clear(); warps = []; quake = 0; for (const ch of chunks.values()) for (let q = 0; q < NT; q++) freeTile(ch, q); tileCount = 0; fillMissions(); MODE = daily ? 'daily' : 'free'; const dn = dayNo(); SEED = daily ? 1000 + (dn * 7919) % 8000 : 1 + (Math.random() * 1000 | 0); if (SV.daily && SV.daily.day !== dn) SV.daily = null; ghost = daily && SV.daily ? SV.daily.ghost : null; ghostRec = []; ghostT = 0; S = { perf: 0, flips: 0, bombs: 0, water: 0, coal: 0, alt: 0, depth: 0, cav: 0 }; runReward = 0; paused = false; lastBio = 0; lavaT = 0; HM = (1 + 0.25 * U('hull')) * DTY().hull * PL().hull; tut = SV.tut ? null : { st: 0, t: 0 }; touches.clear(); chunks.clear(); segs = []; wreck = []; boulders = []; active.clear(); clods = []; SURFC.clear(); fallEv = []; pieces = []; structQ = []; D_lastStruct = 0; parts = []; rings = []; msgs = []; ev = []; gems = 0; T = 0; shake = 0; flash = 0; xReset(); thrV = 1; steerV = 0; slL = slR = null;
   const x = -200; D = { x, y: surf(x) - 330, vx: 700, vy: -160, ang: -0.2, air: true, s: 0, fuel: 1, heat: 0, hull: 1, px: x, py: surf(x) - 330, maxX: 0, mat: AIR, why: '', dead: false, spin: 0, lastMat: AIR, airT: 0, fin: 1, flips: 0, flipAcc: 0, av: 0, gav: 0, crashT: 0, segX: 0, segY: 0, solidT: 0 };
   D.x = D.px = 0; D.y = D.py = surf(0) - TOWER_H + 60; D.vx = D.vy = 0; D.ang = Math.PI / 2; D.fin = 0; D.tower = { pow: 0, dir: 1, held: false, t: 0 }; TWR = { dead: false, pc: [] }; zoomMul = 1; D.hull = HM; D.boostF = D.boostM = U('boost') ? 3 + 1.5 * U('boost') : 0; D.runT = 0; D.lapU0 = D.x; D.lapT0 = 0; D.mstone = 0; D.reMax = 0; ORB = mkOrbits(); $('bst').hidden = !U('boost'); cam.x = D.x; cam.y = D.y; cam.vh = 260; run = true; show(null); $('pz').hidden = false; }
 const norm = a => { a = ((a + Math.PI) % TAU + TAU) % TAU - Math.PI; return a; };
@@ -988,7 +989,7 @@ function stepLying(dt) { D.fin = Math.max(0, D.fin - dt * 6);
   if (!isMoon(D.x)) D.maxX = Math.max(D.maxX, D.x - (D.xo || 0)); D.heat = Math.max(0, D.heat - 0.2 * dt); }
 function say(t, col, big) { if (run) recEv += big ? 2500 : 700; msgs.push({ t, col: col || '#fff', big: !!big, life: 0 }); if (msgs.length > 3) msgs.shift(); }
 function at(d, fn) { ev.push({ t: T + d, fn }); }
-function enterGround() { D.orbU = 0; D.orbX = undefined; if (isMoon(D.x)) D.mLand = true; if (!isMoon(D.x) && D.mstone > 0) { const v = D.mstone * 120; gems += v; S.mdel = (S.mdel || 0) + D.mstone; say(`MOONSTONES DELIVERED ×${D.mstone}  ◆+${v}`, '#d8b8ff', true); SFX.bank(); addChain(5); D.mstone = 0; } 
+function enterGround() { D.orbU = 0; D.orbX = undefined; if (isMoon(D.x)) D.mLand = true; if (!isMoon(D.x) && D.mstone > 0) { const v = D.mstone * 120; gems += v; S.mdel = (S.mdel || 0) + D.mstone; (SV.cargo || (SV.cargo = {})).moon = (SV.cargo.moon || 0) + D.mstone; saveSV(); say(`MOONSTONES DELIVERED ×${D.mstone}  ◆+${v}`, '#d8b8ff', true); SFX.bank(); addChain(5); D.mstone = 0; } 
   const sa = Math.atan2(surf(D.x + 6) - surf(D.x - 6), 12); const va = Math.atan2(D.vy, D.vx), sp = Math.hypot(D.vx, D.vy);
   const tx = Math.cos(sa), ty = Math.sin(sa), nxi = -ty, nyi = tx; const vin = D.vx * nxi + D.vy * nyi, along = Math.abs(D.vx * tx + D.vy * ty);
   const rel = Math.atan2(vin, along); // >0 = into the ground
@@ -1039,6 +1040,13 @@ function explode(x, y, R, power, kind) { if (kind === 'nitro') S.bombs++;
     for (const w of F.water) if (Math.hypot(w.x - x, w.y - y) < R + w.rx) breach(w); } }
 /* ===== leaking gas: a cool drill opens the pocket, the gas seeps out and climbs the tunnels; a hot drill sets it alight ===== */
 let GASC = [];
+/* ===== cargo: things found deep down only count once you bring them back up to the surface ===== */
+const CARGO = { fuel: ['Deep fuel cell', '#ffb02e'], magma: ['Magma stone', '#ff6a2a'], crystal: ['Crystal shard', '#d8a8ff'], core: ['Core fragment', '#ffd040'] };
+function cargoHUD() { const el = $('cargo'); if (!el) return; const c = D && D.cargo; if (!c || !Object.keys(c).length) { if (el.innerHTML) el.innerHTML = ''; return; } const h = 'CARGO: ' + Object.keys(c).map(k => `<i style="color:${CARGO[k][1]}">${CARGO[k][0]}${c[k] > 1 ? ' ×' + c[k] : ''}</i>`).join(' · ') + '<br><span class="up">▲ GET TO THE SURFACE TO KEEP IT</span>'; if (el.innerHTML !== h) el.innerHTML = h; }
+function cargoAdd(k) { if (!D || D.dead) return; D.cargo = D.cargo || {}; D.cargo[k] = (D.cargo[k] || 0) + 1; say(`${CARGO[k][0].toUpperCase()}! Bring it up`, CARGO[k][1], true); try { SFX.gem(3); } catch (e) {} cargoHUD(); }
+function cargoTick() { if (!D || D.dead || isMoon(D.x)) return; const dep = D.y - surf(D.x);
+  if (dep > 0) { if (dep > 15000 && !S.cgFuel) { S.cgFuel = 1; cargoAdd('fuel'); } if (Math.abs(bodyR(D.x) - D.y) < 1500 && !S.cgCore) { S.cgCore = 1; cargoAdd('core'); } }
+  if (D.cargo && D.air && dep < -40) { const c = D.cargo, SC = SV.cargo || (SV.cargo = {}); let n = 0; for (const k in c) { SC[k] = (SC[k] || 0) + c[k]; n += c[k]; } D.cargo = null; const v = 150 * n; gems += v; S.cgDel = (S.cgDel || 0) + n; saveSV(); say(`CARGO DELIVERED ×${n}  ◆+${v}`, '#c6ff3d', true); try { SFX.bank(); } catch (e) {} addChain(3); cargoHUD(); } }
 function gasBreach(g) { if (g.leak) return; g.leak = 1; g.spT = 0; const d = g.rx - g.ry; if (d > 0) carve(g.x - d, g.y, g.ry * 0.95, g.x + d, g.y); else carve(g.x, g.y + d, g.rx * 0.95, g.x, g.y - d); if (thr('gasleak', 3)) say('GAS LEAK – keep the drill cool!', '#e8e0b8'); }
 const gasOpen = (x, y) => { const m = mat(x, y); return m === AIR || m === TUN || m === GAS; };
 function gasTick(dt) { if (SV.set.nopock) { GASC.length = 0; return; }
@@ -1280,7 +1288,7 @@ const TUTX = ['Hold the RIGHT side of the screen to rotate ↻', 'Let go to fly 
 
 function step(dt) {
   T += dt; if (!SV.set.cave) { fallEv.length = 0; structQ.length = 0; } updateFalls(dt); updateCollapse(); if (SV.set.cave && D && !D.dead && T - D_lastStruct > 0.5) { D_lastStruct = T; if (D.y > surf(D.x) + 20) structCheck(D.x - Math.cos(D.ang) * 120, D.y - Math.sin(D.ang) * 120); } if (structQ.length) { const q = structQ.shift(); structCheck(q[0], q[1]); } if (ev.length) { const due = ev.filter(e => e.t <= T); if (due.length) { ev = ev.filter(e => e.t > T); due.forEach(e => e.fn()); } }
-  towerDebris(dt); xWorld(dt); if (D.dead) return; if (D.tower) { towerStep(dt); return; } towerHit(); bldHit(); xDrill(dt); bubHere(); gasTick(dt); contrailTick(); skinTrail(dt); recTick(dt); chainTick(dt); stepFly(dt); D.runT = (D.runT || 0) + dt; boostStep(dt); brakeStep(dt); if (isMoon(D.x) && !D.air) { D.mLand = true; if (!S.moonLand) { S.moonLand = 1; gems += 500; say('MOON LANDING!  ◆+500', '#ffffff', true); SFX.bank(); flash = Math.max(flash, 0.4); addChain(6); } } stepOrbits(); reentryCheck();
+  towerDebris(dt); xWorld(dt); if (D.dead) return; if (D.tower) { towerStep(dt); return; } towerHit(); bldHit(); xDrill(dt); bubHere(); gasTick(dt); cargoTick(); contrailTick(); skinTrail(dt); recTick(dt); chainTick(dt); stepFly(dt); D.runT = (D.runT || 0) + dt; boostStep(dt); brakeStep(dt); if (isMoon(D.x) && !D.air) { D.mLand = true; if (!S.moonLand) { S.moonLand = 1; gems += 500; say('MOON LANDING!  ◆+500', '#ffffff', true); SFX.bank(); flash = Math.max(flash, 0.4); addChain(6); } } stepOrbits(); reentryCheck();
   if (!isMoon(D.x) && D.x - D.lapU0 >= CPL) { const lt = D.runT - D.lapT0; S.laps = (S.laps || 0) + 1; D.lapU0 += CPL; D.lapT0 = D.runT; const rc = SV.rec || (SV.rec = { lap: 0, laps: 0, core: 0 }), fm = Math.floor(lt / 60) + ':' + String(Math.floor(lt % 60)).padStart(2, '0'); if (!rc.lap || lt < rc.lap) { rc.lap = lt; saveSV(); say(`LAP ${S.laps}  ${fm}  NEW RECORD!`, '#c6ff3d', true); } else say(`LAP ${S.laps}  ${fm}`, '#e8f8ff', true); gems += 100; addChain(4); } { const vx = D.air ? D.vx : Math.cos(D.ang) * D.s, vy = D.air ? D.vy : Math.sin(D.ang) * D.s, k = 1 - dt * 3; D.mvx = (D.mvx || 0) * k; D.mvy = (D.mvy || 0) * k; if (vx * vx + vy * vy > D.mvx * D.mvx + D.mvy * D.mvy) { D.mvx = vx; D.mvy = vy; } }
   D.px = D.x; D.py = D.y;
   if (D.lying) { stepLying(dt); if (D.hull <= 0) die('Hull destroyed'); return; }
@@ -1472,7 +1480,7 @@ function stepVolcanoes(dt) { if (isMoon(cam.x)) return; const r0 = Math.floor((c
     if (rnd() < dt * 8) parts.push({ k: 'smoke', x: v.x + (rnd() - 0.5) * 80, y: gy - 300 - rnd() * 400, vx: (rnd() - 0.5) * 50, vy: -120 - rnd() * 80, t: 0, life: 3, s: 40 + rnd() * 40 });
     if (LBOMB.length < 40 && rnd() < dt * 6) LBOMB.push({ x: v.x + (rnd() - 0.5) * 40, y: gy - 20, vx: (rnd() - 0.5) * 1100, vy: -(900 + rnd() * 900), r: 9 + rnd() * 9 });
     // the plume lifts the drill: ride it
-    if (D && !D.dead && D.air && Math.abs(D.x - v.x) < 170 && D.y < gy + 20 && D.y > gy - 1700) { D.vy -= 2900 * dt * k; D.heat = Math.min(1.1, D.heat + 0.2 * dt); if (!v.rode && D.vy < -400) { v.rode = true; bump('ride'); gems += 20; say('ERUPTION RIDE!  ◆+20', '#ff9a3a', true); stylePts(40, 'LAVA SURF'); } } }
+    if (D && !D.dead && D.air && Math.abs(D.x - v.x) < 170 && D.y < gy + 20 && D.y > gy - 1700) { D.vy -= 2900 * dt * k; D.heat = Math.min(1.1, D.heat + 0.2 * dt); if (!v.rode && D.vy < -400) { v.rode = true; bump('ride'); cargoAdd('magma'); gems += 20; say('ERUPTION RIDE!  ◆+20', '#ff9a3a', true); stylePts(40, 'LAVA SURF'); } } }
   for (let i = LBOMB.length - 1; i >= 0; i--) { const b = LBOMB[i]; b.vy += 1300 * dt; b.x += b.vx * dt; b.y += b.vy * dt; if (rnd() < 0.6) parts.push({ k: 'fire', x: b.x, y: b.y, vx: 0, vy: 0, t: 0, life: 0.4, s: b.r * 1.3 });
     if (D && !D.dead && !D.tower && Math.hypot(b.x - D.x, b.y - D.y) < b.r + 26) { D.hull -= 0.1 / (Math.sqrt(HM) * frameF()); D.heat = Math.min(1.1, D.heat + 0.35); say('LAVA BOMB!', '#ff5a1a', true); SFX.clang(); shake = Math.max(shake, 10); LBOMB.splice(i, 1); continue; }
     if ((b.y >= surf(Math.round(b.x)) && !OPEN(mat(b.x, b.y + 4))) || b.y > surf(Math.round(b.x)) + 4000) { LBOMB.splice(i, 1); if (nearCam(b.x, 4000)) { crater(b.x, b.y + 6, 18 + b.r); for (let j = 0; j < 6; j++) parts.push({ k: 'fire', x: b.x, y: surf(b.x) - 4, vx: (rnd() - 0.5) * 200, vy: -100 - rnd() * 200, t: 0, life: 0.6, s: 10 + rnd() * 10 }); if (thr('lbthud', 0.15)) SFX.thump(0.3); blastBuildings(b.x, surf(b.x), 70, 0.3); wreckNear(b.x, surf(b.x), 70); } } } }
@@ -1491,7 +1499,7 @@ function drawCrystalCaves(x, left, right) { for (let ci = Math.floor(left / CW) 
 function xHoles(ch, hole) { for (const cv of ch.F.caves) if (cv.xc) { hole(cv.x, cv.y, Math.max(cv.rx * kAt(cv.x, cv.y), cv.ry) * 1.2, 0.8 + 0.05 * Math.sin(T * 2)); for (const q of xcCrystals(cv)) if (q.L > 70 && !q.dead) hole(cv.x + Math.cos(q.a) * cv.rx * q.f * 0.9, cv.y + Math.sin(q.a) * cv.ry * q.f * 0.9, 120, 0.35); }
   if (xHoles.f !== frameNo) { xHoles.f = frameNo; for (const b of LBOMB) hole(b.x, b.y, 60, 0.7); const fp = drawExhaust.pts; if (fp && flameL > 40) for (let i = 0; i < fp.length; i += 6) hole(fp[i][0], fp[i][1], 30 + flameL * 0.12 * (1 - i / fp.length), 0.6 * (1 - i / fp.length)); for (const w of AWR) hole(w.x, w.y, 90, 0.6); } }
 let ECHO = null; function echoSet(on) { if (!AC || !master) return; if (!ECHO) { try { const dl = AC.createDelay(1), fb = AC.createGain(), wet = AC.createGain(), lp = AC.createBiquadFilter(); dl.delayTime.value = 0.27; fb.gain.value = 0.42; wet.gain.value = 0; lp.type = 'lowpass'; lp.frequency.value = 2600; master.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(wet); wet.connect(AC.destination); ECHO = { wet }; } catch (e) { ECHO = { wet: null }; } } if (ECHO.wet) ECHO.wet.gain.setTargetAtTime(on ? 0.5 : 0, AC.currentTime, 0.3); }
-function crystalCheck() { let inC = null; for (const F of featsNear(D.x)) for (const cv of F.caves) if (cv.xc && inEll(cv, D.x, D.y, 0)) inC = cv; if (inC !== XC.xcIn) { XC.xcIn = inC; echoSet(!!inC); if (inC && !XC.xcSeen.has(inC)) { XC.xcSeen.add(inC); bump('xcav'); gems += 30; say('CRYSTAL CAVE!  ◆+30', '#9ff4ff', true); SFX.bank(); flash = Math.max(flash, 0.15); } } }
+function crystalCheck() { let inC = null; for (const F of featsNear(D.x)) for (const cv of F.caves) if (cv.xc && inEll(cv, D.x, D.y, 0)) inC = cv; if (inC !== XC.xcIn) { XC.xcIn = inC; echoSet(!!inC); if (inC && !XC.xcSeen.has(inC)) { XC.xcSeen.add(inC); bump('xcav'); cargoAdd('crystal'); gems += 30; say('CRYSTAL CAVE!  ◆+30', '#9ff4ff', true); SFX.bank(); flash = Math.max(flash, 0.15); } } }
 // ----- traffic: cars and trains drive along the ground -----
 const CARC = ['#e8402a', '#2f7de0', '#f2c230', '#2fb860', '#f2f2f2', '#8a4ad8'];
 function vehOK(x) { if (isMoon(x) || Math.abs(x) < 2500) return false; const b = biome(x); if (b === 2 || b === 3 || mtnMask(x) > 0.05 || volcH(x) < -5) return false; return Math.abs(surf(Math.round(x) + 40) - surf(Math.round(x) - 40)) < 45 && grounded(x); }
@@ -1611,7 +1619,7 @@ function achHTML() { const s = lifeStats(), got = ACH.filter(a => SV.ach && SV.a
 // ----- per-run end -----
 function xEnd() { if (S._banked) return; if (MODE === 'daily') { bump('daily'); const c = dailyCh(), sc = c.v(); XC.dres = { c, sc, nb: false }; if (SV.daily && sc > (SV.daily.cb || 0)) { SV.daily.cb = sc; XC.dres.nb = true; } }
   const st = SV.st || (SV.st = {}); for (const k of STK) st[k] = (st[k] || 0) + (S[k] || 0); st.maxMach = Math.max(st.maxMach || 0, S.maxMach || 0); S._banked = true; achCheck(); rankCheck(); echoSet(false); }
-function xEndBits(bits) { if (S.plBonus) bits.unshift(`${PL().n} bonus ◆+${fmtG(S.plBonus)}`); if (S.style) bits.push(`style ${S.style}`); if (S.city) bits.push(`${S.city} cit${S.city > 1 ? 'ies' : 'y'} razed`); if (MODE === 'daily' && XC.dres) bits.unshift(`DAILY: ${XC.dres.sc} ${XC.dres.c.u}${XC.dres.nb ? ' – new best!' : ''}`); }
+function xEndBits(bits) { if (D && D.cargo && Object.keys(D.cargo).length) bits.unshift('cargo lost: ' + Object.keys(D.cargo).map(k => CARGO[k][0].toLowerCase() + (D.cargo[k] > 1 ? ' ×' + D.cargo[k] : '')).join(', ')); if (S.plBonus) bits.unshift(`${PL().n} bonus ◆+${fmtG(S.plBonus)}`); if (S.style) bits.push(`style ${S.style}`); if (S.city) bits.push(`${S.city} cit${S.city > 1 ? 'ies' : 'y'} razed`); if (MODE === 'daily' && XC.dres) bits.unshift(`DAILY: ${XC.dres.sc} ${XC.dres.c.u}${XC.dres.nb ? ' – new best!' : ''}`); }
 // ----- hooks called from the game loop -----
 function xWorld(dt) { if (!D) return; stepVolcanoes(dt); stepTraffic(dt); stepAir(dt); stepAvalanche(dt); stepDams(dt); }
 function xDrill(dt) { exhaustTick(dt); styleTick(dt); crystalCheck(); dailyTick(); XC.achT -= dt; if (XC.achT <= 0) { XC.achT = 1; achCheck(); } }
@@ -1646,7 +1654,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v128';
+const VER = 'v129';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2033,14 +2041,14 @@ function applyPlanet() { const P = PL(); for (let i = 0; i < MCOL.length; i++) i
   for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) SKY[i][j] = P.sky ? hx2rgb(P.sky[i][j]) : SKY0[i][j].slice(); }
 applyPlanet();
 const RPARTS = [{ k: 'pad', n: 'Launch pad', d: 'Steel from wrecked buildings', st: 'bld', need: [10, 150], u: 'buildings knocked down', c: [1000, 4000] },
-  { k: 'tank', n: 'Fuel tank', d: 'Deep-earth fuel', st: 'deep', need: [1500, 2300], u: 'm deepest dig', c: [2500, 9000] },
-  { k: 'shield', n: 'Heat shield', d: 'Tempered in a volcano', st: 'ride', need: [1, 5], u: 'eruption rides', c: [4000, 15000] },
-  { k: 'nav', n: 'Navigation crystal', d: 'Grown in crystal caves', st: 'xcav', need: [3, 12], u: 'crystal caves found', c: [6000, 22000] },
-  { k: 'core', n: 'Core reactor', d: 'A piece of the planet\'s core', st: 'coreN', need: [1, 4], u: 'trips through the core', c: [10000, 35000] },
-  { k: 'beacon', n: 'Moon beacon', d: 'Calibrated on the moon', st: 'moonLand', need: [1, 3], u: 'moon landings', c: [15000, 50000] }];
+  { k: 'tank', n: 'Fuel tank', d: 'Grab a fuel cell 1 500 m down', st: 'c:fuel', need: [1, 3], u: 'fuel cells brought up', c: [2500, 9000] },
+  { k: 'shield', n: 'Heat shield', d: 'Ride an eruption for a magma stone', st: 'c:magma', need: [1, 3], u: 'magma stones brought back', c: [4000, 15000] },
+  { k: 'nav', n: 'Navigation crystal', d: 'Shards from crystal caves', st: 'c:crystal', need: [3, 8], u: 'crystal shards brought up', c: [6000, 22000] },
+  { k: 'core', n: 'Core reactor', d: 'Reach the core, then dig back out', st: 'c:core', need: [1, 3], u: 'core fragments brought up', c: [10000, 35000] },
+  { k: 'beacon', n: 'Moon beacon', d: 'Moonstones flown home', st: 'c:moon', need: [2, 6], u: 'moonstones delivered', c: [15000, 50000] }];
 const MK = () => Math.min(1, SV.pmax || 0); // rocket Mk I on Terra, Mk II on Ember
 const rkBuilt = () => (SV.rk || (SV.rk = {}))[SV.pmax || 0] || (SV.rk[SV.pmax || 0] = {});
-const statOf = k => k === 'deep' ? SV.deep : lifeStats()[k] || 0;
+const statOf = k => k.startsWith('c:') ? ((SV.cargo || {})[k.slice(2)] || 0) : k === 'deep' ? SV.deep : lifeStats()[k] || 0;
 const partsTotal = () => Object.values(SV.rk || {}).reduce((a, o) => a + Object.keys(o).length, 0);
 const badgeN = () => Object.keys(SV.ach || {}).length;
 const canFly = () => (SV.pmax || 0) < PLANETS.length - 1;
