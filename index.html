@@ -1630,8 +1630,8 @@ const ACH = [['wreck', 'Wrecking Ball', 'Knock down your first building', s => s
   ['deep1k', 'Deep Digger', 'Drill 1000 m deep', () => SV.deep >= 1000, 200], ['far10k', 'Long Hauler', 'Travel 10 000 m in one run', () => SV.best >= 10000, 300], ['daily7', 'Regular', 'Play 7 daily challenges', s => s.daily >= 7, 300]];
 const STK = ['bld', 'sky', 'mill', 'city', 'domino', 'under', 'veh', 'airc', 'dam', 'avl', 'ride', 'xcav', 'style', 'perf', 'flips', 'coreN', 'moonLand', 'orbits', 'daily'];
 function lifeStats() { const st = SV.st || {}, o = {}; for (const k of STK) o[k] = (st[k] || 0) + (S && !S._banked ? (S[k] || 0) : 0); o.maxMach = Math.max(st.maxMach || 0, S && S.maxMach || 0); return o; }
-function achCheck() { const s = lifeStats(); SV.ach = SV.ach || {}; let any = false; for (const [k, n, , f, r] of ACH) if (!SV.ach[k] && f(s)) { SV.ach[k] = 1; r = Math.round(r / 2); SV.bank += r; any = true; say(`★ BADGE: ${n.toUpperCase()}  ◆+${r}`, '#ffd84a', true); SFX.bank(); } if (any) saveSV(); }
-function achHTML() { const s = lifeStats(), got = ACH.filter(a => SV.ach && SV.ach[a[0]]).length; return `<div class="sub2">${got} of ${ACH.length} badges</div><div class="shop">` + ACH.map(([k, n, d, , r]) => { const on = SV.ach && SV.ach[k]; return `<div class="up" style="${on ? '' : 'opacity:.55'}"><b>${on ? '★ ' : '☆ '}${n}</b><button disabled>${on ? 'GOT' : '◆ ' + r}</button><small>${d}</small></div>`; }).join('') + '</div>'; }
+function achCheck() { const s = lifeStats(); SV.ach = SV.ach || {}; let any = false; for (const [k, n, , f, r] of ACH) if (!SV.ach[k] && f(s)) { SV.ach[k] = 1; const rh = Math.round(r / 2); SV.bank += rh; any = true; say(`★ BADGE: ${n.toUpperCase()}  ◆+${rh}`, '#ffd84a', true); SFX.bank(); } if (any) saveSV(); }
+function achHTML() { const s = lifeStats(), got = ACH.filter(a => SV.ach && SV.ach[a[0]]).length; return `<div class="sub2">${got} of ${ACH.length} badges</div><div class="shop">` + ACH.map(([k, n, d, , r]) => { const on = SV.ach && SV.ach[k]; return `<div class="up" style="${on ? '' : 'opacity:.55'}"><b>${on ? '★ ' : '☆ '}${n}</b><button disabled>${on ? 'GOT' : '◆ ' + Math.round(r / 2)}</button><small>${d}</small></div>`; }).join('') + '</div>'; }
 // ----- per-run end -----
 function xEnd() { if (S._banked) return; if (MODE === 'daily') { bump('daily'); const c = dailyCh(), sc = c.v(); XC.dres = { c, sc, nb: false }; if (SV.daily && sc > (SV.daily.cb || 0)) { SV.daily.cb = sc; XC.dres.nb = true; } }
   const st = SV.st || (SV.st = {}); for (const k of STK) st[k] = (st[k] || 0) + (S[k] || 0); st.maxMach = Math.max(st.maxMach || 0, S.maxMach || 0); S._banked = true; achCheck(); rankCheck(); echoSet(false); }
@@ -1670,7 +1670,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v148';
+const VER = 'v149';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
