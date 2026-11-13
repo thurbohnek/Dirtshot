@@ -1528,9 +1528,10 @@ function xLand(sp) { if (DTY().k === 'bomb' && sp > 800 && (XC.bombT || 0) < T) 
 /* ----- exhaust: a jet flame out of the tail whose length follows the load (material drag x speed). It bends with the tunnel because it is
    drawn along the path the drill actually took, and the smoke it leaves drifts only through open space, never into the walls ----- */
 let DPATH = [], EXH = [], flameL = 0;
-let VENT = null; function ventStart(x, y, a) { VENT = { x, y, a, t: 0 }; for (let i = 0; i < 26; i++) { const sp = 150 + rnd() * 450, aa = a + (rnd() - 0.5) * 1.1; parts.push({ k: 'smoke', x: x - Math.cos(a) * 20, y: y - Math.sin(a) * 20, vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp, t: 0, life: 1.6 + rnd() * 1.2, s: 14 + rnd() * 18 }); }
+let VENT = null; function ventStart(x, y, a) { const k = clamp(((D && D.s) || 0) / 2600, 0, 1); if (k < 0.12) return; const lowC = ['#c8beb2', '#b0a698', '#d8d0c4'];
+  if (k > 0.45) VENT = { x, y, a, t: 0, k }; for (let i = 0, n = Math.round(4 + 22 * k); i < n; i++) { const sp = (60 + rnd() * 120) + k * (100 + rnd() * 330), aa = a + (rnd() - 0.5) * 1.1; if (k > 0.45) parts.push({ k: 'smoke', x: x - Math.cos(a) * 20, y: y - Math.sin(a) * 20, vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp, t: 0, life: (0.8 + rnd() * 0.8) * (0.6 + k), s: (8 + rnd() * 10) * (0.6 + k) }); else parts.push({ k: 'dust', x: x - Math.cos(a) * 14, y: y - Math.sin(a) * 14, vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp - 20, t: 0, life: 0.6 + rnd() * 0.5, s: 8 + rnd() * 8, c: lowC[i % 3], g: 0 }); }
   for (const e of EXH) { const d = Math.hypot(e.x - x, e.y - y); if (d < 700) { e.vx += (x - e.x) / (d + 1) * 500; e.vy += (y - e.y) / (d + 1) * 500; e.life += 1; } } }
-function ventTick(dt) { if (!VENT) return; VENT.t += dt; if (VENT.t > 1.8) { VENT = null; return; } const k = 1 - VENT.t / 1.8; if (rnd() < k * 1.2) { const aa = VENT.a + (rnd() - 0.5) * 0.9, sp = 80 + rnd() * 260 * k; parts.push({ k: 'smoke', x: VENT.x - Math.cos(VENT.a) * 14, y: VENT.y - Math.sin(VENT.a) * 14, vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp - 40, t: 0, life: 1.5 + rnd(), s: 12 + rnd() * 14 }); }
+function ventTick(dt) { if (!VENT) return; VENT.t += dt; const dur = 0.6 + 1.2 * VENT.k; if (VENT.t > dur) { VENT = null; return; } const k = (1 - VENT.t / dur) * VENT.k; if (rnd() < k * 1.2) { const aa = VENT.a + (rnd() - 0.5) * 0.9, sp = 80 + rnd() * 260 * k; parts.push({ k: 'smoke', x: VENT.x - Math.cos(VENT.a) * 14, y: VENT.y - Math.sin(VENT.a) * 14, vx: Math.cos(aa) * sp, vy: Math.sin(aa) * sp - 40, t: 0, life: 1.5 + rnd(), s: 12 + rnd() * 14 }); }
   for (const e of EXH) { const d = Math.hypot(e.x - VENT.x, e.y - VENT.y); if (d < 700) { e.vx += (VENT.x - e.x) / (d + 1) * 300 * dt * 6; e.vy += (VENT.y - e.y) / (d + 1) * 300 * dt * 6; } } }
 function exhaustTick(dt) { ventTick(dt); if (!D || D.dead || D.tower) { DPATH = []; flameL = 0; return; }
   const c = Math.cos(D.ang), s = Math.sin(D.ang), tx = D.x - c * 46, ty = D.y - s * 46, last = DPATH[0];
@@ -1554,7 +1555,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v116';
+const VER = 'v117';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
