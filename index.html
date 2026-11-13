@@ -64,6 +64,21 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 .up { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; background: rgba(255,255,255,.93); color: var(--ink); border-radius: 14px; padding: 8px 10px; text-align: left; box-shadow: 0 4px 0 rgba(80,40,20,.3); }
 .up b { font: 400 17px var(--f-d); color: #8a3b10; }
 .up small { font: 700 12px var(--f-b); opacity: .8; grid-column: 1; }
+.rankS { background: rgba(40,20,10,.38); border: 2px solid rgba(255,255,255,.55); border-radius: 16px; padding: 8px 12px; font: 800 13px/1.3 var(--f-b); text-align: left; }
+.rankS b { font: 400 18px var(--f-d); color: #ffd84a; } .rankS .bar, .rk .bar { height: 7px; border-radius: 4px; background: rgba(255,255,255,.25); margin-top: 5px; overflow: hidden; } .rankS .bar i, .rk .bar i { display: block; height: 100%; background: linear-gradient(90deg, #ffb02e, #ffe14d); border-radius: 4px; }
+.rkBtn { background: linear-gradient(180deg, #e6f6ff, #b9e2ff); color: #0b3550; box-shadow: 0 5px 0 #2b7fb0; position: relative; } #goalDot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ff4a3a; vertical-align: middle; margin-left: 4px; } #goalDot:empty:not(.on) { display: none; }
+.req { font: 800 12px var(--f-b); color: #7a5a40; grid-column: 1; } .req.ok { color: #2e9a3a; }
+.rk { background: rgba(255,255,255,.93); color: var(--ink); border-radius: 14px; padding: 10px 12px; text-align: left; font: 700 13px/1.35 var(--f-b); box-shadow: 0 4px 0 rgba(80,40,20,.3); }
+.rk .t { font: 400 20px var(--f-d); color: #c46a10; } .rk ul { margin: 6px 0 0; padding-left: 0; list-style: none; } .rk li.ok { color: #2e9a3a; } .rk li:before { content: '○ '; } .rk li.ok:before { content: '✓ '; }
+.rkl { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; } .rkl span { font: 800 10.5px var(--f-b); padding: 3px 7px; border-radius: 8px; background: #eadccb; color: #8a7a6a; } .rkl span.on { background: #ffcf5a; color: #5a2a0c; } .rkl span.cur { background: #ff8a2e; color: #fff; }
+.planets { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; } .planets button { border: 0; border-radius: 12px; padding: 7px 12px; font: 400 15px var(--f-d); background: rgba(255,255,255,.85); color: #5a2a0c; cursor: pointer; } .planets button.on { background: #ffcf5a; box-shadow: 0 3px 0 #b4561c; }
+#ovLaunch { position: fixed; inset: 0; z-index: 50; background: linear-gradient(180deg, #050818, #1a2450 60%, #3a5aa0); overflow: hidden; }
+#ovLaunch .lstars { position: absolute; inset: -100% 0 0; background-image: radial-gradient(2px 2px at 20% 30%, #fff, transparent), radial-gradient(1.5px 1.5px at 70% 60%, #fff, transparent), radial-gradient(2px 2px at 40% 80%, #cde, transparent), radial-gradient(1px 1px at 85% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 10% 70%, #fff, transparent); background-size: 220px 220px; animation: lst 3.2s linear forwards; }
+@keyframes lst { to { transform: translateY(50%); } }
+#ovLaunch .lrk { position: absolute; left: 50%; bottom: -40%; width: 90px; height: 260px; margin-left: -45px; animation: lrk 3.2s cubic-bezier(.5,0,.8,.6) forwards; }
+@keyframes lrk { 0% { transform: translateY(0); } 15% { transform: translateY(-10px) translateX(-2px); } 20% { transform: translateY(-10px) translateX(2px); } 100% { transform: translateY(-170vh); } }
+#ovLaunch .ltxt { position: absolute; left: 0; right: 0; top: 30%; text-align: center; color: #fff; font: 400 34px var(--f-d); text-shadow: 0 3px 0 rgba(0,0,0,.4); opacity: 0; animation: ltx 3.2s ease forwards; }
+@keyframes ltx { 0%, 35% { opacity: 0; transform: scale(.8); } 55%, 100% { opacity: 1; transform: scale(1); } }
 .pips { display: flex; gap: 3px; grid-column: 1; }
 .pips i { width: 9px; height: 6px; border-radius: 3px; background: #e2d2c0; }
 .pips i.on { background: #ff9a2e; }
@@ -129,9 +144,11 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
   <div class="logo">Dirtshot</div>
   <div class="tag">Dive from the sky. Drill through the earth.</div>
   <div class="stats"><div><b id="sBest">0 m</b>Best</div><div><b id="sDeep">0 m</b>Deepest</div><div><b id="sBank">◆ 0</b>Gems</div></div>
+  <div class="rankS" id="rankS"></div>
   <div class="mis" id="misS"></div>
   <button class="btn" id="bGo">DRILL!</button>
   <div class="row"><button class="btn2 daily" id="bDaily">DAILY RUN</button><button class="btn2" id="bShop">WORKSHOP</button></div>
+  <button class="btn2 rkBtn" id="bGoal">ROCKET &amp; RANK <span id="goalDot"></span></button>
   <div><button class="link" id="bHow">How to play</button> <button class="link" id="bMus">Collection</button> <button class="link" id="bAch">Badges</button> <button class="link" id="bSet">Settings</button></div>
 </div></div>
 <div class="ov" id="ovHow" hidden><div class="card">
@@ -148,6 +165,17 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
   <div class="shop" id="shopList"></div>
   <button class="btn" id="bShopOk">DONE</button>
 </div></div>
+<div class="ov" id="ovGoal" hidden><div class="card">
+  <div class="logo" style="font-size:44px">Rocket</div>
+  <div class="sub2" id="gPlanet"></div>
+  <div id="gRocket"></div>
+  <div class="shop" id="gParts" style="max-height:none"></div>
+  <div id="gLaunch"></div>
+  <div class="logo" style="font-size:34px;margin-top:8px">Pilot rank</div>
+  <div id="gRank"></div>
+  <button class="btn" id="bGoalOk">DONE</button>
+</div></div>
+<div id="ovLaunch" hidden><div class="lstars"></div><div class="lrk"></div><div class="ltxt" id="lTxt"></div></div>
 <div class="ov" id="ovMus" hidden><div class="card">
   <div class="logo" style="font-size:44px">Collection</div>
   <div class="sub2" id="musN"></div>
@@ -500,7 +528,7 @@ function grabCore() { const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; if (S.cry
 const crysHeat = () => 1 - 0.05 * (SV.cc || 0);
 // ===== re-entry: thick air at orbital speed heats the drill; nose-first is survivable
 function reentryStep(dt, atm, dd, sp) { if (isMoon(D.x)) return 0; const alt = surf(D.x) - D.y; if (alt > 14000) D.wasSpace = true; if (!D.wasSpace || sp < 3000 || atm < 0.005) { D.reQ = 0; return 0; }
-  const q = atm * Math.pow((sp - 3000) / 2600, 2) * 0.55 * (0.5 + 1.6 * Math.abs(Math.sin(dd))) * crysHeat() * (1 - 0.11 * U('cool')); D.reQ = q; D.heat = Math.min(1.25, D.heat + q * dt); D.reMax = Math.max(D.reMax || 0, D.heat);
+  const q = atm * Math.pow((sp - 3000) / 2600, 2) * 0.55 * (0.5 + 1.6 * Math.abs(Math.sin(dd))) * crysHeat() * (1 - 0.11 * U('cool')) * PL().heat; D.reQ = q; D.heat = Math.min(1.25, D.heat + q * dt); D.reMax = Math.max(D.reMax || 0, D.heat);
   if (D.heat > 1) { D.hull -= (D.heat - 0.95) * 2.4 * dt; if (thr('burn', 1.2)) say('BURNING UP!', '#ff7a30', true); }
   if (thr('reS', 0.09)) noise({ type: 'bandpass', f0: 600 + q * 900, dur: 0.14, gain: Math.min(0.25, q * 0.5) }); return q; }
 function reentryCheck() { if (!D.wasSpace || isMoon(D.x)) return; const alt = surf(D.x) - D.y; if (alt > 2500) return; D.wasSpace = false; if (D.hull <= 0) return; if ((D.reMax || 0) < 0.85) { gems += 150; say('PERFECT RE-ENTRY!  ◆+150', '#ffd27a', true); SFX.bank(); addChain(4); } else { gems += 50; say('RE-ENTRY  ◆+50', '#ffb07a', true); addChain(2); } D.reMax = 0; }
@@ -872,7 +900,7 @@ function newMission(excl) { const ks = Object.keys(MIS).filter(k => !excl.includ
 function fillMissions() { SV.mis = (SV.mis || []).filter(m => MIS[m.k] && !m.ok); while (SV.mis.length < 3) SV.mis.push(newMission(SV.mis.map(m => m.k))); saveSV(); }
 function checkMissions() { if (!D || !S.perf && S.perf !== 0) return; for (const m of SV.mis) if (!m.ok && MIS[m.k].v() >= m.n) { m.ok = 1; runReward += m.r; SV.bank += m.r; SV.mlv++; saveSV(); say('MISSION DONE  ◆+' + m.r, '#c6ff3d', true); SFX.gem(3); buzz([20, 30, 20]); } }
 const misHTML = () => '<h3>Missions</h3>' + SV.mis.map(m => `<div class="${m.ok ? 'ok' : ''}"><i>${m.ok ? '✓' : ''}</i><span>${MIS[m.k].t(m.n)}</span><em>◆ ${m.r}</em></div>`).join('');
-function reset(daily) { CRB = null; MUSH = null; CTR = []; MSH = { t: -1, n: 1 }; BDEAD = new Set(); DEB = []; BOD = []; BLDC.clear(); PUNCH = -1; REC = []; recAcc = 0; CLIP = null; $('bClip').hidden = true; CAVC.clear(); VENT = null; DPATH = []; EXH = []; flameL = 0; segs = []; sandLast = null; CB = { p: 0, lv: 0, t: 0, pulse: 0, red: 0, bank: 0 }; FLY = []; POP = []; MU.on = false; tileJobs = []; shocks = []; LKN.clear(); H1C.clear(); SC.clear(); endPending = null; LAKES.clear(); warps = []; quake = 0; for (const ch of chunks.values()) for (let q = 0; q < NT; q++) freeTile(ch, q); tileCount = 0; fillMissions(); MODE = daily ? 'daily' : 'free'; const dn = dayNo(); SEED = daily ? 1000 + (dn * 7919) % 8000 : 1 + (Math.random() * 1000 | 0); if (SV.daily && SV.daily.day !== dn) SV.daily = null; ghost = daily && SV.daily ? SV.daily.ghost : null; ghostRec = []; ghostT = 0; S = { perf: 0, flips: 0, bombs: 0, water: 0, coal: 0, alt: 0, depth: 0, cav: 0 }; runReward = 0; paused = false; lastBio = 0; lavaT = 0; HM = (1 + 0.25 * U('hull')) * DTY().hull; tut = SV.tut ? null : { st: 0, t: 0 }; touches.clear(); chunks.clear(); segs = []; wreck = []; boulders = []; active.clear(); clods = []; SURFC.clear(); fallEv = []; pieces = []; structQ = []; D_lastStruct = 0; parts = []; rings = []; msgs = []; ev = []; gems = 0; T = 0; shake = 0; flash = 0; xReset(); thrV = 1; steerV = 0; slL = slR = null;
+function reset(daily) { CRB = null; MUSH = null; CTR = []; MSH = { t: -1, n: 1 }; BDEAD = new Set(); DEB = []; BOD = []; BLDC.clear(); PUNCH = -1; REC = []; recAcc = 0; CLIP = null; $('bClip').hidden = true; CAVC.clear(); VENT = null; DPATH = []; EXH = []; flameL = 0; segs = []; sandLast = null; CB = { p: 0, lv: 0, t: 0, pulse: 0, red: 0, bank: 0 }; FLY = []; POP = []; MU.on = false; tileJobs = []; shocks = []; LKN.clear(); H1C.clear(); SC.clear(); endPending = null; LAKES.clear(); warps = []; quake = 0; for (const ch of chunks.values()) for (let q = 0; q < NT; q++) freeTile(ch, q); tileCount = 0; fillMissions(); MODE = daily ? 'daily' : 'free'; const dn = dayNo(); SEED = daily ? 1000 + (dn * 7919) % 8000 : 1 + (Math.random() * 1000 | 0); if (SV.daily && SV.daily.day !== dn) SV.daily = null; ghost = daily && SV.daily ? SV.daily.ghost : null; ghostRec = []; ghostT = 0; S = { perf: 0, flips: 0, bombs: 0, water: 0, coal: 0, alt: 0, depth: 0, cav: 0 }; runReward = 0; paused = false; lastBio = 0; lavaT = 0; HM = (1 + 0.25 * U('hull')) * DTY().hull * PL().hull; tut = SV.tut ? null : { st: 0, t: 0 }; touches.clear(); chunks.clear(); segs = []; wreck = []; boulders = []; active.clear(); clods = []; SURFC.clear(); fallEv = []; pieces = []; structQ = []; D_lastStruct = 0; parts = []; rings = []; msgs = []; ev = []; gems = 0; T = 0; shake = 0; flash = 0; xReset(); thrV = 1; steerV = 0; slL = slR = null;
   const x = -200; D = { x, y: surf(x) - 330, vx: 700, vy: -160, ang: -0.2, air: true, s: 0, fuel: 1, heat: 0, hull: 1, px: x, py: surf(x) - 330, maxX: 0, mat: AIR, why: '', dead: false, spin: 0, lastMat: AIR, airT: 0, fin: 1, flips: 0, flipAcc: 0, av: 0, gav: 0, crashT: 0, segX: 0, segY: 0, solidT: 0 };
   D.x = D.px = 0; D.y = D.py = surf(0) - TOWER_H + 60; D.vx = D.vy = 0; D.ang = Math.PI / 2; D.fin = 0; D.tower = { pow: 0, dir: 1, held: false, t: 0 }; TWR = { dead: false, pc: [] }; zoomMul = 1; D.hull = HM; D.boostF = D.boostM = U('boost') ? 3 + 1.5 * U('boost') : 0; D.runT = 0; D.lapU0 = D.x; D.lapT0 = 0; D.mstone = 0; D.reMax = 0; ORB = mkOrbits(); $('bst').hidden = !U('boost'); cam.x = D.x; cam.y = D.y; cam.vh = 260; run = true; show(null); $('pz').hidden = false; }
 const norm = a => { a = ((a + Math.PI) % TAU + TAU) % TAU - Math.PI; return a; };
@@ -1097,7 +1125,7 @@ function drawItem(x, id, r) { const c = ITEMS[id][2] === 'f'; x.save(); x.lineCa
 function die(why) { if (D.dead) return; breakChain(true); FLY = []; D.dead = true; D.why = why; run = false; SFX.over(); if (why === 'Hull destroyed') nuke(D.x, D.y);
   $('pz').hidden = true; $('bst').hidden = true; $('zm').hidden = true; bstHeld = false; const r = endRun(); slowmo(0.6); deadT = 0; endPending = () => { $('endWhy').textContent = (MODE === 'daily' ? 'Daily run · ' : '') + why; $('endDist').textContent = r.m + ' m';
     $('endBest').textContent = (r.nb ? (MODE === 'daily' ? 'New daily best!' : 'New best!') : (MODE === 'daily' ? 'Daily best ' + SV.daily.best + ' m' : 'Best ' + best + ' m')) + ' · ' + r.dm + ' m deep' + (r.nd ? ' – record!' : '');
-    $('endGems').textContent = '◆ ' + gems + ' gems' + (runReward ? '  +  ◆ ' + runReward + ' missions' : '') + '  ·  bank ◆ ' + fmtG(SV.bank); { const g = nextGoal(), el = $('endNext'); if (el) { if (!g) el.textContent = 'Every upgrade maxed!'; else if (SV.bank >= g.c) el.innerHTML = `<b style="color:#c6ff3d">Ready:</b> ${g.u.n} Lv ${g.l + 1} – ◆ ${fmtG(g.c)} in the Workshop`; else { const pct = SV.bank / g.c; el.innerHTML = `Next: ${g.u.n} Lv ${g.l + 1} – ◆ ${fmtG(g.c - SV.bank)} to go<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.25);margin:4px auto 0;width:70%"><div style="height:100%;width:${Math.round(pct * 100)}%;border-radius:3px;background:#ffb02e"></div></div>`; } } } { const rc = SV.rec || {}, fm = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'), bits = []; if (S.laps) bits.push(`${S.laps} lap${S.laps > 1 ? 's' : ''} round the planet`); if (rc.lap) bits.push('best lap ' + fm(rc.lap)); if (S.coreN) bits.push(`through the core ×${S.coreN}`); if (S.moonLand) bits.push('moon landing'); xEndBits(bits); $('endRec').textContent = bits.join(' · '); } $('misE').innerHTML = misHTML(); show('ovEnd'); }; }
+    $('endGems').textContent = '◆ ' + gems + ' gems' + (runReward ? '  +  ◆ ' + runReward + ' missions' : '') + '  ·  bank ◆ ' + fmtG(SV.bank); { const g = nextGoal(), el = $('endNext'); if (el && SV.rankUp && SV.rankUp.length) { const r = SV.rankUp.pop(); SV.rankUp = []; saveSV(); el.innerHTML = `<b style="color:#ffd84a;font-size:16px">★ RANK UP: ${RANKS[r][0]}!</b> ◆+${fmtG(rankRew(r))}`; } else if (el) { if (!g) el.textContent = 'Every upgrade maxed!'; else if (SV.bank >= g.c) el.innerHTML = `<b style="color:#c6ff3d">Ready:</b> ${g.u.n} Lv ${g.l + 1} – ◆ ${fmtG(g.c)} in the Workshop`; else { const pct = SV.bank / g.c; el.innerHTML = `Next: ${g.u.n} Lv ${g.l + 1} – ◆ ${fmtG(g.c - SV.bank)} to go<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.25);margin:4px auto 0;width:70%"><div style="height:100%;width:${Math.round(pct * 100)}%;border-radius:3px;background:#ffb02e"></div></div>`; } } } { const rc = SV.rec || {}, fm = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'), bits = []; if (S.laps) bits.push(`${S.laps} lap${S.laps > 1 ? 's' : ''} round the planet`); if (rc.lap) bits.push('best lap ' + fm(rc.lap)); if (S.coreN) bits.push(`through the core ×${S.coreN}`); if (S.moonLand) bits.push('moon landing'); xEndBits(bits); $('endRec').textContent = bits.join(' · '); } $('misE').innerHTML = misHTML(); show('ovEnd'); }; }
 let endPending = null, deadT = 0; const MACH1 = 3430; // 343 m/s at 10 px per metre
 let shocks = [], pathT = 0;
 function supImpact(x, sy, ang, out) { if (!thr('supimp', 0.8)) return; const M = Math.min(3, D.mach || 1), R = 70 + 45 * (M - 1), C = colOf(TOPM[biome(x)]); bigCrater(x, sy + (out ? 0 : R * 0.15), R * 1.5, R * 0.8, true, false); SFX.boom(0.7); shake = Math.max(shake, 26); flash = Math.max(flash, 0.15);
@@ -1194,7 +1222,7 @@ function endRun() { checkMissions(); const m = Math.round(D.maxX / 10), dm = Mat
   if (m > SV.best) { SV.best = best = m; if (MODE === 'free') nb = true; } if (dm > SV.deep) { SV.deep = dm; nd = true; }
   if (MODE === 'daily') { const dn = dayNo(); if (!SV.daily || SV.daily.day !== dn) SV.daily = { day: dn, best: 0, ghost: null }; if (m > SV.daily.best) { SV.daily.best = m; SV.daily.ghost = ghostRec; nb = true; } }
   const rc = SV.rec || (SV.rec = { lap: 0, laps: 0, core: 0 }); if ((S.laps || 0) > rc.laps) rc.laps = S.laps; if ((S.coreN || 0) > rc.core) rc.core = S.coreN;
-  xEnd(); SV.bank += gems; saveSV(); return { m, dm, nb, nd }; }
+  xEnd(); if (PL().gem !== 1 && !S.plBonus) { S.plBonus = Math.round(gems * (PL().gem - 1)); gems += S.plBonus; } SV.bank += gems; saveSV(); return { m, dm, nb, nd }; }
 function stepTut(dt) { tut.t += dt; const st = tut.st;
   if (st === 0 && D.air && turn) { tut.h = (tut.h || 0) + dt; if (tut.h > 0.35) next(); }
   else if (st === 1 && !D.air && !D.lying) next(); else if (st === 2 && D.air && D.y < surf(D.x) - 10) next(); else if (st === 3 && (S.perf > 0 || tut.t > 12)) { tut = null; SV.tut = 1; saveSV(); say('You got it!', '#c6ff3d', true); }
@@ -1237,7 +1265,7 @@ function step(dt) {
     const thrust = (THR * DTY().thr * (1 + 0.07 * U('eng')) + 200 * clamp(1 - D.s / 400, 0, 1)) * clamp(1.15 - D.s / 1700, 0, 1); const sn = Math.sin(D.ang), gin = (isMoon(D.x) ? GMOON / G : 1) * clamp((bodyR(D.x) - D.y) / bodyR(D.x), 0, 1); D.s += (thrust + G * gin * (sn > 0 ? 0.85 : 0.2) * sn) * dt; D.s *= Math.exp(-DRAG[m] * (m === ROCK || m === DEEP || m === GRAV || m === CLAY || m === COAL ? 1 - 0.08 * U('tip') : 1) * dt); if (SLIDE() && thrV < 0.995) { const tg = thrV * baseTop(); if (D.s > tg) D.s = Math.max(tg, D.s - (900 + (D.s - tg) * 3) * dt); if (thrV < 0.005 && D.s < 60) D.s = 0; } if (D.s > 250) { const pump = Math.abs(D.gav) * 0.05 * dt; D.s += D.s * pump; if (pump > 0.12 * dt && thr('carve', 2.5) && D.s > 1400) say('CARVE!', '#ffe08a'); if (pump > 0.08 * dt && D.s > 1100 && thr('cbc', 0.6)) addChain(1); }
     D.s = clamp(D.s, 0, vCap());
     D.fuel = 1; if (false) D.fuel = Math.max(0, D.fuel - (0.03 + DRAG[m] * 0.025) * dt);
-    { const sh = clamp(1 - (D.y - surf(Math.round(D.x))) / 6000, 0, 1), pass = HEAT[m] < 0.2 ? sh * (0.04 + 0.09 * clamp(1 - D.s / 1500, 0, 1)) : 0; D.heat = clamp(D.heat + HEAT[m] * dt * (HEAT[m] > 0 ? (0.1 * (1 - sh) + D.s / 1000) * (1 - 0.11 * U('cool')) * crysHeat() : 1) - pass * dt, 0, 1.15); } if (D.heat > 1) { D.hull -= 0.1 * dt; if (thr('hot', 1.2)) say('OVERHEATING!', '#ff5a2e'); }
+    { const sh = clamp(1 - (D.y - surf(Math.round(D.x))) / 6000, 0, 1), pass = HEAT[m] < 0.2 ? sh * (0.04 + 0.09 * clamp(1 - D.s / 1500, 0, 1)) : 0; D.heat = clamp(D.heat + HEAT[m] * dt * (HEAT[m] > 0 ? (0.1 * (1 - sh) + D.s / 1000) * (1 - 0.11 * U('cool')) * PL().heat * crysHeat() : 1) - pass * dt, 0, 1.15); } if (D.heat > 1) { D.hull -= 0.1 * dt; if (thr('hot', 1.2)) say('OVERHEATING!', '#ff5a2e'); }
     if (m === WATER && D.lastMat !== WATER) S.water++;
     if (m === WATER && D.lastMat !== WATER && thr('cool', 1.5)) { SFX.splash(); say('Cooled', '#9fdcff'); }
     D.lastMat = m;
@@ -1534,8 +1562,8 @@ function achCheck() { const s = lifeStats(); SV.ach = SV.ach || {}; let any = fa
 function achHTML() { const s = lifeStats(), got = ACH.filter(a => SV.ach && SV.ach[a[0]]).length; return `<div class="sub2">${got} of ${ACH.length} badges</div><div class="shop">` + ACH.map(([k, n, d, , r]) => { const on = SV.ach && SV.ach[k]; return `<div class="up" style="${on ? '' : 'opacity:.55'}"><b>${on ? '★ ' : '☆ '}${n}</b><button disabled>${on ? 'GOT' : '◆ ' + r}</button><small>${d}</small></div>`; }).join('') + '</div>'; }
 // ----- per-run end -----
 function xEnd() { if (S._banked) return; if (MODE === 'daily') { bump('daily'); const c = dailyCh(), sc = c.v(); XC.dres = { c, sc, nb: false }; if (SV.daily && sc > (SV.daily.cb || 0)) { SV.daily.cb = sc; XC.dres.nb = true; } }
-  const st = SV.st || (SV.st = {}); for (const k of STK) st[k] = (st[k] || 0) + (S[k] || 0); st.maxMach = Math.max(st.maxMach || 0, S.maxMach || 0); S._banked = true; achCheck(); echoSet(false); }
-function xEndBits(bits) { if (S.style) bits.push(`style ${S.style}`); if (S.city) bits.push(`${S.city} cit${S.city > 1 ? 'ies' : 'y'} razed`); if (MODE === 'daily' && XC.dres) bits.unshift(`DAILY: ${XC.dres.sc} ${XC.dres.c.u}${XC.dres.nb ? ' – new best!' : ''}`); }
+  const st = SV.st || (SV.st = {}); for (const k of STK) st[k] = (st[k] || 0) + (S[k] || 0); st.maxMach = Math.max(st.maxMach || 0, S.maxMach || 0); S._banked = true; achCheck(); rankCheck(); echoSet(false); }
+function xEndBits(bits) { if (S.plBonus) bits.unshift(`${PL().n} bonus ◆+${fmtG(S.plBonus)}`); if (S.style) bits.push(`style ${S.style}`); if (S.city) bits.push(`${S.city} cit${S.city > 1 ? 'ies' : 'y'} razed`); if (MODE === 'daily' && XC.dres) bits.unshift(`DAILY: ${XC.dres.sc} ${XC.dres.c.u}${XC.dres.nb ? ' – new best!' : ''}`); }
 // ----- hooks called from the game loop -----
 function xWorld(dt) { if (!D) return; stepVolcanoes(dt); stepTraffic(dt); stepAir(dt); stepAvalanche(dt); stepDams(dt); }
 function xDrill(dt) { exhaustTick(dt); styleTick(dt); crystalCheck(); dailyTick(); XC.achT -= dt; if (XC.achT <= 0) { XC.achT = 1; achCheck(); } }
@@ -1570,7 +1598,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v125';
+const VER = 'v126';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -1931,9 +1959,70 @@ const up = e => { touches.delete(e.pointerId); if (slL && slL.id === e.pointerId
 window.addEventListener('pointerdown', down); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up); window.addEventListener('blur', () => { touches.clear(); slL = slR = null; steerV = 0; });
 const keys = {}; let boostOn = false, bstHeld = false, zoomMul = 1; window.addEventListener('keydown', e => { if (['Space', 'ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'KeyW', 'KeyS', 'ShiftLeft', 'ShiftRight'].includes(e.code)) { keys[e.code] = true; audio(); e.preventDefault(); if (endPending && e.code === 'Space') showEnd(); else if (!run && !$('ovEnd').hidden && e.code === 'Space') reset(MODE === 'daily'); } if (e.code === 'Escape' || e.code === 'KeyP') { paused ? resume() : pause(); } });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
-const OVS = ['ovAch', 'ovStart', 'ovEnd', 'ovHow', 'ovShop', 'ovSet', 'ovMus']; let backTo = 'ovStart';
+/* ===== GOALS: build a rocket part by part, fly to new planets, climb pilot ranks ===== */
+const PLANETS = [{ n: 'Terra', d: 'Home. Brown earth and blue skies.', gem: 1, heat: 1, hull: 1, tint: null, sky: null },
+  { n: 'Ember', d: 'A hot red world – the drill heats up 30 % faster, but every gem counts ×1.6.', gem: 1.6, heat: 1.3, hull: 1, tint: [-14, 1.25, 0.82], sky: [['#ff7a4a', '#ffb07a', '#ffe0a8'], ['#5a1e40', '#ff5a2a', '#ffb060'], ['#140610', '#30101e', '#4e1c2c']] },
+  { n: 'Glacia', d: 'A frozen blue world – cooler running but a brittle hull (−20 %). Gems ×2.4.', gem: 2.4, heat: 0.8, hull: 0.8, tint: [175, 0.55, 1.12], sky: [['#86d0ff', '#d4f2ff', '#ffffff'], ['#3e4ea8', '#a898ff', '#dfe6ff'], ['#040a22', '#121e48', '#283a68']] }];
+const PL = () => PLANETS[SV.planet || 0] || PLANETS[0];
+const MCOL0 = MCOL.map(a => a && a.slice()), SKY0 = SKY.map(r => r.map(c => c.slice()));
+const hx2rgb = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
+function tintHex(h, t) { let [r, g, b] = hx2rgb(h).map(v => v / 255); const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let hh = 0, ss = 0, l = (mx + mn) / 2; const dd = mx - mn;
+  if (dd) { ss = l > 0.5 ? dd / (2 - mx - mn) : dd / (mx + mn); hh = mx === r ? (g - b) / dd + (g < b ? 6 : 0) : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4; hh *= 60; }
+  hh = (hh + t[0] + 360) % 360; ss = clamp(ss * t[1], 0, 1); l = clamp(l * t[2], 0, 1);
+  const q = l < 0.5 ? l * (1 + ss) : l + ss - l * ss, pp = 2 * l - q, f = k => { k = (k + 1) % 1; return k < 1 / 6 ? pp + (q - pp) * 6 * k : k < 0.5 ? q : k < 2 / 3 ? pp + (q - pp) * (2 / 3 - k) * 6 : pp; };
+  return '#' + [f(hh / 360 + 1 / 3), f(hh / 360), f(hh / 360 - 1 / 3)].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); }
+function applyPlanet() { const P = PL(); for (let i = 0; i < MCOL.length; i++) if (MCOL0[i]) MCOL[i] = (P.tint && i !== 14 && i !== 16) ? MCOL0[i].map(h => tintHex(h, P.tint)) : MCOL0[i].slice();
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) SKY[i][j] = P.sky ? hx2rgb(P.sky[i][j]) : SKY0[i][j].slice(); }
+applyPlanet();
+const RPARTS = [{ k: 'pad', n: 'Launch pad', d: 'Steel from wrecked buildings', st: 'bld', need: [10, 150], u: 'buildings knocked down', c: [1000, 4000] },
+  { k: 'tank', n: 'Fuel tank', d: 'Deep-earth fuel', st: 'deep', need: [1500, 2300], u: 'm deepest dig', c: [2500, 9000] },
+  { k: 'shield', n: 'Heat shield', d: 'Tempered in a volcano', st: 'ride', need: [1, 5], u: 'eruption rides', c: [4000, 15000] },
+  { k: 'nav', n: 'Navigation crystal', d: 'Grown in crystal caves', st: 'xcav', need: [3, 12], u: 'crystal caves found', c: [6000, 22000] },
+  { k: 'core', n: 'Core reactor', d: 'A piece of the planet\'s core', st: 'coreN', need: [1, 4], u: 'trips through the core', c: [10000, 35000] },
+  { k: 'beacon', n: 'Moon beacon', d: 'Calibrated on the moon', st: 'moonLand', need: [1, 3], u: 'moon landings', c: [15000, 50000] }];
+const MK = () => Math.min(1, SV.pmax || 0); // rocket Mk I on Terra, Mk II on Ember
+const rkBuilt = () => (SV.rk || (SV.rk = {}))[SV.pmax || 0] || (SV.rk[SV.pmax || 0] = {});
+const statOf = k => k === 'deep' ? SV.deep : lifeStats()[k] || 0;
+const partsTotal = () => Object.values(SV.rk || {}).reduce((a, o) => a + Object.keys(o).length, 0);
+const badgeN = () => Object.keys(SV.ach || {}).length;
+const canFly = () => (SV.pmax || 0) < PLANETS.length - 1;
+const RANKS = [['Rookie Digger', []], ['Mole', [['best', 1500, 'm best distance']]], ['Tunneler', [['deep', 800, 'm deepest dig'], ['badges', 3, 'badges']]],
+  ['Sky Driller', [['best', 8000, 'm best distance'], ['parts', 1, 'rocket part built']]], ['Rock Breaker', [['deep', 1500, 'm deepest dig'], ['badges', 6, 'badges'], ['parts', 2, 'rocket parts built']]],
+  ['Orbit Rider', [['orbits', 1, 'full orbit'], ['parts', 3, 'rocket parts built']]], ['Core Diver', [['coreN', 1, 'trip through the core'], ['badges', 10, 'badges'], ['parts', 4, 'rocket parts built']]],
+  ['Moonwalker', [['moonLand', 1, 'moon landing'], ['parts', 6, 'rocket parts built']]], ['Star Pilot', [['planet', 1, 'new planet reached']]],
+  ['Comet Rider', [['badges', 20, 'badges'], ['parts', 9, 'rocket parts built']]], ['Planet Cracker', [['planet', 2, 'planets reached'], ['badges', 30, 'badges']]]];
+const rkVal = k => k === 'best' ? SV.best : k === 'deep' ? SV.deep : k === 'badges' ? badgeN() : k === 'parts' ? partsTotal() : k === 'planet' ? (SV.pmax || 0) : lifeStats()[k] || 0;
+const rankRew = i => 400 * i;
+function rankCheck(quiet) { let up = null; SV.rank = SV.rank || 0; while (SV.rank < RANKS.length - 1 && RANKS[SV.rank + 1][1].every(([k, n]) => rkVal(k) >= n)) { SV.rank++; SV.bank += rankRew(SV.rank); up = SV.rank; } if (up !== null) { if (!quiet) SV.rankUp = (SV.rankUp || []).concat([up]); saveSV(); } return up; }
+function rankProg() { const r = SV.rank || 0; if (r >= RANKS.length - 1) return 1; const q = RANKS[r + 1][1]; return q.reduce((a, [k, n]) => a + Math.min(1, rkVal(k) / n), 0) / q.length; }
+function rankHTML(full) { const r = SV.rank || 0, nx = RANKS[r + 1];
+  const reqs = nx ? nx[1].map(([k, n, u]) => `<li class="${rkVal(k) >= n ? 'ok' : ''}">${k === 'planet' && n === 1 ? 'Fly the rocket to a new planet' : `${fmtG(Math.min(rkVal(k), n))} / ${fmtG(n)} ${u}`}</li>`).join('') : '';
+  if (!full) return `Rank ${r + 1} · <b>${RANKS[r][0]}</b>${nx ? `<div style="opacity:.85;margin-top:2px">Next: ${nx[0]} – ◆ ${fmtG(rankRew(r + 1))}</div><div class="bar"><i style="width:${Math.round(rankProg() * 100)}%"></i></div>` : '<div>Top rank reached!</div>'}`;
+  return `<div class="rk"><div class="t">Rank ${r + 1}: ${RANKS[r][0]}</div>${nx ? `Next: <b>${nx[0]}</b> · reward ◆ ${fmtG(rankRew(r + 1))}<ul>${reqs}</ul><div class="bar"><i style="width:${Math.round(rankProg() * 100)}%"></i></div>` : 'You reached the top rank. Legend.'}<div class="rkl">${RANKS.map((q, i) => `<span class="${i === r ? 'cur' : i < r ? 'on' : ''}">${q[0]}</span>`).join('')}</div></div>`; }
+function rocketSVG() { const b = rkBuilt(), on = k => !!b[k], st = k => on(k) ? '' : ' fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2" stroke-dasharray="5 4"';
+  const mk = MK() ? '#d84a3a' : '#e85a2a';
+  return `<svg viewBox="0 0 200 230" width="170" height="196" style="display:block;margin:0 auto">
+  <path d="M100 18 L126 70 L74 70 Z" ${on('beacon') ? 'fill="' + mk + '"' : st('beacon')}/>${on('beacon') ? '<line x1="100" y1="4" x2="100" y2="18" stroke="#fff" stroke-width="3"/><circle cx="100" cy="4" r="4" fill="#ffe14d"/>' : ''}
+  <rect x="74" y="70" width="52" height="80" rx="6" ${on('tank') ? 'fill="#f2f2f2" stroke="#b8c0cc" stroke-width="2"' : st('tank')}/>
+  <circle cx="100" cy="98" r="12" ${on('nav') ? 'fill="#7df9ff" stroke="#3a8aa8" stroke-width="3"' : st('nav')}/>
+  <path d="M74 120 L52 160 L74 152 Z M126 120 L148 160 L126 152 Z M74 150 L126 150 L120 166 L80 166 Z" ${on('shield') ? 'fill="' + mk + '"' : st('shield')}/>
+  <path d="M84 166 L116 166 L124 186 L76 186 Z" ${on('core') ? 'fill="#555c68" stroke="#ffb02e" stroke-width="2"' : st('core')}/>
+  <rect x="30" y="196" width="140" height="14" rx="4" ${on('pad') ? 'fill="#8a8f99"' : st('pad')}/>${on('pad') ? '<rect x="40" y="186" width="8" height="10" fill="#6a6f79"/><rect x="152" y="186" width="8" height="10" fill="#6a6f79"/>' : ''}
+  </svg>`; }
+function goalReady() { const b = rkBuilt(), mk = MK(); if (!canFly()) return false; if (RPARTS.every(p => b[p.k])) return true; return RPARTS.some(p => !b[p.k] && statOf(p.st) >= p.need[mk] && SV.bank >= p.c[mk]); }
+function renderGoal() { const mk = MK(), b = rkBuilt(), here = (SV.planet || 0) === (SV.pmax || 0);
+  $('gPlanet').innerHTML = `Planet <b>${PL().n}</b> – ${PL().d}${(SV.pmax || 0) > 0 ? `<div class="planets" style="margin-top:6px">${PLANETS.slice(0, (SV.pmax || 0) + 1).map((q, i) => `<button data-pl="${i}" class="${i === (SV.planet || 0) ? 'on' : ''}">${q.n}</button>`).join('')}</div>` : ''}`;
+  $('gRocket').innerHTML = canFly() ? rocketSVG() : '<div class="sub2">You have flown to every planet!</div>';
+  $('gParts').innerHTML = !canFly() ? '' : `<div class="sub2" style="margin:-4px 0 2px">Rocket Mk ${mk ? 'II' : 'I'} → ${PLANETS[(SV.pmax || 0) + 1].n}${here ? '' : ` · build it on ${PLANETS[SV.pmax || 0].n}`}</div>` + RPARTS.map(p => { const v = statOf(p.st), n = p.need[mk], ok = v >= n, done = b[p.k], c = p.c[mk];
+    return `<div class="up"><b>${p.n}</b><button data-rp="${p.k}" ${done || !ok || SV.bank < c || !here ? 'disabled' : ''}>${done ? 'BUILT' : '◆ ' + fmtG(c)}</button><small>${p.d}</small><span class="req ${ok ? 'ok' : ''}">${ok ? '✓' : '○'} ${fmtG(Math.min(v, n))} / ${fmtG(n)} ${p.u}</span></div>`; }).join('');
+  $('gLaunch').innerHTML = canFly() && RPARTS.every(p => b[p.k]) ? `<button class="btn" id="bLaunch">LAUNCH TO ${PLANETS[(SV.pmax || 0) + 1].n.toUpperCase()}!</button>` : '';
+  $('gRank').innerHTML = rankHTML(true); }
+function launchRocket() { const to = (SV.pmax || 0) + 1, svg = rocketSVG(); SV.pmax = to; SV.planet = to; rankCheck(true); saveSV(); applyPlanet(); const L = $('ovLaunch'); L.querySelector('.lrk').innerHTML = svg.replace('</svg>', '<path d="M84 186 Q100 260 116 186 Z" fill="#ffb02e"><animate attributeName="d" values="M84 186 Q100 250 116 186 Z;M84 186 Q100 270 116 186 Z;M84 186 Q100 250 116 186 Z" dur=".15s" repeatCount="indefinite"/></path></svg>').replace('width="170" height="196"', 'width="90" height="104"');
+  $('lTxt').innerHTML = `Next stop:<br>${PLANETS[to].n}`; L.hidden = false; for (const e of L.querySelectorAll('.lstars,.lrk,.ltxt')) { e.style.animation = 'none'; void e.offsetWidth; e.style.animation = ''; }
+  try { SFX.mach(3, true); } catch (e) {} buzz([60, 40, 120]); setTimeout(() => { L.hidden = true; renderGoal(); show('ovGoal'); }, 3400); }
+const OVS = ['ovAch', 'ovStart', 'ovEnd', 'ovHow', 'ovShop', 'ovSet', 'ovMus', 'ovGoal']; let backTo = 'ovStart';
 function show(id) { for (const o of OVS) $(o).hidden = o !== id; }
-function showMenu() { endPending = null; fillMissions(); $('sBest').textContent = SV.best + ' m'; $('sDeep').textContent = SV.deep + ' m'; $('sBank').textContent = '◆ ' + fmtG(SV.bank); if (SV.ecoMsg) { SV.ecoMsg = 0; saveSV(); const n = document.createElement('div'); n.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;background:rgba(255,255,255,.96);color:#3a2414;border-radius:16px;padding:14px 16px;font:600 14px Nunito,sans-serif;box-shadow:0 6px 0 rgba(80,40,20,.35);text-align:center'; n.innerHTML = '<b style="font-size:17px">Upgrades rebalanced</b><br>Each upgrade now has 10 levels and takes real play to earn. Your upgrades and gem bank were reset – records, badges and skins are kept.<br><button style="margin-top:10px;padding:8px 22px;border:0;border-radius:12px;background:#ffb02e;font:800 14px Nunito,sans-serif;color:#3a2414">OK</button>'; n.querySelector('button').onclick = () => n.remove(); document.body.appendChild(n); } $('misS').innerHTML = misHTML(); $('bDaily').textContent = xDailyBtn(); $('pz').hidden = true; show('ovStart'); }
+function showMenu() { endPending = null; fillMissions(); $('sBest').textContent = SV.best + ' m'; $('sDeep').textContent = SV.deep + ' m'; $('sBank').textContent = '◆ ' + fmtG(SV.bank); rankCheck(true); SV.rankUp = []; $('rankS').innerHTML = rankHTML(false) + ((SV.planet || 0) ? `<div style="margin-top:3px;opacity:.85">Planet ${PL().n} · gems ×${PL().gem}</div>` : ''); $('goalDot').className = goalReady() ? 'on' : ''; if (SV.ecoMsg) { SV.ecoMsg = 0; saveSV(); const n = document.createElement('div'); n.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;background:rgba(255,255,255,.96);color:#3a2414;border-radius:16px;padding:14px 16px;font:600 14px Nunito,sans-serif;box-shadow:0 6px 0 rgba(80,40,20,.35);text-align:center'; n.innerHTML = '<b style="font-size:17px">Upgrades rebalanced</b><br>Each upgrade now has 10 levels and takes real play to earn. Your upgrades and gem bank were reset – records, badges and skins are kept.<br><button style="margin-top:10px;padding:8px 22px;border:0;border-radius:12px;background:#ffb02e;font:800 14px Nunito,sans-serif;color:#3a2414">OK</button>'; n.querySelector('button').onclick = () => n.remove(); document.body.appendChild(n); } $('misS').innerHTML = misHTML(); $('bDaily').textContent = xDailyBtn(); $('pz').hidden = true; show('ovStart'); }
 function renderShop() { $('shopBank').textContent = '◆ ' + fmtG(SV.bank); $('shopList').innerHTML = UPS.map(u => { const l = SV.up[u.k] || 0, c = l >= UMAX ? 0 : COSTK(u.k, l); return `<div class="up"><b>${u.n} <span style="font-weight:700;opacity:.55;font-size:.85em">Lv ${l}/${UMAX}</span></b><button data-k="${u.k}" ${l >= UMAX || SV.bank < c ? 'disabled' : ''}>${l >= UMAX ? 'MAX' : '◆ ' + fmtG(c)}</button><small>${u.d}</small><div class="pips">${Array.from({ length: UMAX }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</div></div>`; }).join('')
   + '<div class="logo" style="font-size:26px;margin:14px 0 6px">Skins</div>' + SKINS.map(k => { const own = k.c === 0 || (SV.skins && SV.skins[k.k]), on = (SV.skin || 'classic') === k.k, sw = k.b ? `linear-gradient(${k.b[0]},${k.b[1]},${k.b[2]})` : 'linear-gradient(90deg,#f55,#fc3,#5e5,#5cf,#a6f)';
     return `<div class="up"><b><span style="display:inline-block;width:26px;height:14px;border-radius:7px;vertical-align:-2px;margin-right:6px;background:${sw};box-shadow:inset 0 0 0 2px ${k.s}"></span>${k.n}</b><button data-skin="${k.k}" ${on || (!own && SV.bank < k.c) ? 'disabled' : ''}>${on ? 'ON' : own ? 'USE' : '◆ ' + k.c}</button><small>${k.d}</small></div>`; }).join('')
@@ -1968,6 +2057,10 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) pause
 $('bGo').onclick = () => { audio(); hold = false; reset(false); };
 $('bDaily').onclick = () => { audio(); hold = false; reset(true); };
 $('bAgain').onclick = () => { audio(); hold = false; reset(MODE === 'daily'); };
+$('bGoal').onclick = () => { renderGoal(); show('ovGoal'); }; $('bGoalOk').onclick = () => showMenu();
+$('ovGoal').addEventListener('click', e => { const t = e.target.closest('button'); if (!t) return; if (t.id === 'bLaunch') { launchRocket(); return; }
+  if (t.dataset.pl !== undefined) { SV.planet = +t.dataset.pl; saveSV(); applyPlanet(); renderGoal(); return; }
+  const p = RPARTS.find(q => q.k === t.dataset.rp); if (!p || t.disabled) return; const mk = MK(), c = p.c[mk]; if (SV.bank < c || statOf(p.st) < p.need[mk]) return; SV.bank -= c; rkBuilt()[p.k] = 1; rankCheck(); saveSV(); audio(); SFX.gem(3); buzz([20, 30, 60]); renderGoal(); });
 $('bShop').onclick = () => openShop('ovStart'); $('bShop2').onclick = () => openShop('ovEnd');
 $('bShopOk').onclick = () => backTo === 'ovEnd' ? (show('ovEnd')) : showMenu();
 $('bMenu').onclick = () => showMenu();
