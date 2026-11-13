@@ -905,6 +905,10 @@ function pushOut(dyn) { const c = Math.cos(D.ang), s = Math.sin(D.ang); let hits
   return { hits, hitV }; }
 function bodyContact(dt) { const r = pushOut(true); if (window.__bcl && r.hits) window.__bcl.push([Math.round(D.x), Math.round(D.y), Math.round(surf(Math.round(D.x))), +D.ang.toFixed(2), Math.round(D.vx), Math.round(D.vy), Math.round(r.hitV), r.hits]); if (r.hitV > 380) { const sdm = Math.pow(r.hitV / 1600, 1.7) * 0.42 / (Math.sqrt(HM) * frameF()); D.hull -= sdm; if (r.hitV > kaboomV()) D.hull = -1; SFX.thunk(); shake = Math.max(shake, 4 + r.hitV / 250); dirt(D.x, D.y + 8, 8 + r.hitV / 100, colOf(mat(D.x, D.y + 30))[2]); if (sdm > 0.2) { say('SIDE IMPACT!', '#ff6a5a', true); breakChain(); } else if (thr('bonk', 0.6)) say('Bonk!', '#ffd0b0'); }
   if (r.hits) { D.restT = (D.restT || 0) + (Math.hypot(D.vx, D.vy) < 150 ? dt : 0); if (D.restT > 0.3) { D.restT = 0; const ix = Math.round(D.x), onS = D.y < surf(ix) + 30; layDown(onS ? Math.atan2(surf(ix + 6) - surf(ix - 6), 12) : null); return true; } } else D.restT = 0; return false; }
+/* turning while (nearly) stopped underground: the drill pivots on its tail and the bit carves the arc, so the body never sits inside solid earth */
+function pivotTurn(pa) { const P = 44, c0 = Math.cos(pa), s0 = Math.sin(pa), c1 = Math.cos(D.ang), s1 = Math.sin(D.ang), tx = D.x - c0 * P, ty = D.y - s0 * P, nx = tx + c1 * P, ny = ty + s1 * P;
+  for (const t of [-20, 6, TIP - 4]) carve(tx + c0 * (P + t), ty + s0 * (P + t), TR * 0.9, tx + c1 * (P + t), ty + s1 * (P + t));
+  D.x = nx; D.y = ny; D.px = nx; D.py = ny; if (thr('pivdust', 0.12)) dirt(tx + c1 * (P + TIP), ty + s1 * (P + TIP), 3, colOf(mat(tx + c1 * (P + TIP + 8), ty + s1 * (P + TIP + 8)))[2]); }
 function roughDig(sp, mis) { if (mis > 0.5 && sp > 600) { const cd = crookDmg(Math.min(mis, 1.6), sp); D.hull -= cd; if (cd > 0.06) { SFX.clang(); say('CROOKED HIT!', '#ffb08a', true); breakChain(); } } else if (thr('digin', 0.8)) say('Dug in!', '#ffe08a');
   D.air = false; D.lying = false; D.av = 0; D.gav = 0; D.fin = 0; D.solidT = 0.25; D.flips = 0; D.flipAcc = 0; D.s = Math.max(300, sp * Math.max(0.3, Math.cos(Math.min(mis, 1.5)))); const L = TIP + 6, tx = D.x + Math.cos(D.ang) * L, ty = D.y + Math.sin(D.ang) * L; SFX.thump(0.35); dirt(tx, ty, 14, colOf(mat(tx, ty))[2]); }
 function layDown(sa) { breakChain(); const sp = Math.hypot(D.vx, D.vy); D.lying = true; D.air = false; D.s = 0; D.onSurf = sa !== null; D.av = 0; D.gav = 0; D.combo = 0; D.flips = 0; D.flipAcc = 0;
@@ -1210,7 +1214,7 @@ function step(dt) {
     if (OPEN(m) && D.solidT <= 0 && (m === AIR || OPEN(mat(D.x + Math.cos(D.ang) * (TIP + 22), D.y + Math.sin(D.ang) * (TIP + 22))))) { if (m === AIR) exitGround(); else dropIntoCavity(); return; }
     if (OPEN(m)) m = D.mat || SOIL; D.mat = m;
     if (m === BED) { const L = Math.cos(D.ang) < 0; let am = L ? Math.PI - D.ang : D.ang; am = norm(am); am = -Math.abs(am) * 0.8 - 0.3; D.ang = L ? Math.PI - am : am; D.s *= 0.55; D.hull -= 0.1; SFX.clang(); shake = Math.max(shake, 6); say('Bedrock!', '#ccc'); for (let i = 0; i < 12; i++) parts.push({ k: 'spark', x: tx, y: ty, vx: (rnd() - 0.5) * 500, vy: -rnd() * 400, t: 0, life: 0.4, s: 2 }); buzz(60); }
-    { const wav = turn * DTY().turn * 4.3 * clamp(D.s / 200, 0.3, 1); D.gav += (wav - D.gav) * Math.min(1, dt * 9); D.ang = norm(D.ang + D.gav * dt);
+    { const wav = turn * DTY().turn * 4.3 * clamp(D.s / 200, 0.3, 1); D.gav += (wav - D.gav) * Math.min(1, dt * 9); { const pa = D.ang; D.ang = norm(D.ang + D.gav * dt); if (D.s < 160 && Math.abs(angDiff(D.ang, pa)) > 1e-4) pivotTurn(pa); }
       const slow = SLIDE() && thrV < 0.02 ? 0 : clamp(1 - D.s / 260, 0, 1); if (slow > 0) { const dir = Math.cos(D.ang) >= 0 ? 1 : -1; const toDown = angDiff(Math.PI / 2, D.ang); if (Math.abs(toDown) > 0.2) D.ang = norm(D.ang + Math.sign(toDown) * slow * 2.2 * dt); } }
     shake = Math.max(shake, 0.8 + D.s / 1100);
     const thrust = (THR * DTY().thr * (1 + 0.07 * U('eng')) + 200 * clamp(1 - D.s / 400, 0, 1)) * clamp(1.15 - D.s / 1700, 0, 1); const sn = Math.sin(D.ang), gin = (isMoon(D.x) ? GMOON / G : 1) * clamp((bodyR(D.x) - D.y) / bodyR(D.x), 0, 1); D.s += (thrust + G * gin * (sn > 0 ? 0.85 : 0.2) * sn) * dt; D.s *= Math.exp(-DRAG[m] * (m === ROCK || m === DEEP || m === GRAV || m === CLAY || m === COAL ? 1 - 0.08 * U('tip') : 1) * dt); if (SLIDE() && thrV < 0.995) { const tg = thrV * baseTop(); if (D.s > tg) D.s = Math.max(tg, D.s - (900 + (D.s - tg) * 3) * dt); if (thrV < 0.005 && D.s < 60) D.s = 0; } if (D.s > 250) { const pump = Math.abs(D.gav) * 0.05 * dt; D.s += D.s * pump; if (pump > 0.12 * dt && thr('carve', 2.5) && D.s > 1400) say('CARVE!', '#ffe08a'); if (pump > 0.08 * dt && D.s > 1100 && thr('cbc', 0.6)) addChain(1); }
@@ -1502,7 +1506,7 @@ function xDrill(dt) { styleTick(dt); crystalCheck(); dailyTick(); XC.achT -= dt;
 function xLand(sp) { if (DTY().k === 'bomb' && sp > 800 && (XC.bombT || 0) < T) { XC.bombT = T + 1; const sy = surf(Math.round(D.x)); explode(D.x, sy + 30, 115, 250, 'dbomb'); say('KABOOM!', '#ff6a3d', true); addChain(1); } }
 function xDraw(x, left, right, t, s) { drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v102';
+const VER = 'v103';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
