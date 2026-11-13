@@ -1654,7 +1654,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v132';
+const VER = 'v133';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -1930,6 +1930,12 @@ function render() {
     x.fillStyle = 'rgba(255,190,60,0.3)'; x.beginPath(); x.arc(dx, dy, 13 + 4 * pu, 0, TAU); x.fill(); x.save(); x.translate(dx, dy); x.rotate(na); x.fillStyle = '#ffd45a'; x.strokeStyle = '#3a2208'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(13, 0); x.lineTo(-8, -7); x.lineTo(-4, 0); x.lineTo(-8, 7); x.closePath(); x.fill(); x.stroke(); x.restore(); x.globalAlpha = 1; }
   if (D && !isMoon(cam.x) && spF > 0.3) { const [mx, my] = C2S(MCX, MCY), R = RMN * GV.s, M = 34; if (mx < -R || mx > VW + R || my < -R || my > VH + R) { const cx = VW / 2, cy = VH / 2, ang = Math.atan2(my - cy, mx - cx), tx = clamp(cx + Math.cos(ang) * VW, M, VW - M), ty = clamp(cy + Math.sin(ang) * VH, M + 90, VH - M - 60);
       x.save(); x.globalAlpha = spF * (0.7 + 0.3 * Math.sin(T * 3)); x.translate(tx, ty); x.rotate(ang); x.fillStyle = '#e8e8ff'; x.beginPath(); x.moveTo(14, 0); x.lineTo(-8, -9); x.lineTo(-4, 0); x.lineTo(-8, 9); x.closePath(); x.fill(); x.restore(); x.globalAlpha = spF; x.font = '800 11px Nunito, sans-serif'; x.textAlign = 'center'; x.fillStyle = '#e8e8ff'; x.fillText('MOON', tx - Math.cos(ang) * 22, ty - Math.sin(ang) * 22 + 4); x.globalAlpha = 1; } }
+  // moon compass: a small arrow at the top of the screen always points at the moon (and home again from the moon)
+  if (D && run && !D.dead && GV && !window.__film) { const onM = isMoon(D.x), tX = onM ? 0 : MCX, tY = onM ? 0 : MCY, [mx, my] = C2S(tX, tY), [ex, ey] = W2S(D.x, D.y), ang = Math.atan2(my - ey, mx - ex), [X, Y] = toCart(D.x, D.y), dm = Math.max(0, Math.hypot(X - tX, Y - tY) - (onM ? RPL : RMN)) / 10;
+    const cx = VW / 2, cy = 106, r = 20; x.save(); x.globalAlpha = 0.92; x.fillStyle = 'rgba(16,22,44,0.55)'; x.strokeStyle = onM ? 'rgba(140,220,255,0.8)' : 'rgba(232,232,255,0.75)'; x.lineWidth = 1.5; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill(); x.stroke();
+    x.fillStyle = onM ? '#7fd0ff' : '#e8e8ff'; x.beginPath(); x.arc(cx, cy, 5.5, 0, TAU); x.fill(); if (!onM) { x.fillStyle = 'rgba(16,22,44,0.55)'; x.beginPath(); x.arc(cx + 2.4, cy - 1.6, 4.6, 0, TAU); x.fill(); }
+    x.translate(cx, cy); x.rotate(ang); x.fillStyle = '#ffd45a'; x.strokeStyle = '#3a2208'; x.lineWidth = 1.2; x.beginPath(); x.moveTo(r + 9, 0); x.lineTo(r - 1, -6.5); x.lineTo(r + 1.5, 0); x.lineTo(r - 1, 6.5); x.closePath(); x.fill(); x.stroke(); x.restore();
+    x.font = '900 11px Nunito, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.lineWidth = 3; x.strokeStyle = 'rgba(0,0,0,0.45)'; const lbl = (onM ? 'HOME ' : 'MOON ') + (dm >= 10000 ? Math.round(dm / 1000).toLocaleString('en-US') + ' km' : dm >= 1000 ? (dm / 1000).toFixed(1) + ' km' : Math.round(dm) + ' m'); x.strokeText(lbl, cx, cy + r + 13); x.fillStyle = '#fff'; x.fillText(lbl, cx, cy + r + 13); x.globalAlpha = 1; }
   // snow in the tundra, embers over the volcano
   drawWeather(x, s);
   // speed lines
