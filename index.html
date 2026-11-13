@@ -1219,7 +1219,7 @@ function step(dt) {
     if (D.solidT > 0) D.solidT -= dt;
     const tx = D.x + Math.cos(D.ang) * TIP, ty = D.y + Math.sin(D.ang) * TIP; let m = mat(tx, ty);
     if (OPEN(m) && D.solidT <= 0 && (m === AIR || OPEN(mat(D.x + Math.cos(D.ang) * (TIP + 22), D.y + Math.sin(D.ang) * (TIP + 22))))) { if (m === AIR) exitGround(); else dropIntoCavity(); return; }
-    if (OPEN(m)) m = D.mat || SOIL; D.mat = m; if ((m === SAND || m === GRAV) && !isMoon(D.x)) sandSeg(m);
+    if (OPEN(m)) m = D.mat || SOIL; D.mat = m; 
     if (m === BED) { const L = Math.cos(D.ang) < 0; let am = L ? Math.PI - D.ang : D.ang; am = norm(am); am = -Math.abs(am) * 0.8 - 0.3; D.ang = L ? Math.PI - am : am; D.s *= 0.55; D.hull -= 0.1; SFX.clang(); shake = Math.max(shake, 6); say('Bedrock!', '#ccc'); for (let i = 0; i < 12; i++) parts.push({ k: 'spark', x: tx, y: ty, vx: (rnd() - 0.5) * 500, vy: -rnd() * 400, t: 0, life: 0.4, s: 2 }); buzz(60); }
     { const wav = turn * DTY().turn * 4.3 * clamp(D.s / 200, 0.3, 1); D.gav += (wav - D.gav) * Math.min(1, dt * 9); { const pa = D.ang; D.ang = norm(D.ang + D.gav * dt); if (D.s < 160 && Math.abs(angDiff(D.ang, pa)) > 1e-4) pivotTurn(pa); }
       const slow = SLIDE() && thrV < 0.02 ? 0 : clamp(1 - D.s / 260, 0, 1); if (slow > 0) { const dir = Math.cos(D.ang) >= 0 ? 1 : -1; const toDown = angDiff(Math.PI / 2, D.ang); if (Math.abs(toDown) > 0.2) D.ang = norm(D.ang + Math.sign(toDown) * slow * 2.2 * dt); } }
@@ -1546,7 +1546,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v111';
+const VER = 'v112';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -1914,6 +1914,7 @@ function renderShop() { $('shopBank').textContent = '◆ ' + SV.bank; $('shopLis
 function openShop(from) { backTo = from; renderShop(); show('ovShop'); }
 $('shopList').addEventListener('click', e => { const bd = e.target.closest('button[data-dt]'); if (bd && !bd.disabled) { const k = DTYPES.find(q => q.k === bd.dataset.dt); if (!k) return; SV.dts = SV.dts || {}; if (k.c && !SV.dts[k.k]) { if (SV.bank < k.c) return; SV.bank -= k.c; SV.dts[k.k] = 1; SFX.gem(3); } SV.dt = k.k; saveSV(); audio(); buzz(20); renderShop(); return; } const b = e.target.closest('button[data-skin]'); if (!b || b.disabled) return; const k = SKINS.find(q => q.k === b.dataset.skin); if (!k) return; SV.skins = SV.skins || {}; if (k.c && !SV.skins[k.k]) { if (SV.bank < k.c) return; SV.bank -= k.c; SV.skins[k.k] = 1; SFX.gem(3); } SV.skin = k.k; saveSV(); audio(); buzz(20); renderShop(); });
 $('shopList').onclick = e => { const b = e.target.closest('button[data-k]'); if (!b || b.disabled) return; const k = b.dataset.k, l = U(k); if (l >= UMAX || SV.bank < COST[l]) return; SV.bank -= COST[l]; SV.up[k] = l + 1; saveSV(); audio(); SFX.gem(2); buzz(20); renderShop(); };
+if (!SV.set.caveMig) { SV.set.cave = 1; SV.set.caveMig = 1; } /* realistic tunnel cave-ins are on by default */
 function setLbl() { $('tCtl').lastChild.textContent = SLIDE() ? 'Sliders' : 'Tap sides'; $('tSnd').lastChild.textContent = SV.set.snd ? 'On' : 'Off'; $('tVib').lastChild.textContent = SV.set.vib ? 'On' : 'Off'; $('tQ').lastChild.textContent = SV.set.q ? 'High' : 'Low (faster)'; $('tCave').lastChild.textContent = SV.set.cave ? 'On' : 'Off (faster)'; $('tFps').lastChild.textContent = SV.set.fps ? 'On' : 'Off'; $('tPock').lastChild.textContent = SV.set.nopock ? 'Hidden (test)' : 'Shown'; $('tFlat').lastChild.textContent = SV.set.flat ? 'Off (faster)' : 'On'; $('tRend').lastChild.textContent = SV.set.rend === 'gl' ? 'Classic (WebGL)' : 'Fast (direct)'; $('tPf').lastChild.textContent = SV.set.pf ? 'On' : 'Off'; $('tTcpu').lastChild.textContent = SV.set.tgpu ? 'GPU' : 'CPU'; }
 function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').textContent = inGame ? 'RESUME' : 'BACK'; $('bQuit').hidden = !inGame; show('ovSet'); }
 function pause() { if (!run || paused || !D || D.dead) return; paused = true; touches.clear(); $('pz').hidden = true; openSet(true); }
