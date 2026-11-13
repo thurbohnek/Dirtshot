@@ -180,7 +180,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 <div class="ov" id="ovHow" hidden><div class="card">
   <div class="logo" style="font-size:44px">How to play</div>
   <div class="how">
-    <b>Left thumb</b> slides sideways to steer ↺ ↻ – let go and the drill goes straight. <b>Right thumb</b> sets the speed from 0 to 100 % of the drill's normal top speed – it speeds up or brakes to hold it. Speed you build with perfect dives and combos goes on top at 100 %. The slider stays where you leave it.<br>Out in <b>space</b>, pinch with two fingers (or use + / −) to zoom in and out.<br>Other controls in Settings → Controls: <b>Joystick</b> (point the stick where you want to go; let go and the drill keeps its heading) or <b>Tap sides</b> (hold a side to turn, both to brake).<br>The drill only bites when there's earth ahead – in <b>caverns</b> it falls like a rock. Soft ground <b>caves in</b> behind you.<br>In the air, keep holding to <b>flip</b>. Buy <b>wings</b> in the workshop to steer your flight. Land nose-first along the slope for a <b>perfect dive</b>; land sideways and you lie there until you rotate the nose down.<br>
+    <b>Left thumb</b> is a joystick: point it where you want the drill to go – let go and it keeps its heading. <b>Right thumb</b> sets the speed from 0 to 100 % of the drill's normal top speed – it speeds up or brakes to hold it. Speed you build with perfect dives and combos goes on top at 100 %. The slider stays where you leave it.<br>Out in <b>space</b>, pinch with two fingers (or use + / −) to zoom in and out.<br>Other controls in Settings → Controls: <b>Sliders</b> (slide the left thumb sideways to rotate) or <b>Tap sides</b> (hold a side to turn, both to brake).<br>The drill only bites when there's earth ahead – in <b>caverns</b> it falls like a rock. Soft ground <b>caves in</b> behind you.<br>In the air, keep holding to <b>flip</b>. Buy <b>wings</b> in the workshop to steer your flight. Land nose-first along the slope for a <b>perfect dive</b>; land sideways and you lie there until you rotate the nose down.<br>
     The earth eats your speed – pop out and fly to get it back. <b>Old bombs</b> blow you sky-high, a hot drill ignites <b>gas</b>, <b>water</b> cools you.<br>Spend gems in the <b>Workshop</b>. The <b>Daily run</b> is the same ground for everyone today – race your own ghost.
   </div>
   <button class="btn" id="bHowOk">GOT IT</button>
@@ -883,7 +883,7 @@ function buzz(p) { try { if (SV.set.vib && navigator.vibrate) navigator.vibrate(
 /* ================= GAME STATE ================= */
 const G = 1650, THR = 430, TR = 20;
 const DELAY = new Array(12).fill(Infinity); let segs = [], D_tick = 0;
-let slL = null, slR = null, steerV = 0, thrV = 1, cruiseK = 0; const SLIDE = () => (SV.set.ctl || 'slide') !== 'tap', STICK = () => SV.set.ctl === 'stick'; let stA = 0, stM = 0;
+let slL = null, slR = null, steerV = 0, thrV = 1, cruiseK = 0; const SLIDE = () => (SV.set.ctl || 'slide') !== 'tap', STICK = () => (SV.set.ctl || 'stick') === 'stick'; let stA = 0, stM = 0;
 let D = null, run = false, hold = false, brakeOn = false, brakeK = 0, turn = 0, steer = 0, slider = null, touches = new Map(), T = 0, best = 0, gems = 0, msgs = [], parts = [], rings = [], ev = [], shake = 0, flash = 0;
 best = SV.best;
 let TS = 1, slowT = 0; function slowmo(d) { if (REDUCED) return; slowT = Math.max(slowT, d); }
@@ -1285,6 +1285,7 @@ function stepTut(dt) { tut.t += dt; const st = tut.st;
   if (st === 0 && D.air && turn) { tut.h = (tut.h || 0) + dt; if (tut.h > 0.35) next(); }
   else if (st === 1 && !D.air && !D.lying) next(); else if (st === 2 && D.air && D.y < surf(D.x) - 10) next(); else if (st === 3 && (S.perf > 0 || tut.t > 12)) { tut = null; SV.tut = 1; saveSV(); say('You got it!', '#c6ff3d', true); }
   function next() { tut.st++; tut.t = 0; SFX.gem(0); } }
+const TUTXS = ['Point the LEFT joystick to turn the nose', 'Let go to fly straight – hit the ground nose-first', 'Point the stick up to burst out!', 'Land along the slope for a PERFECT DIVE'];
 const TUTX0 = ['Slide the LEFT slider right to rotate ↻', 'Let go to fly straight – hit the ground nose-first', 'Steer with the left slider – point up to burst out!', 'Land along the slope for a PERFECT DIVE'];
 const TUTX = ['Hold the RIGHT side of the screen to rotate ↻', 'Let go to fly straight – hit the ground nose-first', 'Hold a side to steer – point up to burst out!', 'Land along the slope for a PERFECT DIVE'];
 
@@ -1656,7 +1657,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v139';
+const VER = 'v140';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -1962,7 +1963,7 @@ function render() {
   if (run && !SLIDE()) { for (const sd of [-1, 1]) { const on = turn === sd, cx = sd < 0 ? 44 : VW - 44, cy = VH - 120; x.globalAlpha = on ? 0.95 : (T < 15 ? 0.5 : 0.22); x.fillStyle = on ? '#ffb02e' : 'rgba(255,255,255,0.8)'; x.strokeStyle = 'rgba(60,25,10,0.45)'; x.lineWidth = 3; x.beginPath(); x.arc(cx, cy, 26, 0, TAU); x.fill(); x.stroke();
       x.strokeStyle = on ? '#fff' : 'rgba(60,25,10,0.7)'; x.lineWidth = 4; x.lineCap = 'round'; x.beginPath(); if (sd > 0) x.arc(cx, cy, 12, -2.4, 1.4); else x.arc(cx, cy, 12, Math.PI - 1.4, Math.PI + 2.4, true); x.stroke();
       const ea = sd > 0 ? 1.4 : Math.PI - 1.4, ex = cx + Math.cos(ea) * 12, ey = cy + Math.sin(ea) * 12; x.beginPath(); x.moveTo(ex - 6 * sd, ey - 3); x.lineTo(ex, ey); x.lineTo(ex - 1 * sd, ey - 8); x.stroke(); } x.globalAlpha = 1; }
-  if (D && !D.dead && tut && !D.lying && run) { const tt = (SLIDE() ? TUTX0 : TUTX)[tut.st]; x.font = '400 22px "Lilita One", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; const w = Math.min(VW - 24, x.measureText(tt).width + 36); x.fillStyle = 'rgba(40,20,10,0.55)'; x.beginPath(); const ty = hintY(); x.roundRect ? x.roundRect(VW / 2 - w / 2, ty - 22, w, 44, 22) : x.rect(VW / 2 - w / 2, ty - 22, w, 44); x.fill(); x.fillStyle = '#fff'; x.fillText(tt, VW / 2, ty, VW - 40); x.font = '900 11px Nunito, sans-serif'; x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillText('TUTORIAL ' + (tut.st + 1) + '/4', VW / 2, ty - 34); x.textBaseline = 'alphabetic'; }
+  if (D && !D.dead && tut && !D.lying && run) { const tt = (STICK() ? TUTXS : SLIDE() ? TUTX0 : TUTX)[tut.st]; x.font = '400 22px "Lilita One", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; const w = Math.min(VW - 24, x.measureText(tt).width + 36); x.fillStyle = 'rgba(40,20,10,0.55)'; x.beginPath(); const ty = hintY(); x.roundRect ? x.roundRect(VW / 2 - w / 2, ty - 22, w, 44, 22) : x.rect(VW / 2 - w / 2, ty - 22, w, 44); x.fill(); x.fillStyle = '#fff'; x.fillText(tt, VW / 2, ty, VW - 40); x.font = '900 11px Nunito, sans-serif'; x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillText('TUTORIAL ' + (tut.st + 1) + '/4', VW / 2, ty - 34); x.textBaseline = 'alphabetic'; }
   else if (D && !D.dead && !D.tower && (T < 6 || D.lying) && run && hintY() < VH - 360) { x.font = '800 15px Nunito, sans-serif'; x.textAlign = 'center'; x.fillStyle = 'rgba(255,255,255,0.95)'; x.strokeStyle = 'rgba(60,25,10,0.6)'; x.lineWidth = 4; const tt = D.lying ? 'On its side – rotate the nose down to dig in' : D.air ? (turn ? 'Keep holding to flip!' : STICK() ? 'Point the stick where to go · right thumb sets speed' : SLIDE() ? 'Left thumb steers · right thumb sets speed' : 'Hold right ↻ or left ↺ to rotate · both to brake') : (turn ? 'Keep holding to swing round' : STICK() ? 'Point the stick where to go · right thumb sets speed' : SLIDE() ? 'Left thumb steers · right thumb sets speed' : 'Right side turns ↻ · left side turns ↺ · both = brake'); const ty = hintY(), w = Math.min(VW - 24, x.measureText(tt).width + 28); x.fillStyle = 'rgba(40,20,10,0.45)'; x.beginPath(); x.roundRect(VW / 2 - w / 2, ty - 16, w, 32, 16); x.fill(); x.fillStyle = 'rgba(255,255,255,0.95)'; x.textBaseline = 'middle'; x.fillText(tt, VW / 2, ty, VW - 40); x.textBaseline = 'alphabetic'; }
 }
 function updateFX(dt) { if (parts.length > 420) { let ex = parts.length - 420; for (let i = 0; i < parts.length && ex > 0; i++) if (parts[i].k !== 'wat' && parts[i].k !== 'core') { parts.splice(i, 1); i--; ex--; } } stepShocks(dt); if (run) stepWater(dt); for (const p of parts) if (p.k === 'wat') moveWat(p, dt); if (wreck.length) stepWreck(dt); if (boulders.length) stepBoulders(dt); for (const p of parts) { p.t += dt; if (p.k === 'wat') continue; p.vy += (p.g || 0) * dt; if (p.k === 'smoke' || p.k === 'fire') { p.vx *= Math.exp(-1.5 * dt); } else if (p.k === 'dust') { p.vx *= Math.exp(-0.8 * dt); p.vy *= Math.exp(-0.8 * dt); } p.x += p.vx * dt; p.y += p.vy * dt; if (p.vr) p.rot += p.vr * dt; }
@@ -2143,7 +2144,7 @@ function setLbl() { $('tShk').lastChild.textContent = ['Off', 'Low', 'Full'][SV.
 function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').textContent = inGame ? 'RESUME' : 'BACK'; $('bQuit').hidden = !inGame; show('ovSet'); }
 function pause() { if (!run || paused || !D || D.dead) return; paused = true; touches.clear(); $('pz').hidden = true; openSet(true); }
 function resume() { if (!paused) { if (!$('ovSet').hidden) showMenu(); return; } paused = false; touches.clear(); last = performance.now(); show(null); $('pz').hidden = false; }
-$('tCtl').onclick = () => { const o = ['slide', 'stick', 'tap'], c = SV.set.ctl || 'slide'; SV.set.ctl = o[(o.indexOf(c) + 1) % 3]; saveSV(); setLbl(); };
+$('tCtl').onclick = () => { const o = ['stick', 'slide', 'tap'], c = SV.set.ctl || 'stick'; SV.set.ctl = o[(o.indexOf(c) + 1) % 3]; saveSV(); setLbl(); };
 $('tSnd').onclick = () => { SV.set.snd = SV.set.snd ? 0 : 1; SOUND = !!SV.set.snd; if (master) master.gain.value = SOUND ? 0.8 : 0; if (SOUND) audio(); saveSV(); setLbl(); };
 $('tShk').onclick = () => { SV.set.shk = ((SV.set.shk === undefined ? 1 : SV.set.shk) + 1) % 3; saveSV(); setLbl(); };
 $('tVib').onclick = () => { SV.set.vib = SV.set.vib ? 0 : 1; saveSV(); setLbl(); buzz(30); };
