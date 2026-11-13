@@ -427,7 +427,7 @@ function drawFnd(x, B, sp) { const n = Math.ceil((B.w + 12) / FSEG); if (!B.fnd)
   for (let j = 0; j < n; j++) { if (!B.fnd[j]) continue; const lx = x0 + j * FSEG, gx = B.x + lx + FSEG / 2; if ((frameNo + j) % 6 === 0 && OPEN(mat(gx, Math.max(B.gy, surf(Math.round(gx))) + 10))) { fndKill(B, j, 0, 0); continue; } const sx = sp.ox + lx, sw = Math.min(FSEG, sp.W - sx); if (sw > 0) x.drawImage(sp.c, sx, sp.oy, sw, sp.H - sp.oy, lx, 0, sw + 0.5, sp.H - sp.oy); } }
 function fndBlast(B, x, y, R) { if (!B.fnd) return; const x0 = -B.w / 2 - 6; for (let j = 0; j < B.fnd.length; j++) { const gx = B.x + x0 + (j + 0.5) * FSEG, d = Math.hypot(gx - x, B.gy - y); if (d < R * 0.6) fndKill(B, j, (gx - x) * 2, -300); } }
 function drawBuildings(x, left, right, t) { if ((frameNo % 240) === 0) for (const Ls of BLDC.values()) for (const B of Ls) if (B.sp && !B.mod && frameNo - (B.used || 0) > 900) { B.sp = null; B.spF = null; B.cell = null; } /* free far-away sprites */
-  const L = bldsIn(left, right); if ((frameNo % 12) === 0) for (const B of L) { if (B.cell && !B.mod) continue; let lost = false; for (const f of [-0.4, -0.15, 0.15, 0.4]) { const gx = B.x + f * B.w; if (OPEN(mat(gx, Math.max(B.gy, surf(gx)) + 12))) lost = true; } if (lost && !B.cell) { bldCells(B); B.dirty = true; } else if (lost || B.mod) B.dirty = B.dirty || lost; }
+  const L = bldsIn(left, right); if ((frameNo % 12) === 0) for (const B of L) { if (B.lostChk === true) continue; let lost = false; for (const f of [-0.47, -0.3, -0.15, 0, 0.15, 0.3, 0.47]) { const gx = B.x + f * B.w; if (OPEN(mat(gx, Math.max(B.gy, surf(gx)) + 12))) lost = true; } if (lost && !B.cell) { bldCells(B); B.dirty = true; } else if (lost) B.dirty = true; }
   for (const B of L) if (B.dirty) bldSupport(B);
   for (const B of L) { const sp = bldSprite(B); B.used = frameNo; x.save(); if (FAST) setAffL(x, B.x, B.gy); else x.translate(B.x, B.gy);
     if (!B.mod) { x.drawImage(sp.c, -sp.ox, -sp.oy); bldMoving(x, B, t); if (B.type === 'sky' && nightF > 0.05) { x.globalAlpha = nightF * 0.5; x.fillStyle = '#ffd86a'; const hw = B.w / 2; for (let k = 0; k < 6; k++) { const yy = -B.h + 20 + ((B.seed * (k + 3)) % 1) * (B.h - 40); x.fillRect(-hw + 10, yy, B.w - 20, 18); } x.globalAlpha = 1; } }
@@ -1557,7 +1557,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v118';
+const VER = 'v119';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -1764,14 +1764,15 @@ function render() {
   if (!(lod && s < 0.06) && !isMoon(cam.x)) { drawBuildings(x, left, right, t); xDraw(x, left, right, t, s); }
   if (FAST) setAff(x, cam.x, cam.y);
   // particles (behind drill)
-  for (const p of parts) { const k = p.t / p.life;
+  let pax = cam.x, pay = cam.y; const pAff = p => { if (FAST && (Math.abs(p.x - pax) > 220 || Math.abs(p.y - pay) > 220)) { setAff(x, p.x, p.y); pax = p.x; pay = p.y; } };
+  for (const p of parts) { pAff(p); const k = p.t / p.life;
     if (p.k === 'smoke') { x.globalAlpha = (1 - k) * 0.45; x.fillStyle = '#6b5e58'; x.beginPath(); x.arc(p.x, p.y, p.s * (1 + k), 0, TAU); x.fill(); }
     else if (p.k === 'rock') { x.globalAlpha = Math.min(1, (1 - k) * 3); x.fillStyle = p.c; x.save(); x.translate(p.x, p.y); x.rotate(p.rot); x.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.8); x.restore(); }
     else if (p.k === 'bub') { x.globalAlpha = 1 - k; x.strokeStyle = '#e8f7ff'; x.lineWidth = 1; x.beginPath(); x.arc(p.x, p.y, p.s, 0, TAU); x.stroke(); }
     else if (p.k === 'gas') { x.globalAlpha = (1 - k) * 0.7; x.fillStyle = '#d8ff8a'; x.beginPath(); x.arc(p.x, p.y, p.s, 0, TAU); x.fill(); }
     else if (p.k === 'wat') { x.globalAlpha = Math.min(1, (1 - k) * 4) * 0.85; x.fillStyle = '#5aaaf0'; x.beginPath(); x.arc(p.x, p.y, p.s, 0, TAU); x.fill(); x.fillStyle = '#c8ecff'; x.fillRect(p.x - p.s * 0.4, p.y - p.s * 0.5, p.s * 0.5, p.s * 0.35); }
     else if (p.k === 'dust') { x.globalAlpha = Math.min(k * 6, 1) * (1 - k) * 0.22; x.fillStyle = p.c; x.beginPath(); x.arc(p.x, p.y, p.s * (1 + k * 1.5), 0, TAU); x.fill(); } }
-  x.globalAlpha = 1;
+  x.globalAlpha = 1; if (FAST) setAff(x, cam.x, cam.y);
   if (D && run && D.air && !D.dead && !D.tower && D.y < surf(D.x) - 50) { let px = D.x, py = D.y, vx = D.vx, vy = D.vy, hit = null; const pts = [];
     for (let i = 0; i < 140; i++) { const dt = 1 / 40, [ax, ay] = airAcc(px, py, vx, vy); vx += ax * dt; vy += ay * dt; px += vx / kAt(px, py) * dt; py += vy * dt; if (i % 2) pts.push(px, py); if (py >= surf(px)) { hit = [px, surf(px), vx, vy]; break; } }
     if (hit) { const sa = Math.atan2(surf(hit[0] + 6) - surf(hit[0] - 6), 12), tx = Math.cos(sa), ty = Math.sin(sa); const vin = -hit[2] * ty + hit[3] * tx, along = Math.abs(hit[2] * tx + hit[3] * ty), rel = Math.atan2(vin, along), va = Math.atan2(hit[3], hit[2]), mis = Math.abs(angDiff(D.ang, va)), sp = Math.hypot(hit[2], hit[3]);
@@ -1794,7 +1795,7 @@ function render() {
       for (const [spr, a] of [[0.16, 0.13], [0.32, 0.07]]) { const rg = x.createRadialGradient(lx, ly, 2, lx, ly, cl); rg.addColorStop(0, `rgba(255,236,190,${a * dkA})`); rg.addColorStop(0.5, `rgba(255,226,170,${a * dkA * 0.45})`); rg.addColorStop(1, 'rgba(255,220,160,0)'); x.fillStyle = rg; x.beginPath(); x.moveTo(lx, ly); x.arc(lx, ly, cl, D.ang - spr, D.ang + spr); x.closePath(); x.fill(); } x.restore();
       x.globalAlpha = dkA * 0.9; const fg = x.createRadialGradient(lx, ly, 0, lx, ly, 18); fg.addColorStop(0, 'rgba(255,250,230,1)'); fg.addColorStop(1, 'rgba(255,220,150,0)'); x.fillStyle = fg; x.beginPath(); x.arc(lx, ly, 18, 0, TAU); x.fill(); x.globalAlpha = 1; } }
   for (let r = Math.floor(left / LAKEW) - 1; r <= Math.floor(right / LAKEW) + 1; r++) { const L = lakeOf(r); if (!L || L.gone || L.x + L.rx < left || L.x - L.rx > right) continue; if (FAST) setAff(x, L.x, L.y); x.globalAlpha = 0.35 + 0.05 * Math.sin(t * 2 + L.ph); const gg = x.createRadialGradient(L.x, L.y, L.rx * 0.2, L.x, L.y, L.rx * 1.3); gg.addColorStop(0, 'rgba(255,140,40,0.7)'); gg.addColorStop(1, 'rgba(255,60,10,0)'); x.fillStyle = gg; x.beginPath(); x.ellipse(L.x, L.y - L.dh * 0.3, L.rx * 1.3, L.dh * 1.3, 0, 0, TAU); x.fill(); } x.globalAlpha = 1;
-  for (const p of parts) { const k = p.t / p.life; if (p.k === 'fire') { x.globalAlpha = (1 - k) * 0.8; const r = p.s * (1 - k * 0.4); x.drawImage(FIRE, p.x - r, p.y - r, r * 2, r * 2); }
+  if (FAST) { setAff(x, cam.x, cam.y); pax = cam.x; pay = cam.y; } for (const p of parts) { pAff(p); const k = p.t / p.life; if (p.k === 'fire') { x.globalAlpha = (1 - k) * 0.8; const r = p.s * (1 - k * 0.4); x.drawImage(FIRE, p.x - r, p.y - r, r * 2, r * 2); }
     else if (p.k === 'core') { const r = p.s * (0.3 + 1.4 * Math.sqrt(k)); x.globalAlpha = Math.pow(1 - k, 1.5); const gg = x.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); gg.addColorStop(0, 'rgba(255,250,225,0.95)'); gg.addColorStop(0.15, 'rgba(255,215,110,0.85)'); gg.addColorStop(0.45, 'rgba(255,120,30,0.55)'); gg.addColorStop(0.75, 'rgba(190,40,10,0.3)'); gg.addColorStop(1, 'rgba(120,20,5,0)'); x.fillStyle = gg; x.beginPath(); x.arc(p.x, p.y, r, 0, TAU); x.fill(); }
     else if (p.k === 'haze') { x.globalAlpha = (1 - k) * 0.22; x.fillStyle = '#ff8a3a'; x.beginPath(); x.arc(p.x + Math.sin(p.t * 18 + p.s) * 4, p.y, p.s * (1 + k), 0, TAU); x.fill(); }
     else if (p.k === 'spark') { x.globalAlpha = 1 - k; x.strokeStyle = p.c || '#ffd27a'; x.lineWidth = p.s; x.beginPath(); x.moveTo(p.x, p.y); x.lineTo(p.x - p.vx * 0.03, p.y - p.vy * 0.03); x.stroke(); } }
