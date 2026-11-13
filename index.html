@@ -1411,11 +1411,13 @@ function stepTraffic(dt) { if (isMoon(cam.x)) { VEH = []; return; } XC.vehT -= d
   for (let i = VEH.length - 1; i >= 0; i--) { const v = VEH[i]; if (!nearCam(v.x, 12000)) { VEH.splice(i, 1); continue; }
     if (v.fall) { v.vy += 1300 * dt; v.y += v.vy * dt; if (!OPEN(mat(v.x, v.y + 14))) { wreckVeh(v, 0, 0); VEH.splice(i, 1); } continue; }
     const nx = v.x + v.dir * v.v * dt; if (!vehOK(nx + v.dir * 60)) { /* turn round: the last car becomes the front, so the train doesn't jump */ v.x -= v.dir * (v.n - 1) * 118; v.dir = -v.dir; v.stuck = (v.stuck || 0) + 1; if (v.stuck > 2 && !vehOK(v.x + v.dir * 80)) { VEH.splice(i, 1); continue; } } else { v.x = nx; v.stuck = 0; } v.y = surf(v.x);
-    if (OPEN(mat(v.x, v.y + 12))) { v.fall = 1; v.vy = 0; continue; }
+    { let lost = false; for (let j = 0; j < v.n; j++) { const cx = v.x - v.dir * j * 118; if (OPEN(mat(cx, surf(Math.round(cx)) + 12)) || OPEN(mat(cx + 30, surf(Math.round(cx + 30)) + 12))) { lost = true; break; } } if (lost) { dropVeh(v); VEH.splice(i, 1); continue; } }
     if (D && !D.dead && !D.tower) for (let j = 0; j < v.n; j++) { const cx = v.x - v.dir * j * 118, cy = surf(cx) - 22; if (Math.hypot(cx - D.x, cy - D.y) < 62) { const vx = D.air ? D.vx : Math.cos(D.ang) * D.s, vy = D.air ? D.vy : Math.sin(D.ang) * D.s; wreckVeh(v, vx, vy); VEH.splice(i, 1); if (D.air) { D.vx *= 0.9; D.vy *= 0.9; } else D.s *= 0.92; break; } } } }
 function wreckVeh(v, vx, vy) { bump('veh'); const g = v.train ? 30 : 8; gems += g; say(v.train ? `TRAIN WRECK!  ◆+${g}` : `CAR CRUSHED!  ◆+${g}`, '#ffb060', !!v.train); addChain(v.train ? 3 : 1); SFX.clang(); if (v.train) SFX.boom(0.4); shake = Math.max(shake, v.train ? 12 : 5);
   for (let j = 0; j < v.n; j++) { const cx = v.x - v.dir * j * 118, cy = (v.fall ? v.y : surf(cx)) - 22; for (let q = 0; q < 6; q++) DEB.push({ x: cx + (rnd() - 0.5) * 60, y: cy + (rnd() - 0.5) * 20, a: rnd() * 6, L: 10 + rnd() * 30, w: 6 + rnd() * 10, c: rnd() < 0.3 ? '#2a2a30' : rnd() < 0.5 ? '#9ac8e8' : (v.train ? v.cs[j] : v.c), vx: vx * 0.3 + (rnd() - 0.5) * 500, vy: vy * 0.3 - 200 - rnd() * 400, va: (rnd() - 0.5) * 12, rest: false });
     for (let q = 0; q < 6; q++) parts.push({ k: 'fire', x: cx + (rnd() - 0.5) * 50, y: cy, vx: (rnd() - 0.5) * 160, vy: -60 - rnd() * 160, t: 0, life: 0.6 + rnd() * 0.4, s: 12 + rnd() * 12 }); dust(cx, cy, 4, '#6a6060', 120); } if (DEB.length > 220) DEB.splice(0, DEB.length - 220); }
+/* the ground went from under a car or a wagon: every car tumbles down as loose wreckage (no reward, nobody hit it) */
+function dropVeh(v) { for (let j = 0; j < v.n; j++) { const cx = v.x - v.dir * j * 118, cy = surf(Math.round(cx)) - 22, col = v.train ? v.cs[j] : v.c; for (let q = 0; q < 5; q++) DEB.push({ x: cx + (q - 2) * 14, y: cy + (rnd() - 0.5) * 10, a: (rnd() - 0.5) * 0.6, L: 16 + rnd() * 18, w: 10 + rnd() * 8, c: q === 0 ? '#2a2a30' : q === 4 ? '#9ac8e8' : col, vx: (rnd() - 0.5) * 80, vy: rnd() * 40, va: (rnd() - 0.5) * 3, rest: false }); } if (DEB.length > 260) DEB.splice(0, DEB.length - 260); }
 function wreckNear(x, y, R) { for (let i = VEH.length - 1; i >= 0; i--) { const v = VEH[i]; for (let j = 0; j < v.n; j++) { const cx = v.x - v.dir * j * 118; if (Math.hypot(cx - x, surf(cx) - y) < R) { wreckVeh(v, (cx - x) * 3, -400); VEH.splice(i, 1); break; } } }
   for (let i = AIRC.length - 1; i >= 0; i--) { const a = AIRC[i]; if (Math.hypot(a.x - x, a.y - y) < R) { downAir(a, (a.x - x) * 2, -200); AIRC.splice(i, 1); } } }
 function drawCar(x, c, w) { x.fillStyle = c; x.beginPath(); x.moveTo(-w / 2, -8); x.lineTo(-w / 2, -24); x.lineTo(-w * 0.25, -26); x.lineTo(-w * 0.15, -40); x.lineTo(w * 0.22, -40); x.lineTo(w * 0.34, -26); x.lineTo(w / 2, -22); x.lineTo(w / 2, -8); x.closePath(); x.fill(); x.fillStyle = '#9ad4f4'; x.fillRect(-w * 0.12, -37, w * 0.14, 10); x.fillRect(w * 0.05, -37, w * 0.14, 10); x.fillStyle = '#1e1e24'; for (const q of [-0.3, 0.3]) { x.beginPath(); x.arc(q * w, -8, 8, 0, TAU); x.fill(); } x.fillStyle = '#fff6b0'; x.fillRect(w / 2 - 4, -20, 4, 5); }
@@ -1555,7 +1557,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v117';
+const VER = 'v118';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
