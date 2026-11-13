@@ -416,16 +416,21 @@ function splitBody(b) { if (b.cells.length <= 3) { const c = Math.cos(b.a), s = 
     const nb = { B: b.B, cells: part.map(q => [q[0], q[1], q[2], q[3]]), x: b.x, y: b.y, a: b.a, vx: b.vx - b.va * ry + rx * 0.6, vy: b.vy + b.va * rx - 40, va: b.va + (rnd() - 0.5) * 1.2, rest: false, still: 0, age: 0, dirty: true }; bodyProps(nb); BOD.push(nb); }
   b.cells = []; }
 // explosions: knock blocks out near the blast, throw the rest of nearby buildings sideways in snapped sections
-function blastBuildings(x, y, R, pw) { blastX(x, y, R); for (const B of bldsIn(x - R * 1.6, x + R * 1.6)) { const cyB = B.gy - B.h / 2, d = Math.hypot(B.x - x, cyB - y); if (d > R * 1.6) continue; bldCells(B); B.touched = true; const dir = Math.sign(B.x - x) || 1; cutAt(B, x, y, R * 0.55, 0, -200);
+function blastBuildings(x, y, R, pw) { blastX(x, y, R); for (const B of bldsIn(x - R * 1.6, x + R * 1.6)) { const cyB = B.gy - B.h / 2, d = Math.hypot(B.x - x, cyB - y); if (d > R * 1.6) continue; bldCells(B); B.touched = true; const dir = Math.sign(B.x - x) || 1; if (!B.fnd) B.fnd = new Uint8Array(Math.ceil((B.w + 12) / FSEG)).fill(1); fndBlast(B, x, y, R); cutAt(B, x, y, R * 0.55, 0, -200);
     const f = clamp(1 - d / (R * 1.6), 0, 1) * pw; if (f > 0.22) { const idx = []; for (let k = 0; k < B.cell.length; k++) if (B.cell[k]) idx.push(k); const seg = Math.max(4, Math.round(B.nr / Math.max(1, Math.round(B.h / 300)))), groups = new Map(); for (const k of idx) { const j = (k / B.nc) | 0, g = Math.floor((B.nr - 1 - j) / seg); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(k); }
       for (const [g, ks] of groups) { const up = 1 + g * 0.35; mkBody(B, ks, dir * (500 + 500 * rnd()) * f * up, -(150 + 250 * rnd()) * f, dir * (0.6 + 0.8 * rnd()) * f); } bldAward(B); } else B.dirty = true; }
   for (const b of BOD) { const d = Math.hypot(b.x - x, b.y - y); if (d > R * 1.6) continue; const f = (1 - d / (R * 1.6)) * pw, dx = (b.x - x) / (d || 1), dy = (b.y - y) / (d || 1); b.vx += dx * 900 * f; b.vy += dy * 700 * f - 200 * f; b.va += (rnd() - 0.5) * 3 * f; b.rest = false; } }
+const FSEG = 24;
+function fndKill(B, j, vx, vy) { if (!B.fnd || !B.fnd[j]) return; B.fnd[j] = 0; const lx = -B.w / 2 - 6 + (j + 0.5) * FSEG; for (let q = 0; q < 3; q++) DEB.push({ x: B.x + lx + (rnd() - 0.5) * 16, y: B.gy + 4 + rnd() * 10, a: rnd() * 6, L: 10 + rnd() * 14, w: 8 + rnd() * 8, c: rnd() < 0.5 ? '#6b6158' : '#57504a', vx: vx + (rnd() - 0.5) * 200, vy: vy - rnd() * 200, va: (rnd() - 0.5) * 10, rest: false }); if (DEB.length > 260) DEB.splice(0, DEB.length - 260); }
+function drawFnd(x, B, sp) { const n = Math.ceil((B.w + 12) / FSEG); if (!B.fnd) B.fnd = new Uint8Array(n).fill(1); const x0 = -B.w / 2 - 6;
+  for (let j = 0; j < n; j++) { if (!B.fnd[j]) continue; const lx = x0 + j * FSEG, gx = B.x + lx + FSEG / 2; if ((frameNo + j) % 6 === 0 && OPEN(mat(gx, Math.max(B.gy, surf(Math.round(gx))) + 10))) { fndKill(B, j, 0, 0); continue; } const sx = sp.ox + lx, sw = Math.min(FSEG, sp.W - sx); if (sw > 0) x.drawImage(sp.c, sx, sp.oy, sw, sp.H - sp.oy, lx, 0, sw + 0.5, sp.H - sp.oy); } }
+function fndBlast(B, x, y, R) { if (!B.fnd) return; const x0 = -B.w / 2 - 6; for (let j = 0; j < B.fnd.length; j++) { const gx = B.x + x0 + (j + 0.5) * FSEG, d = Math.hypot(gx - x, B.gy - y); if (d < R * 0.6) fndKill(B, j, (gx - x) * 2, -300); } }
 function drawBuildings(x, left, right, t) { if ((frameNo % 240) === 0) for (const Ls of BLDC.values()) for (const B of Ls) if (B.sp && !B.mod && frameNo - (B.used || 0) > 900) { B.sp = null; B.spF = null; B.cell = null; } /* free far-away sprites */
   const L = bldsIn(left, right); if ((frameNo % 12) === 0) for (const B of L) { if (B.cell && !B.mod) continue; let lost = false; for (const f of [-0.4, -0.15, 0.15, 0.4]) { const gx = B.x + f * B.w; if (OPEN(mat(gx, Math.max(B.gy, surf(gx)) + 12))) lost = true; } if (lost && !B.cell) { bldCells(B); B.dirty = true; } else if (lost || B.mod) B.dirty = B.dirty || lost; }
   for (const B of L) if (B.dirty) bldSupport(B);
   for (const B of L) { const sp = bldSprite(B); B.used = frameNo; x.save(); if (FAST) setAffL(x, B.x, B.gy); else x.translate(B.x, B.gy);
     if (!B.mod) { x.drawImage(sp.c, -sp.ox, -sp.oy); bldMoving(x, B, t); if (B.type === 'sky' && nightF > 0.05) { x.globalAlpha = nightF * 0.5; x.fillStyle = '#ffd86a'; const hw = B.w / 2; for (let k = 0; k < 6; k++) { const yy = -B.h + 20 + ((B.seed * (k + 3)) % 1) * (B.h - 40); x.fillRect(-hw + 10, yy, B.w - 20, 18); } x.globalAlpha = 1; } }
-    else { if (B.cell.some(v => v) && !OPEN(mat(B.x, Math.max(B.gy, surf(B.x)) + 12))) x.drawImage(sp.c, 0, sp.oy, sp.W, sp.H - sp.oy, -sp.ox, 0, sp.W, sp.H - sp.oy); const F = B.spF, cw = B.cw, ch = B.chh; for (let k = 0; k < B.cell.length; k++) if (B.cell[k]) { const i = k % B.nc, j = (k / B.nc) | 0; x.drawImage(F, i * cw, j * ch, cw, ch, -sp.ox + i * cw, -sp.oy + j * ch, cw + 0.6, ch + 0.6); } }
+    else { drawFnd(x, B, sp); const F = B.spF, cw = B.cw, ch = B.chh; for (let k = 0; k < B.cell.length; k++) if (B.cell[k]) { const i = k % B.nc, j = (k / B.nc) | 0; x.drawImage(F, i * cw, j * ch, cw, ch, -sp.ox + i * cw, -sp.oy + j * ch, cw + 0.6, ch + 0.6); } }
     x.restore(); }
   for (const b of BOD) { if (b.x + b.rad < left || b.x - b.rad > right || !b.B.spF) continue; const F = b.B.spF, cw = b.B.cw, ch = b.B.chh; x.save(); if (FAST) setAffL(x, b.x, b.y); else x.translate(b.x, b.y); x.rotate(b.a); for (const q of b.cells) x.drawImage(F, q[2] * cw, q[3] * ch, cw, ch, q[0] - cw / 2, q[1] - ch / 2, cw + 0.6, ch + 0.6); x.restore(); }
   for (const p of DEB) { if (p.x < left - 200 || p.x > right + 200) continue; x.save(); if (FAST) setAffL(x, p.x, p.y); else x.translate(p.x, p.y); x.rotate(p.a); x.fillStyle = p.c; x.fillRect(-p.L / 2, -p.w / 2, p.L, p.w); x.fillStyle = 'rgba(0,0,0,0.22)'; x.fillRect(-p.L / 2, p.w * 0.1, p.L, p.w * 0.4); x.restore(); } }
@@ -602,7 +607,11 @@ function phTile(x, ch, ty) { const bot = Math.min(ty + TH, Y1), xs = []; for (le
   for (let i = 0; i < 8; i++) { const tp = xs.map((w, j) => Math.min(bot, Math.max(ty, ss[j] + PHB[i](w)))), bt = xs.map((w, j) => Math.min(bot, Math.max(ty, i < 7 ? ss[j] + PHB[i + 1](w) : bed(w)))); let any = false; for (let j = 0; j < xs.length; j++) if (bt[j] > tp[j] + 0.5) { any = true; break; } if (!any) continue;
     x.beginPath(); x.moveTo(xs[0] - ch.x0 + ch.x0, tp[0]); for (let j = 1; j < xs.length; j++) x.lineTo(xs[j] + (j === xs.length - 1 ? 0.5 : 0), tp[j]); for (let j = xs.length - 1; j >= 0; j--) x.lineTo(xs[j] + (j === xs.length - 1 ? 0.5 : 0), bt[j]); x.closePath(); x.fillStyle = MCOL[mats[i]][0]; x.fill(); }
   const bb = xs.map(w => Math.max(ty, Math.min(bot, bed(w)))); if (bb.some(v => v < bot)) { x.beginPath(); x.moveTo(xs[0], bb[0]); for (let j = 1; j < xs.length; j++) x.lineTo(xs[j], bb[j]); x.lineTo(xs[xs.length - 1], bot); x.lineTo(xs[0], bot); x.closePath(); x.fillStyle = MCOL[BED][0]; x.fill(); } }
-function getTile(ch, k, lazy) { let t = ch.tiles[k]; if (t) return t; if (lazy && (tileBudget <= 0 && performance.now() > tileDeadline || PF.nb >= 3)) return null; /* the real paint cost of a new tile lands on the GPU later, so cap new tiles per frame */ tileBudget--; tilesBuilt++; const tb0 = performance.now(); ensureBand(ch, k); t = buildTile(ch, k); PF.build += performance.now() - tb0; PF.nb++; if (!t) { evictTiles(cam.x, cam.y, true); return null; } ch.tiles[k] = t; tileCount += t.kr || 1; t.used = frameNo; if (tileCount > MAXT + 25) evictTiles(cam.x, cam.y);
+/* build the tiles where the drill is heading first, so fast runs underground don't outrun the terrain */
+function prefetchTiles() { if (!D || D.dead || D.tower) return; const vx = D.air ? D.vx : Math.cos(D.ang) * D.s, vy = D.air ? D.vy : Math.sin(D.ang) * D.s, sp = Math.hypot(vx, vy); if (sp < 300) return;
+  for (const la of [0, 0.25, 0.5, 0.8]) { const px = D.x + vx * la / kAt(D.x, D.y), py = D.y + vy * la, ci = Math.floor(px / CW), k = Math.floor((py - Y0) / TH);
+    for (const dk of [0, -1, 1]) { const kk = k + dk; if (kk < 0 || kk >= NT) continue; for (const dc of [0, Math.sign(vx) || 1]) { const ch = getChunk(ci + dc); if (!ch.tiles[kk] && getTile(ch, kk, true) === null && PF.nb > 0) return; } } } }
+function getTile(ch, k, lazy) { let t = ch.tiles[k]; if (t) return t; if (lazy && (tileBudget <= 0 && performance.now() > tileDeadline || PF.nb >= (ftE < 17.6 ? 7 : 4))) return null; /* the real paint cost of a new tile lands on the GPU later, so cap new tiles per frame */ tileBudget--; tilesBuilt++; const tb0 = performance.now(); ensureBand(ch, k); t = buildTile(ch, k); PF.build += performance.now() - tb0; PF.nb++; if (!t) { evictTiles(cam.x, cam.y, true); return null; } ch.tiles[k] = t; tileCount += t.kr || 1; t.used = frameNo; if (tileCount > MAXT + 25) evictTiles(cam.x, cam.y);
   if ((ch.built && ch.built[k]) || (ch.dug && ch.dug[k])) { ensureBg(t); const x = t.ctx, r0 = k * RPT, r1 = Math.min(MROWS, r0 + RPT); x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; x.beginPath(); for (let rr = r0; rr < r1; rr++) for (let cc = 0; cc < MCOLS; cc++) if (ch.mask[rr * MCOLS + cc] === 1) { const cx = cc * CELL + 4, cy = Y0 + rr * CELL + 4 - t.top; x.moveTo(cx + 7.5, cy); x.arc(cx, cy, 7.5, 0, TAU); } x.fill(); x.restore(); }
   if (ch.polys) for (const P of ch.polys) { if (P.y1 < t.top || P.y0 > t.top + t.H) continue; for (const [c, k2] of [[t.ctx, 1], ...(P.open && t.bg ? [[t.bg.getContext('2d'), 0.5]] : [])]) { c.save(); c.globalCompositeOperation = 'destination-out'; c.fillStyle = '#000'; c.globalAlpha = 1; c.beginPath(); P.pts.forEach(([a, b], i) => i ? c.lineTo((a - ch.x0) * k2, (b - t.top) * k2) : c.moveTo((a - ch.x0) * k2, (b - t.top) * k2)); c.closePath(); c.fill(); c.restore(); } }
   (ch.built || (ch.built = new Uint8Array(NT)))[k] = 1; return t; }
@@ -872,7 +881,7 @@ function bubHere() { if (D.air || D.dead) return; for (const F of featsNear(D.x)
 function gasHere(x, y, dt) { for (const F of featsNear(x)) for (const g of F.gas) if (g.gas > 0.05 && inEll(g, x, y, 0)) { if (D.heat > 0.7) { igniteGas(g, 0); } else { const take = Math.min(g.gas, 0.9 * dt); g.gas -= take; D.fuel = Math.min(1, D.fuel + take * 0.9); if (!g.snd) { g.snd = 1; SFX.gas(); } if (rnd() < 0.5) parts.push({ k: 'gas', x: x + (rnd() - 0.5) * 40, y: y + (rnd() - 0.5) * 40, vx: (rnd() - 0.5) * 60, vy: (rnd() - 0.5) * 60, t: 0, life: 0.4, s: 5 + rnd() * 5 }); if (g.gas <= 0.05 && thr('gasfull', 1)) say('+FUEL', '#b8ff6a'); } } }
 function enterSolid() { const va = Math.atan2(D.vy, D.vx), sp = Math.hypot(D.vx, D.vy), mis = Math.abs(angDiff(D.ang, va));
   D.x = D.px; D.y = D.py;
-  if (mis > 1.0) { layDown(null); return; }
+  if (mis > 1.0) { if (noseIn(10)) roughDig(sp, mis); else layDown(null); return; }
   if (mis > 0.5 && sp > 600) { const cd = crookDmg(mis, sp); D.hull -= cd; if (cd > 0.06) { SFX.clang(); say('CROOKED HIT!', '#ffb08a', true); breakChain(); } }
   D.air = false; D.av = 0; D.gav = 0;
   { D.s = sp * (mis < 0.35 ? 0.98 : 0.92 - 0.25 * mis / 1.15); if (sp > 380 && thr("es", 0.7)) SFX.thump(sp / 1600); shake = Math.max(shake, 4 + sp / 260); if (D.flips > 0) { D.s = D.s * (1 + 0.18 * D.flips) + 150 * D.flips; gems += D.flips; S.flips += D.flips; addChain(D.flips); say(D.flips > 1 ? `${D.flips}× FLIP LANDED!` : 'FLIP LANDED!', '#7df9ff', true); } }
@@ -882,6 +891,20 @@ function dropIntoCavity() { if (featsNear(D.x).some(F => F.caves.some(c => inEll
 function frameF() { return 1 + 0.55 * U('frame'); }
 function kaboomV() { return (1100 + 650 * U('frame')) * DTY().crash; } /* side-on hit above this speed explodes: ~400 km/h at the start, ~1570 km/h fully upgraded */
 function crookDmg(mis, sp) { return (mis - 0.5) * Math.pow(sp / 2500, 1.4) * 2.2 / (Math.sqrt(HM) * frameF()); }
+/* ----- whole-body physics: the tail and body collide with the ground, the nose digs in ----- */
+const BODY_T = [-54, -40, -26, -12];
+const dSolid = (x, y) => !OPEN(mat(x, y));
+function cNorm(px, py) { const ix = Math.round(px), sy = surf(ix); if (py < sy + 40) { const sa = Math.atan2(surf(ix + 6) - surf(ix - 6), 12); return [Math.sin(sa), -Math.cos(sa)]; } let nx = 0, ny = 0; for (let k = 0; k < 8; k++) { const a = k * TAU / 8, cx = Math.cos(a), cy = Math.sin(a); if (OPEN(mat(px + cx * 16, py + cy * 16))) { nx += cx; ny += cy; } } const l = Math.hypot(nx, ny); return l > 0.01 ? [nx / l, ny / l] : [0, -1]; }
+function noseIn(ext) { const L = TIP + (ext || 6); return dSolid(D.x + Math.cos(D.ang) * L, D.y + Math.sin(D.ang) * L); }
+function pushOut(dyn) { const c = Math.cos(D.ang), s = Math.sin(D.ang); let hits = 0, hitV = 0;
+  for (let it = 0; it < 5; it++) { let any = false; for (const t of BODY_T) { const rx = c * t, ry = s * t, px = D.x + rx, py = D.y + ry; if (!dSolid(px, py)) continue; any = true; hits++; const [nx, ny] = cNorm(px, py); D.x += nx * 3; D.y += ny * 3;
+      if (dyn && it === 0) { const w = D.av, vpx = D.vx - w * ry, vpy = D.vy + w * rx, vn = vpx * nx + vpy * ny; if (vn < 0) { const rn = rx * ny - ry * nx, k2 = 1400, J = -1.3 * vn / (1 + rn * rn / k2); D.vx += J * nx; D.vy += J * ny; D.av += rn * J / k2; const tx = -ny, ty = nx, vt = D.vx * tx + D.vy * ty; D.vx -= vt * 0.1 * tx; D.vy -= vt * 0.1 * ty; hitV = Math.max(hitV, -vn); } } }
+    if (!any) break; }
+  return { hits, hitV }; }
+function bodyContact(dt) { const r = pushOut(true); if (window.__bcl && r.hits) window.__bcl.push([Math.round(D.x), Math.round(D.y), Math.round(surf(Math.round(D.x))), +D.ang.toFixed(2), Math.round(D.vx), Math.round(D.vy), Math.round(r.hitV), r.hits]); if (r.hitV > 380) { const sdm = Math.pow(r.hitV / 1600, 1.7) * 0.42 / (Math.sqrt(HM) * frameF()); D.hull -= sdm; if (r.hitV > kaboomV()) D.hull = -1; SFX.thunk(); shake = Math.max(shake, 4 + r.hitV / 250); dirt(D.x, D.y + 8, 8 + r.hitV / 100, colOf(mat(D.x, D.y + 30))[2]); if (sdm > 0.2) { say('SIDE IMPACT!', '#ff6a5a', true); breakChain(); } else if (thr('bonk', 0.6)) say('Bonk!', '#ffd0b0'); }
+  if (r.hits) { D.restT = (D.restT || 0) + (Math.hypot(D.vx, D.vy) < 150 ? dt : 0); if (D.restT > 0.3) { D.restT = 0; const ix = Math.round(D.x), onS = D.y < surf(ix) + 30; layDown(onS ? Math.atan2(surf(ix + 6) - surf(ix - 6), 12) : null); return true; } } else D.restT = 0; return false; }
+function roughDig(sp, mis) { if (mis > 0.5 && sp > 600) { const cd = crookDmg(Math.min(mis, 1.6), sp); D.hull -= cd; if (cd > 0.06) { SFX.clang(); say('CROOKED HIT!', '#ffb08a', true); breakChain(); } } else if (thr('digin', 0.8)) say('Dug in!', '#ffe08a');
+  D.air = false; D.lying = false; D.av = 0; D.gav = 0; D.fin = 0; D.solidT = 0.25; D.flips = 0; D.flipAcc = 0; D.s = Math.max(300, sp * Math.max(0.3, Math.cos(Math.min(mis, 1.5)))); const L = TIP + 6, tx = D.x + Math.cos(D.ang) * L, ty = D.y + Math.sin(D.ang) * L; SFX.thump(0.35); dirt(tx, ty, 14, colOf(mat(tx, ty))[2]); }
 function layDown(sa) { breakChain(); const sp = Math.hypot(D.vx, D.vy); D.lying = true; D.air = false; D.s = 0; D.onSurf = sa !== null; D.av = 0; D.gav = 0; D.combo = 0; D.flips = 0; D.flipAcc = 0;
   const sdm = Math.pow(sp / 1600, 1.7) * 0.42 / (Math.sqrt(HM) * frameF()); D.hull -= sdm; if (sp > kaboomV()) D.hull = -1; /* side-on above the frame's limit: kaboom */ if (sdm > 0.25) { SFX.clang(); say('SIDE IMPACT!', '#ff6a5a', true); shake = Math.max(shake, 20 + sp / 200); flash = Math.max(flash, Math.min(0.5, sdm * 0.4)); } if (D.onSurf) { const tx = Math.cos(sa), ty = Math.sin(sa); D.lv = (D.vx * tx + D.vy * ty) * 0.45; D.y = restY(D.x, D.ang); } else { D.lv = 0; D.vx = D.vy = 0; }
   SFX.thunk(); shake = Math.max(shake, 7 + sp / 300); buzz([40, 20, 60]); say('THUNK!', '#ffd0b0', true); dirt(D.x, D.y + 8, 22, MCOL[1][2]); }
@@ -889,13 +912,13 @@ function restY(x, ang) { const c = Math.cos(ang), sn = Math.sin(ang); let y = 1e
 function stepLying(dt) { D.fin = Math.max(0, D.fin - dt * 6);
   // roter (tungt) med input
   const sa = D.onSurf ? Math.atan2(surf(D.x + 6) - surf(D.x - 6), 12) : 0; let want = turn * 2.6; if (D.onSurf) { const up = -Math.sin(D.ang - sa); if (Math.abs(up) > 0.5) want += Math.sign(Math.cos(D.ang - sa) || 1) * (Math.abs(up) - 0.5) * 3; } if (!turn) { const d1 = angDiff(sa, D.ang), d2 = angDiff(sa + Math.PI, D.ang), d = Math.abs(d1) < Math.abs(d2) ? d1 : d2; want = clamp(d * 5, -4, 4); }
-  D.av += (want - D.av) * Math.min(1, dt * 6); D.ang = norm(D.ang + D.av * dt);
+  D.av += (want - D.av) * Math.min(1, dt * 6); D.ang = norm(D.ang + D.av * dt); if (!D.onSurf) pushOut(false);
   if (D.onSurf) { let sup = 0; for (const t of [-30, -10, 10, 30]) { const px = D.x + Math.cos(D.ang) * t; const sy = surf(px); if (!OPEN(mat(px, sy + 10)) && !OPEN(mat(px, sy + 36))) sup++; } if (sup < 2) { for (const t of [-34, 0, 34]) { const px = D.x + Math.cos(D.ang) * t; crater(px, surf(px) + 12, 30); } dirt(D.x, D.y + 10, 18, MCOL[1][2]); SFX.thump(0.4); D.lying = false; D.onSurf = false; D.air = true; D.airT = 0; D.vx = Math.cos(sa) * (D.lv || 0); D.vy = 60; D.y += 6; return; } }
   if (D.onSurf) { D.lv += G * Math.sin(sa) * 0.6 * dt; D.lv *= Math.exp(-2.2 * dt); D.x += Math.cos(sa) * D.lv * dt / kAt(D.x, D.y); D.y = restY(D.x, D.ang); if (Math.abs(D.lv) > 60 && rnd() < 0.3) dirt(D.x, D.y + 10, 1, MCOL[1][2]); }
   else if (OPEN(mat(D.x, D.y + 18))) { D.lying = false; D.air = true; D.vx = 0; D.vy = 0; return; }
   // nesa ned i fast masse + man presser = bor seg ned
-  const tx = D.x + Math.cos(D.ang) * (TIP + 18), ty = D.y + Math.sin(D.ang) * (TIP + 18); const down = Math.sin(D.ang);
-  if (!OPEN(mat(tx, ty)) && down > 0.35 && turn !== 0) { D.lying = false; D.air = false; D.s = Math.max(200, Math.abs(D.lv || 0)); D.solidT = 0.15; D.fin = 0; SFX.thump(0.3); dirt(D.x, D.y + 8, 14, MCOL[1][2]); }
+  const tx = D.x + Math.cos(D.ang) * (TIP + 10), ty = D.y + Math.sin(D.ang) * (TIP + 10); const down = Math.sin(D.ang - (D.onSurf ? sa : 0));
+  if (!OPEN(mat(tx, ty)) && (down > 0.08 || !D.onSurf || turn !== 0)) { D.lying = false; D.air = false; D.s = Math.max(300, Math.abs(D.lv || 0)); D.solidT = 0.25; D.fin = 0; SFX.thump(0.3); dirt(D.x, D.y + 8, 14, MCOL[1][2]); }
   if (!isMoon(D.x)) D.maxX = Math.max(D.maxX, D.x - (D.xo || 0)); D.heat = Math.max(0, D.heat - 0.2 * dt); }
 function say(t, col, big) { if (run) recEv += big ? 2500 : 700; msgs.push({ t, col: col || '#fff', big: !!big, life: 0 }); if (msgs.length > 3) msgs.shift(); }
 function at(d, fn) { ev.push({ t: T + d, fn }); }
@@ -905,7 +928,7 @@ function enterGround() { D.orbU = 0; D.orbX = undefined; if (isMoon(D.x)) D.mLan
   const rel = Math.atan2(vin, along); // >0 = into the ground
   xLand(sp);
   const mis = Math.abs(angDiff(D.ang, va));
-  if (rel >= 0.08 && mis > 1.0) { layDown(sa); return; }
+  if (rel >= 0.08 && mis > 1.0) { if (noseIn(10) || Math.sin(D.ang - sa) > 0.12) { roughDig(sp, mis); D.ang = D.ang; } else layDown(sa); return; }
   if (mis > 0.5 && sp > 600) { const cd = crookDmg(mis, sp); D.hull -= cd; if (cd > 0.06) { SFX.clang(); say('CROOKED HIT!', '#ffb08a', true); breakChain(); } }
   if (false) {
     D.hull -= 0.14; breakChain(); D.combo = 0; D.flips = 0; D.flipAcc = 0; D.av = 0; D.gav = 0; const fwd = D.vx >= 0 ? 1 : -1; D.air = false; D.fin = 0; D.s = Math.max(160, sp * 0.35); D.ang = clampAng(fwd > 0 ? sa + 0.6 : Math.PI + sa - 0.6); D.y = surf(D.x) + 4; say('CRASH!', '#ff6a5a', true); SFX.clang(); buzz([50, 30, 80]); shake = Math.max(shake, 9); dirt(D.x, D.y, 24, MCOL[1][2]); return; }
@@ -1171,7 +1194,7 @@ function step(dt) {
     const dd = angDiff(D.ang, va); sp *= Math.exp(-reentryStep(dt, atm, dd, sp) * 0.22 * dt); if (Math.abs(dd) < 1.9) va += clamp(dd, -1, 1) * (1.1 + 0.25 * U('fin')) * D.fin * atm * dt; sp *= Math.exp(-(0.01 + 0.05 * Math.abs(Math.sin(dd)) * D.fin) * atm * dt);
     D.vx = Math.cos(va) * sp; D.vy = Math.sin(va) * sp; { const [ax, ay] = airAcc(D.x, D.y, D.vx, D.vy); D.vx += ax * dt; D.vy += ay * dt; }
     { const dx = D.vx / kAt(D.x, D.y) * dt; D.x += dx; D.ang -= dx / bodyR(D.x); } D.y += D.vy * dt; if (coreCross()) return; frameCheck(); D.heat = Math.max(0, D.heat + HEAT[AIR] * dt);
-    if (D.airT > 0.2 && D.y < surf(D.x) - 2) { const c = Math.cos(D.ang), sn = Math.sin(D.ang); for (const t of [-56, -36, -16]) { const px = D.x + c * t, py = D.y + sn * t; if (py > surf(px) + 2) { const sa = Math.atan2(surf(px + 6) - surf(px - 6), 12), vin = -D.vx * Math.sin(sa) + D.vy * Math.cos(sa); if (vin > 0) { layDown(sa); return; } } } }
+    if (D.airT > 0.25) { const nIn = noseIn(); if (!nIn && bodyContact(dt)) return; if (nIn && OPEN(mat(D.x, D.y))) { const sp2 = Math.hypot(D.vx, D.vy); if (sp2 < 420) { roughDig(sp2, Math.abs(angDiff(D.ang, Math.atan2(D.vy, D.vx)))); return; } } }
     const m0 = mat(D.x, D.y); D.mat = m0; if (m0 === GAS) gasHere(D.x, D.y, dt);
     if (!OPEN(m0)) {
       const fromAbove = D.py <= surf(D.px) + 2;
@@ -1477,7 +1500,7 @@ function xDrill(dt) { styleTick(dt); crystalCheck(); dailyTick(); XC.achT -= dt;
 function xLand(sp) { if (DTY().k === 'bomb' && sp > 800 && (XC.bombT || 0) < T) { XC.bombT = T + 1; const sy = surf(Math.round(D.x)); explode(D.x, sy + 30, 115, 250, 'dbomb'); say('KABOOM!', '#ff6a3d', true); addChain(1); } }
 function xDraw(x, left, right, t, s) { drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v98';
+const VER = 'v99';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -1645,7 +1668,7 @@ function render() {
   // terrain chunks
   const left = GV.uL - 20 / sX, right = GV.uL + GV.uspan + 20 / sX, vtop = GV.yT - 20 / sY, vbot = GV.yT + GV.yspan + 20 / sY;
   const lod = (right - left) / CW * Math.max(0, Math.min(vbot, bodyR(cam.x)) - Math.max(vtop, surf(cam.x) - 400)) / TH > (D && D.dead ? 460 : 150) || right - left > 30000; /* after a crash the scene is still, so afford real tiles and show the crater */ /* too many tiles to draw: use the smooth far view */ const k0 = clamp(Math.floor((vtop - Y0) / TH), 0, NT - 1), k1 = clamp(Math.floor((vbot - Y0) / TH), 0, NT - 1);
-  tileBudget = 1; tileDeadline = performance.now() + (SV.set.q ? 6 : 4); const vis = [], ovl = 1.1 / sY, ovlX = 1.1 / sX;
+  tileBudget = 1; tileDeadline = performance.now() + (SV.set.q ? 7 : 5); if (!lod) prefetchTiles(); const vis = [], ovl = 1.1 / sY, ovlX = 1.1 / sX;
   if (FAST) { if (lod) drawLODf(x, left, right, vtop, vbot); else drawTilesF(x, left, right, k0, k1); }
   else { if (lod) drawLOD(x, left, right, vtop, vbot); else for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = getChunk(ci); for (let k = k0; k <= k1; k++) { const tl = getTile(ch, k, true); const ty = Y0 + k * TH; if (tl) { tl.used = frameNo; if (tl.bg) x.drawImage(tl.bg, ch.x0, ty, CW + ovlX, tl.H + ovl); vis.push([ch, tl]); } else { const sm = ch.cols[16][0]; if (ty + TH > sm) { phMiss++; phTile(x, ch, ty); } } } }
   for (const [ch, tl] of vis) x.drawImage(tl.fg, ch.x0, tl.top, CW + ovlX, tl.H + ovl); }
