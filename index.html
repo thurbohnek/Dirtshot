@@ -984,7 +984,7 @@ function stepLying(dt) { D.fin = Math.max(0, D.fin - dt * 6);
   if (D.onSurf) { D.lv += G * Math.sin(sa) * 0.6 * dt; D.lv *= Math.exp(-2.2 * dt); D.x += Math.cos(sa) * D.lv * dt / kAt(D.x, D.y); D.y = restY(D.x, D.ang); if (Math.abs(D.lv) > 60 && rnd() < 0.3) dirt(D.x, D.y + 10, 1, MCOL[1][2]); }
   else if (OPEN(mat(D.x, D.y + 18))) { D.lying = false; D.air = true; D.vx = 0; D.vy = 0; return; }
   // nesa ned i fast masse + man presser = bor seg ned
-  const tx = D.x + Math.cos(D.ang) * (TIP + 10), ty = D.y + Math.sin(D.ang) * (TIP + 10); const down = Math.sin(D.ang - (D.onSurf ? sa : 0));
+  const down = Math.sin(D.ang - (D.onSurf ? sa : 0)), tl = TIP + 10 + (down > 0.3 ? 16 : 0), tx = D.x + Math.cos(D.ang) * tl, ty = D.y + Math.sin(D.ang) * tl;
   if (!OPEN(mat(tx, ty)) && (down > 0.08 || !D.onSurf || turn !== 0)) { D.lying = false; D.air = false; D.s = Math.max(300, Math.abs(D.lv || 0)); D.solidT = 0.45; D.fin = 0; SFX.thump(0.3); dirt(D.x, D.y + 8, 14, MCOL[1][2]); }
   if (!isMoon(D.x)) D.maxX = Math.max(D.maxX, D.x - (D.xo || 0)); D.heat = Math.max(0, D.heat - 0.2 * dt); }
 function say(t, col, big) { if (run) recEv += big ? 2500 : 700; msgs.push({ t, col: col || '#fff', big: !!big, life: 0 }); if (msgs.length > 3) msgs.shift(); }
@@ -1654,7 +1654,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v133';
+const VER = 'v134';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
