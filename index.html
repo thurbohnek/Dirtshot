@@ -1472,14 +1472,15 @@ function xReset() { VEH = []; AIRC = []; AWR = []; LBOMB = []; AVL = []; FLOODS 
 const nearCam = (x, m) => Math.abs(x - cam.x) < m;
 const grounded = (x, d) => !OPEN(mat(x, surf(Math.round(x)) + (d || 12)));
 /* pockets (water, gas, lava, nitro, fossils) that a crater or tunnel opens up must not hang in the air */
-function exposeSweep(left, right) { if ((frameNo % 12) !== 0) return; const zones = (XC.craters || []).filter(c => T - c.t < 40).map(c => [c.x, c.y, c.r * 3 + 200]); if (CRB) zones.push([(CRB.x0 + CRB.x1) / 2, (CRB.y0 + CRB.y1) / 2, Math.max(CRB.x1 - CRB.x0, CRB.y1 - CRB.y0) * 0.75]); if (!zones.length) return; const inZ = o => zones.some(z => Math.hypot(o.x - z[0], o.y - z[1]) < z[2]);
+function exposeSweep(left, right) { if ((frameNo % 12) !== 0) return; for (const b of boulders) if (b.rest && (b.y + b.s < surf(Math.round(b.x)) - 4 || isCarved(b.x, b.y + b.s + 5))) { b.rest = false; b.vy = 0; } /* resting boulders whose ground was blown away fall again */ const zones = (XC.craters || []).filter(c => T - c.t < 40).map(c => [c.x, c.y, c.r * 3 + 200]); if (CRB) zones.push([(CRB.x0 + CRB.x1) / 2, (CRB.y0 + CRB.y1) / 2, Math.max(CRB.x1 - CRB.x0, CRB.y1 - CRB.y0) * 0.75]); if (!zones.length) return; const inZ = o => zones.some(z => Math.hypot(o.x - z[0], o.y - z[1]) < z[2]);
   for (let ci = Math.floor(left / CW) - 1; ci <= Math.floor(right / CW) + 1; ci++) { const ch = chunks.get(ci); if (!ch) continue; const F = ch.F;
-    const open = (o, rx, ry) => { if (!inZ(o)) return false; if (isCarved(o.x, o.y)) return true; for (let k = 0; k < 6; k++) { const a = k * TAU / 6; if (isCarved(o.x + Math.cos(a) * rx * 0.75, o.y + Math.sin(a) * ry * 0.75)) return true; } return false; };
+    const above = (xx, yy) => yy < surf(Math.round(xx)) - 2 || isCarved(xx, yy), open = (o, rx, ry) => { if (!inZ(o)) return false; if (above(o.x, o.y)) return true; for (let k = 0; k < 6; k++) { const a = k * TAU / 6; if (above(o.x + Math.cos(a) * rx * 0.75, o.y + Math.sin(a) * ry * 0.75)) return true; } return false; };
+    for (const e of F.gems) if (e.alive && inZ(e) && above(e.x, e.y) && above(e.x, e.y + 14) && above(e.x, e.y + 30)) { e.alive = false; for (let i = 0; i < 5; i++) parts.push({ k: 'spark', x: e.x, y: e.y, vx: (rnd() - 0.5) * 160, vy: rnd() * 120, t: 0, life: 0.5, s: 2 }); } /* gems blown loose don't hover in the sky */
     for (const w of F.water) if (!w.dry && open(w, w.rx, w.ry)) { w.dry = true; for (let i = 0; i < 14; i++) parts.push({ k: 'wat', x: w.x + (rnd() - 0.5) * w.rx, y: w.y + (rnd() - 0.5) * w.ry, vx: (rnd() - 0.5) * 300, vy: -rnd() * 200, t: 0, life: 2, s: 4 + rnd() * 3, g: 0 }); }
     for (const g of F.gas) if (g.gas > 0.05 && open(g, g.rx, g.ry)) { g.gas = 0; dust(g.x, g.y, 6, '#c8e070', 120); }
     for (const l of F.lava) if (!l.gone && open(l, l.rx, l.ry)) { l.gone = true; for (let i = 0; i < 16; i++) parts.push({ k: 'fire', x: l.x + (rnd() - 0.5) * l.rx, y: l.y + (rnd() - 0.5) * l.ry, vx: (rnd() - 0.5) * 200, vy: 100 + rnd() * 200, t: 0, life: 0.8, s: 10 + rnd() * 10 }); }
     for (const n of F.nitro) if (n.alive && inZ(n) && isCarved(n.x, n.y + 14) && isCarved(n.x, n.y + 30)) { n.alive = false; at(0.1 + rnd() * 0.3, () => explode(n.x, n.y, 90, 420, 'nitro')); }
-    for (const o of F.fos) if (o.alive && inZ(o) && isCarved(o.x, o.y)) { o.alive = false; DEB.push({ x: o.x, y: o.y, a: 0, L: 14, w: 9, c: '#e8dcc0', vx: 0, vy: 0, va: 1, rest: false }); } } }
+    for (const o of F.fos) if (o.alive && inZ(o) && above(o.x, o.y)) { o.alive = false; DEB.push({ x: o.x, y: o.y, a: 0, L: 14, w: 9, c: '#e8dcc0', vx: 0, vy: 0, va: 1, rest: false }); } } }
 function stylePts(n, lbl) { S.style = (S.style || 0) + n; gems += Math.ceil(n / 10); say(`${lbl}  +${n} STYLE`, '#b48cff'); addChain(1); }
 function bump(k, n) { S[k] = (S[k] || 0) + (n || 1); }
 // ----- volcanoes: real cones in the volcanic biome (part of the terrain, so you can drill into them) -----
@@ -1671,7 +1672,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v152';
+const VER = 'v153';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
