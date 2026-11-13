@@ -516,7 +516,7 @@ function brakeStep(dt) { thrStep(dt); brakeK += ((D.lying ? 0 : Math.max(brakeOn
   D.brk = k; }
 /* speed slider = cruise control: 0-100 % of the base top speed (what a fresh run gets, without built-up combo speed) */
 const baseTop = () => (2600 + 700 * U('eng')) * DTY().spd;
-function thrStep(dt) { cruiseK = 0; if (!SLIDE() || D.lying) return; const tgt = thrV * baseTop();
+function thrStep(dt) { cruiseK = 0; if (!SLIDE() || D.lying || D.tower) return; const tgt = thrV * baseTop();
   if (!D.air) { if (D.s < tgt) D.s = Math.min(tgt, D.s + 1500 * dt); else if (thrV < 0.995 && D.s > tgt) { D.s = Math.max(tgt, D.s - (700 + (D.s - tgt) * 2) * dt); cruiseK = clamp((D.s - tgt) / 400, 0, 0.6); } }
   else if (thrV < 0.995) { const sp = Math.hypot(D.vx, D.vy); if (sp > tgt + 30) { const atm = isMoon(D.x) ? 0.15 : clamp(1 - (surf(Math.round(D.x)) - D.y) / 60000, 0.15, 1), f = Math.exp(-clamp((sp - tgt) / 800, 0.1, 1) * 1.4 * atm * dt); D.vx *= f; D.vy *= f; cruiseK = clamp((sp - tgt) / 600, 0.2, 1); } } }
 function boostStep(dt) { if (!D.boostM) return; if (boostOn && D.boostF > 0) { const th = 1700 + 160 * U('boost'); if (D.air) { D.vx += Math.cos(D.ang) * th * dt; D.vy += Math.sin(D.ang) * th * dt; } else if (!D.lying) D.s += th * 0.55 * dt; else { D.lying = false; D.air = true; D.vx = Math.cos(D.ang) * 400; D.vy = Math.sin(D.ang) * 400 - 200; }
@@ -1308,7 +1308,10 @@ function drawDrill(x, t) { const heat = clamp(D.heat, 0, 1.1), SK = skin(), DT =
   x.fillStyle = SK.s; if (SK.k === 'neon') { x.shadowColor = '#ff3cf0'; x.shadowBlur = 8; } for (let i = 0; i < 3; i++) x.fillRect(-36 + i * 9, -13, 4, 26); x.shadowBlur = 0;
   if (DT === 'heavy') { x.fillStyle = '#4a5060'; x.fillRect(-40, -16, 33, 5); x.fillRect(-40, 11, 33, 5); x.fillStyle = '#c8ccd4'; for (let i = 0; i < 4; i++) { x.fillRect(-37 + i * 8, -15, 2, 2); x.fillRect(-37 + i * 8, 13, 2, 2); } }
   if (DT === 'bomb') { x.fillStyle = '#1e1e24'; x.fillRect(-12, -15, 6, 30); x.fillStyle = '#ffd030'; for (let i = 0; i < 3; i++) x.fillRect(-12, -15 + i * 11, 6, 5); x.fillStyle = '#e8402a'; x.beginPath(); x.arc(-26, 0, 3.5 + Math.sin(t * 10), 0, TAU); x.fill(); }
-  if (brakeK > 0.05 && D.air) { const o = brakeK; x.fillStyle = '#d8dde6'; x.strokeStyle = '#3a3f4a'; x.lineWidth = 1.5; for (const sd of [-1, 1]) { x.save(); x.translate(-30, sd * 12); x.rotate(sd * -1.1 * o); x.beginPath(); x.rect(-2, sd > 0 ? 0 : -14, 16, 14); x.fill(); x.stroke(); x.restore(); } }
+  if (brakeK > 0.05 && D.air && !D.tower) { /* speed brakes: short wide panels hinged on the hull just ahead of the tail, folded flat when closed, standing out into the airflow when open */
+    const o = Math.min(1, brakeK), ang = 1.35 * o; for (const sd of [-1, 1]) { x.save(); x.translate(-24, sd * 13); x.rotate(-sd * ang);
+      x.fillStyle = '#c7ccd6'; x.strokeStyle = '#2c303a'; x.lineWidth = 1.2; x.beginPath(); x.roundRect(-13, sd > 0 ? 0 : -4.5, 14, 4.5, 1.5); x.fill(); x.stroke();
+      x.fillStyle = '#e8402a'; x.fillRect(-12, sd > 0 ? 1.4 : -3, 3, 1.6); x.fillStyle = '#2c303a'; x.beginPath(); x.arc(0, 0, 1.5, 0, TAU); x.fill(); x.restore(); } }
   if (DT === 'light') { x.fillStyle = '#7df9ff'; x.fillRect(-40, -2, 32, 4); }
   x.fillStyle = '#9be7ff'; x.beginPath(); x.ellipse(-20, -6, 7, 5, 0, 0, TAU); x.fill(); x.fillStyle = 'rgba(255,255,255,0.8)'; x.beginPath(); x.ellipse(-22, -8, 3, 1.6, -0.3, 0, TAU); x.fill();
   // bit
@@ -1557,7 +1560,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v119';
+const VER = 'v120';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -1909,7 +1912,7 @@ function frame(now) { if (fps30 && run && !paused && (++fpsTick & 1)) { requestA
 function frameOld(now) { try { frameInner(now); } catch (e) { errN++; if (errN < 5) console.error(e); } requestAnimationFrame(frame); }
 { const b = document.getElementById('bst'); if (b) { b.addEventListener('pointerdown', e => { audio(); bstHeld = true; b.classList.add('on'); e.preventDefault(); }); const off = () => { bstHeld = false; b.classList.remove('on'); }; b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); } }
 { const zb = (id, f) => { const b = document.getElementById(id); if (!b) return; let iv = null; const go = () => { zoomMul = clamp(zoomMul * f, 0.08, 6); }; b.addEventListener('pointerdown', e => { e.preventDefault(); audio(); go(); clearInterval(iv); iv = setInterval(go, 90); }); const st = () => clearInterval(iv); b.addEventListener('pointerup', st); b.addEventListener('pointercancel', st); b.addEventListener('pointerleave', st); }; zb('zIn', 1 / 1.12); zb('zOut', 1.12); }
-const down = e => { audio(); if (e.target.closest && e.target.closest('button')) return; if (endPending) { showEnd(); return; } const rt = e.clientX > innerWidth / 2; touches.set(e.pointerId, rt ? 1 : -1); if (SLIDE()) { if (!rt && !slL) slL = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX }; else if (rt && !slR) slR = { id: e.pointerId, y0: e.clientY, th0: thrV, x: e.clientX }; } };
+const down = e => { audio(); if (e.target.closest && e.target.closest('button')) return; if (endPending) { showEnd(); return; } const rt = e.clientX > innerWidth / 2; touches.set(e.pointerId, rt ? 1 : -1); if (SLIDE() && !(D && D.tower)) { if (!rt && !slL) slL = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX }; else if (rt && !slR) slR = { id: e.pointerId, y0: e.clientY, th0: thrV, x: e.clientX }; } };
 const slMv = e => { if (slL && slL.id === e.pointerId) { slL.x = e.clientX; steerV = clamp((e.clientX - slL.x0) / 55, -1, 1); if (Math.abs(steerV) < 0.08) steerV = 0; } if (slR && slR.id === e.pointerId) { let v = clamp(slR.th0 - (e.clientY - slR.y0) / 200, 0, 1); if (v < 0.025) v = 0; if ((Math.round(v * 10) !== Math.round(thrV * 10))) buzz(4); thrV = v; } };
 window.addEventListener('pointermove', slMv);
 const up = e => { touches.delete(e.pointerId); if (slL && slL.id === e.pointerId) { slL = null; steerV = 0; } if (slR && slR.id === e.pointerId) slR = null; };
