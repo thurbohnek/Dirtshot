@@ -728,14 +728,14 @@ function stepClods(dt) { if (!clods.length) return; let hitD = 0;
   if (hitD > 10 && thr('cavein', 1.2)) { D.s *= 0.85; say('CAVE-IN!', '#ffb36b', true); shake = Math.max(shake, 6); buzz(40); } }
 function drawClods(x) { for (const c of clods) { const C = colOf(c.m); x.save(); x.translate(c.x, c.y); x.rotate(c.rot); x.fillStyle = C[0]; x.beginPath(); for (let k = 0; k < 5; k++) { const a = k / 5 * TAU, rr = c.r * c.sh[k]; k ? x.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : x.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } x.closePath(); x.fill(); x.fillStyle = C[2]; x.globalAlpha = 0.6; x.beginPath(); x.arc(-c.r * 0.3, -c.r * 0.3, c.r * 0.3, 0, TAU); x.fill(); x.globalAlpha = 1; x.restore(); } }
 /* ===== RAS I BITER: flak av taket løsner, faller og legger seg ===== */
-const FALL = { 1: { d: 0.55, casc: 0.6, w: [30, 56], h: [14, 26] }, 2: { d: 2.2, casc: 0.25, w: [44, 72], h: [16, 30] }, 3: { d: 0.35, casc: 0.7, w: [26, 46], h: [12, 22] }, 11: { d: 0.25, casc: 0.8, w: [24, 40], h: [10, 20] }, 13: { d: 0.4, casc: 0.65, w: [26, 48], h: [12, 22] } };
+const FALL = { 1: { d: 0.55, casc: 0.6, w: [16, 30], h: [6, 11] }, 2: { d: 2.2, casc: 0.3, w: [22, 36], h: [7, 12] }, 3: { d: 0.35, casc: 0.7, w: [12, 24], h: [5, 10] }, 11: { d: 0.25, casc: 0.8, w: [12, 22], h: [5, 9] }, 13: { d: 0.4, casc: 0.65, w: [14, 26], h: [6, 10] } };
 let fallEv = [], pieces = [];
 function cellMat(wx, wy) { const c = cellAt(Math.floor(wx / CELL), Math.floor((wy - Y0) / CELL)); if (!c || c.ch.mask[c.i] === 1) return 0; return c.ch.cm[c.i]; }
 function inPoly(pts, x, y) { let ins = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) ins = !ins; } return ins; }
 function updateFalls(dt) {
   if (fallEv.length) { let n = 0; for (const e of fallEv) { if (e.t > T || n >= 3) continue; e.done = true; n++; tryCollapse(e); } fallEv = fallEv.filter(e => !e.done); if (fallEv.length > 80) fallEv.splice(0, fallEv.length - 80); }
   for (const p of pieces) stepPiece(p, dt); pieces = pieces.filter(p => !p.dead); }
-function tryCollapse(e) { if (pieces.length > 30) return; let y = e.y; const sx = e.x; let guard = 0;
+function tryCollapse(e) { if (pieces.length > 40) return; if (!e.sub) { for (const dx of [-20, 20]) if (rnd() < 0.7) fallEv.push({ x: e.x + dx + (rnd() - 0.5) * 8, y: e.y, t: T + rnd() * 0.25, gen: e.gen, sub: 1 }); } let y = e.y; const sx = e.x; let guard = 0;
   while (cellOpen(sx, y) && guard++ < 60) { y -= 4; if (y < surf(sx)) return; } const ceilY = y; const m = cellMat(sx, ceilY - 3) || cellMat(sx, ceilY - 9); const L = FALL[m]; if (!L) return;
   if (e.gen > 0 && rnd() > Math.pow(L.casc, e.gen)) return;
   const w = L.w[0] + rnd() * (L.w[1] - L.w[0]), h = L.h[0] + rnd() * (L.h[1] - L.h[0]);
@@ -751,7 +751,7 @@ function tryCollapse(e) { if (pieces.length > 30) return; let y = e.y; const sx 
   forTiles(minx, maxx, miny, maxy, (x, ox, oy) => { x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; x.beginPath(); pts.forEach(([px, py], i) => i ? x.lineTo(px - ox, py - oy) : x.moveTo(px - ox, py - oy)); x.closePath(); x.fill(); x.restore(); });
   for (let gy = Math.floor((miny - Y0) / CELL); gy <= Math.floor((maxy - Y0) / CELL); gy++) for (let gx = Math.floor(minx / CELL); gx <= Math.floor(maxx / CELL); gx++) { const c = cellAt(gx, gy); if (!c || c.ch.mask[c.i] === 1) continue; if (inPoly(pts, gx * CELL + 4, Y0 + gy * CELL + 4) && FALL[c.ch.cm[c.i]]) (c.ch.mask[c.i] = 1, (c.ch.dug || (c.ch.dug = {}))[(c.i / MCOLS / RPT) | 0] = 1); }
   const cx = (minx + maxx) / 2, cy = (miny + maxy) / 2;
-  pieces.push({ cv, x: cx, y: cy, ox: minx - cx, oy: miny - cy, bw, bh, pts: pts.map(([px, py]) => [px - cx, py - cy]), vx: (rnd() - 0.5) * 30, vy: 0, rot: 0, vr: (rnd() - 0.5) * 1.2, m, w, h, gen: e.gen, sx, ceilTop: top, life: 0 });
+  pieces.push({ y0: cy, cv, x: cx, y: cy, ox: minx - cx, oy: miny - cy, bw, bh, pts: pts.map(([px, py]) => [px - cx, py - cy]), vx: (rnd() - 0.5) * 30, vy: 0, rot: 0, vr: (rnd() - 0.5) * 1.2, m, w, h, gen: e.gen, sx, ceilTop: top, life: 0 });
   for (let i = 0; i < 4; i++) parts.push({ k: 'rock', x: sx + (rnd() - 0.5) * w, y: ceilY, vx: (rnd() - 0.5) * 40, vy: 40 + rnd() * 80, t: 0, life: 0.5, s: 1.5 + rnd() * 2, c: colOf(m)[2], rot: 0, vr: 0, g: 1500 });
   rumble(0.35, sx, ceilY); }
 function stepPiece(p, dt) { p.life += dt; p.vy = Math.min(p.vy + G * 0.9 * dt, 1200); p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
@@ -759,9 +759,9 @@ function stepPiece(p, dt) { p.life += dt; p.vy = Math.min(p.vy + G * 0.9 * dt, 1
   // treffer boret?
   if (D && !D.dead && !D.air && p.vy > 150 && Math.hypot(p.x - D.x, p.y - D.y) < Math.max(p.w, p.h) * 0.5 + 16) { p.dead = true; D.s *= 0.75; D.hull -= 0.012 * p.w / 10; crumble(p); if (p.w > 22 && thr('cavein', 2)) { say('CAVE-IN!', '#ffb36b', true); shake = Math.max(shake, 7); buzz(45); SFX.thump(0.3); } return; }
   // traff gulvet? sjekk punkter langs undersiden
-  let hit = false; const [a0, a1] = [p.pts[0], p.pts[1]]; for (let k = 0; k <= 4; k++) { const lx = a0[0] + (a1[0] - a0[0]) * k / 4, ly = a0[1] + (a1[1] - a0[1]) * k / 4; const wx = p.x + lx * c - ly * s, wy = p.y + lx * s + ly * c + 3; if (p.life > 0.06 && wy > surf(wx) + 2 && !cellOpen(wx, wy) && !cellOpen(wx, wy + 8)) { hit = true; break; } }
+  let hit = false; const [a0, a1] = [p.pts[0], p.pts[1]]; for (let k = 0; k <= 4; k++) { const lx = a0[0] + (a1[0] - a0[0]) * k / 4, ly = a0[1] + (a1[1] - a0[1]) * k / 4; const wx = p.x + lx * c - ly * s, wy = p.y + lx * s + ly * c + 3; if (p.life > 0.05 && wy > surf(wx) + 2 && !cellOpen(wx, wy) && !cellOpen(wx, wy + 5)) { hit = true; break; } }
   if (!hit && p.y < Y1 + 100) return;
-  p.dead = true; const spd = p.vy; if (spd > 650 && p.w > 34) { crumble(p, 0.5); } stamp(p);
+  p.dead = true; p.rot += (rnd() - 0.5) * 0.4; const spd = p.vy; if (spd > 650 && p.w > 34) { crumble(p, 0.5); } stamp(p);
   for (let i = 0; i < 5; i++) parts.push({ k: 'smoke', x: p.x + (rnd() - 0.5) * p.w, y: p.y + p.h * 0.3, vx: (rnd() - 0.5) * 50, vy: -20 - rnd() * 20, t: 0, life: 1.1, s: 8 + rnd() * 8 });
   rumble(Math.min(0.8, p.w / 60), p.x, p.y); const nd = nearD(p.x, p.y); if (p.w > 30 && nd > 0.5 && thr('land', 0.45)) noise({ f0: 380, f1: 70, dur: 0.35, gain: 0.08 * nd });
   if (Math.hypot(p.x - cam.x, p.y - cam.y) < 700) shake = Math.max(shake, Math.min(5, p.w / 14));
@@ -1553,7 +1553,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v114';
+const VER = 'v115';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
