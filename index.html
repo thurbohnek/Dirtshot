@@ -626,29 +626,24 @@ function mv(o) { const a = AC, bus = mbus(); if (!a || !bus) return; const t = a
   let node = src; if (o.ft) { const f = a.createBiquadFilter(); f.type = o.ft; f.frequency.value = o.ff; f.Q.value = o.q || 0.8; node.connect(f); node = f; }
   const g = a.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(o.g, t + (o.at || 0.004)); g.gain.exponentialRampToValueAtTime(0.0001, t + o.dur); node.connect(g); g.connect(bus);
   src.start(t, o.noise ? Math.random() * 1.5 : 0); src.stop(t + o.dur + 0.05); }
-function musicTick() { const a = AC; if (!a || !SOUND || !run || paused || !D || D.dead || CB.lv < 1) { MU.on = false; return; } const now = a.currentTime;
-  if (!MU.on || MU.next < now - 0.1) { MU.on = true; MU.next = now + 0.04; MU.st = 0; }
-  let guard = 0; while (MU.next < now + 0.12 && guard++ < 8) { const d = MU.next - now, st = MU.st, bar = st >> 4, s16 = st & 15, rt = ROOT[bar], lv = CB.lv;
-    if (s16 % 4 === 0) { mv({ type: 'sine', f0: 170, f1: 48, dur: 0.16, g: 0.55, d }); mv({ type: 'triangle', f0: 340, f1: 90, dur: 0.09, g: 0.3, d }); mv({ noise: 1, ft: 'bandpass', ff: 2500, q: 1, dur: 0.02, g: 0.25, d }); MU.kicks.push(MU.next); }
+/* one 16th-note step of the game track; the menu plays the same track with every layer on */
+function musicStep(d, st, lv, kick) { const bar = st >> 4, s16 = st & 15, rt = ROOT[bar];
+    if (s16 % 4 === 0) { mv({ type: 'sine', f0: 170, f1: 48, dur: 0.16, g: 0.55, d }); mv({ type: 'triangle', f0: 340, f1: 90, dur: 0.09, g: 0.3, d }); mv({ noise: 1, ft: 'bandpass', ff: 2500, q: 1, dur: 0.02, g: 0.25, d }); if (kick) MU.kicks.push(MU.next); }
     if (s16 % 2 === 1 || lv >= 2 && s16 % 4 === 2) mv({ noise: 1, ft: 'highpass', ff: 7000, dur: s16 % 4 === 2 ? 0.07 : 0.03, g: s16 % 4 === 2 ? 0.16 : 0.07, d });
     if (lv >= 2 && (s16 === 4 || s16 === 12)) { mv({ noise: 1, ft: 'bandpass', ff: 1500, q: 0.9, dur: 0.14, g: 0.4, d }); mv({ type: 'triangle', f0: 220, f1: 160, dur: 0.07, g: 0.15, d }); }
     if (lv >= 3 && [0, 3, 6, 8, 10, 14].includes(s16)) mv({ type: 'sawtooth', ft: 'lowpass', ff: 1100, q: 2, f0: mf(rt + 24 + (s16 === 8 ? 12 : 0)), dur: 0.13, g: 0.22, d });
     if (lv >= 4) { const ar = [36, 36 + THIRD[bar], 43, 48][s16 % 4]; mv({ type: 'square', ft: 'lowpass', ff: 3200, f0: mf(rt + ar), dur: 0.09, g: 0.07, d }); if (s16 === 0 || s16 === 10) mv({ type: 'sawtooth', ft: 'lowpass', ff: 2400, f0: mf(rt + 48 + [0, 7, 3, 5][bar]), dur: 0.35, at: 0.02, g: 0.06, d }); }
-    MU.next += SPB; MU.st = (st + 1) % 64; }
+}
+function musicTick() { const a = AC; if (!a || !SOUND || !run || paused || !D || D.dead || CB.lv < 1) { MU.on = false; return; } const now = a.currentTime;
+  if (!MU.on || MU.next < now - 0.1) { MU.on = true; MU.next = now + 0.04; MU.st = 0; }
+  let guard = 0; while (MU.next < now + 0.12 && guard++ < 8) { musicStep(MU.next - now, MU.st, CB.lv, true);
+    MU.next += SPB; MU.st = (MU.st + 1) % 64; }
   while (MU.kicks.length > 1 && MU.kicks[1] <= now) MU.kicks.shift(); }
-/* menu music: a filtered, laid-back version of the in-game track (same tempo, chords, bass riff and arpeggio) */
+/* menu music: the game track itself, with every layer playing */
 const MM = { on: false, next: 0, st: 0 };
 function menuMusicTick() { const a = AC; if (!a || !SOUND || run || a.state !== 'running' || document.hidden) { MM.on = false; return; } const now = a.currentTime;
   if (!MM.on || MM.next < now - 0.1) { MM.on = true; MM.next = now + 0.05; MM.st = 0; }
-  let guard = 0; while (MM.next < now + 0.15 && guard++ < 8) { const d = MM.next - now, st = MM.st, bar = (st >> 4) & 3, s16 = st & 15, rt = ROOT[bar], half = st >= 64, th = THIRD[bar];
-    if (s16 === 0) for (const n of [36, 36 + th, 43]) mv({ type: 'sawtooth', ft: 'lowpass', ff: 700, q: 0.7, f0: mf(rt + n), dur: SPB * 16 + 0.3, at: 0.4, g: 0.02, d });
-    if (s16 === 0 || (half && s16 === 8)) mv({ type: 'sine', f0: 170, f1: 48, dur: 0.16, g: 0.42, d });
-    if (half && (s16 === 4 || s16 === 12)) mv({ noise: 1, ft: 'bandpass', ff: 1500, q: 0.9, dur: 0.14, g: 0.16, d });
-    if (s16 % 4 === 2) mv({ noise: 1, ft: 'highpass', ff: 7000, dur: 0.05, g: 0.07, d });
-    if ([0, 3, 6, 8, 10, 14].includes(s16)) mv({ type: 'sawtooth', ft: 'lowpass', ff: half ? 750 : 480, q: 2, f0: mf(rt + 24 + (s16 === 8 ? 12 : 0)), dur: 0.16, g: 0.2, d });
-    { const ar = [36, 36 + th, 43, 48][s16 % 4]; mv({ type: 'triangle', ft: 'lowpass', ff: 2200, f0: mf(rt + ar + 12), dur: 0.16, g: 0.035, d }); }
-    if (half && (s16 === 0 || s16 === 10)) mv({ type: 'triangle', ft: 'lowpass', ff: 2000, f0: mf(rt + 48 + [0, 7, 3, 5][bar]), dur: 0.5, at: 0.03, g: 0.07, d });
-    MM.next += SPB; MM.st = (st + 1) % 128; } }
+  let guard = 0; while (MM.next < now + 0.12 && guard++ < 8) { musicStep(MM.next - now, MM.st, 4, false); MM.next += SPB; MM.st = (MM.st + 1) % 64; } }
 function beatPulse() { if (!MU.on || !AC || !MU.kicks.length) return 0; const dt = AC.currentTime - MU.kicks[0]; return dt >= 0 ? Math.exp(-dt * 7) : 0; }
 function drawCombo(x) { if (!D || (!CB.p && CB.red <= 0 && CB.bank <= 0)) return; const lv = CB.lv, col = CB_C[lv], bp = beatPulse();
   if (lv >= 1) { const a = (0.025 + 0.015 * lv) * (0.6 + 0.4 * Math.min(1, CB.t / 1.2)); x.save(); x.globalCompositeOperation = 'lighter'; const E = 70 + 10 * lv;
@@ -1674,7 +1669,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v146';
+const VER = 'v147';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
