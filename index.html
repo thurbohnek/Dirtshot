@@ -636,20 +636,19 @@ function musicTick() { const a = AC; if (!a || !SOUND || !run || paused || !D ||
     if (lv >= 4) { const ar = [36, 36 + THIRD[bar], 43, 48][s16 % 4]; mv({ type: 'square', ft: 'lowpass', ff: 3200, f0: mf(rt + ar), dur: 0.09, g: 0.07, d }); if (s16 === 0 || s16 === 10) mv({ type: 'sawtooth', ft: 'lowpass', ff: 2400, f0: mf(rt + 48 + [0, 7, 3, 5][bar]), dur: 0.35, at: 0.02, g: 0.06, d }); }
     MU.next += SPB; MU.st = (st + 1) % 64; }
   while (MU.kicks.length > 1 && MU.kicks[1] <= now) MU.kicks.shift(); }
-/* menu music: a laid-back 8-bar loop (A minor, 100 bpm) while you are in the menus */
-const MM = { on: false, next: 0, st: 0 }, MSPB = 60 / 100 / 4, MCH = [[57, 60, 64], [57, 60, 65], [55, 60, 64], [55, 59, 62]], MRT = [45, 41, 48, 43];
-const MMEL = [[76, 0, 74, 72, 0, 69, 72, 0], [72, 0, 74, 76, 0, 77, 76, 0], [79, 0, 76, 74, 0, 72, 74, 0], [74, 0, 71, 67, 0, 71, 74, 0], [81, 0, 79, 76, 0, 74, 76, 0], [77, 0, 76, 74, 0, 72, 74, 0], [76, 0, 79, 84, 0, 83, 79, 0], [79, 0, 78, 74, 0, 71, 0, 0]];
+/* menu music: a filtered, laid-back version of the in-game track (same tempo, chords, bass riff and arpeggio) */
+const MM = { on: false, next: 0, st: 0 };
 function menuMusicTick() { const a = AC; if (!a || !SOUND || run || a.state !== 'running' || document.hidden) { MM.on = false; return; } const now = a.currentTime;
   if (!MM.on || MM.next < now - 0.1) { MM.on = true; MM.next = now + 0.05; MM.st = 0; }
-  let guard = 0; while (MM.next < now + 0.15 && guard++ < 8) { const d = MM.next - now, st = MM.st, bar = st >> 4, s16 = st & 15, c = bar & 3, ch = MCH[c], rt = MRT[c];
-    if (s16 === 0) for (const n of ch) mv({ type: 'sawtooth', ft: 'lowpass', ff: 820, q: 0.7, f0: mf(n), dur: MSPB * 16 + 0.25, at: 0.35, g: 0.022, d });
-    if (s16 === 0 || s16 === 8 || (s16 === 11 && bar % 2)) mv({ type: 'sine', f0: 150, f1: 46, dur: 0.18, g: 0.38, d });
-    if (s16 === 4 || s16 === 12) mv({ noise: 1, ft: 'bandpass', ff: 1700, q: 0.9, dur: 0.12, g: 0.13, d });
-    if (s16 % 4 === 2) mv({ noise: 1, ft: 'highpass', ff: 7500, dur: 0.04, g: 0.06, d });
-    if (s16 % 2 === 0) mv({ type: 'sawtooth', ft: 'lowpass', ff: 420, q: 2, f0: mf(rt + (s16 % 8 === 6 ? 12 : 0)), dur: 0.22, g: 0.1, d });
-    if (bar >= 2) mv({ type: 'square', ft: 'lowpass', ff: 1900, f0: mf(ch[s16 % 3] + 12), dur: 0.11, g: 0.018, d });
-    if (s16 % 2 === 0) { const m = MMEL[bar][s16 >> 1]; if (m) mv({ type: 'triangle', ft: 'lowpass', ff: 2600, f0: mf(m), dur: 0.34, at: 0.01, g: 0.075, d }); }
-    MM.next += MSPB; MM.st = (st + 1) % 128; } }
+  let guard = 0; while (MM.next < now + 0.15 && guard++ < 8) { const d = MM.next - now, st = MM.st, bar = (st >> 4) & 3, s16 = st & 15, rt = ROOT[bar], half = st >= 64, th = THIRD[bar];
+    if (s16 === 0) for (const n of [36, 36 + th, 43]) mv({ type: 'sawtooth', ft: 'lowpass', ff: 700, q: 0.7, f0: mf(rt + n), dur: SPB * 16 + 0.3, at: 0.4, g: 0.02, d });
+    if (s16 === 0 || (half && s16 === 8)) mv({ type: 'sine', f0: 170, f1: 48, dur: 0.16, g: 0.42, d });
+    if (half && (s16 === 4 || s16 === 12)) mv({ noise: 1, ft: 'bandpass', ff: 1500, q: 0.9, dur: 0.14, g: 0.16, d });
+    if (s16 % 4 === 2) mv({ noise: 1, ft: 'highpass', ff: 7000, dur: 0.05, g: 0.07, d });
+    if ([0, 3, 6, 8, 10, 14].includes(s16)) mv({ type: 'sawtooth', ft: 'lowpass', ff: half ? 750 : 480, q: 2, f0: mf(rt + 24 + (s16 === 8 ? 12 : 0)), dur: 0.16, g: 0.2, d });
+    { const ar = [36, 36 + th, 43, 48][s16 % 4]; mv({ type: 'triangle', ft: 'lowpass', ff: 2200, f0: mf(rt + ar + 12), dur: 0.16, g: 0.035, d }); }
+    if (half && (s16 === 0 || s16 === 10)) mv({ type: 'triangle', ft: 'lowpass', ff: 2000, f0: mf(rt + 48 + [0, 7, 3, 5][bar]), dur: 0.5, at: 0.03, g: 0.07, d });
+    MM.next += SPB; MM.st = (st + 1) % 128; } }
 function beatPulse() { if (!MU.on || !AC || !MU.kicks.length) return 0; const dt = AC.currentTime - MU.kicks[0]; return dt >= 0 ? Math.exp(-dt * 7) : 0; }
 function drawCombo(x) { if (!D || (!CB.p && CB.red <= 0 && CB.bank <= 0)) return; const lv = CB.lv, col = CB_C[lv], bp = beatPulse();
   if (lv >= 1) { const a = (0.025 + 0.015 * lv) * (0.6 + 0.4 * Math.min(1, CB.t / 1.2)); x.save(); x.globalCompositeOperation = 'lighter'; const E = 70 + 10 * lv;
@@ -1675,7 +1674,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v145';
+const VER = 'v146';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
