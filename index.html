@@ -65,7 +65,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 .up b { font: 400 17px var(--f-d); color: #8a3b10; }
 .up small { font: 700 12px var(--f-b); opacity: .8; grid-column: 1; }
 .pips { display: flex; gap: 3px; grid-column: 1; }
-.pips i { width: 16px; height: 6px; border-radius: 3px; background: #e2d2c0; }
+.pips i { width: 9px; height: 6px; border-radius: 3px; background: #e2d2c0; }
 .pips i.on { background: #ff9a2e; }
 .up button { grid-row: 1 / span 3; grid-column: 2; border: 0; border-radius: 12px; padding: 9px 10px; min-width: 74px; font: 400 16px var(--f-d); background: linear-gradient(180deg, #9ff0ff, #3dc4ff); color: #0b3550; box-shadow: 0 4px 0 #1a6f9a; cursor: pointer; }
 .up button:disabled { background: #d9cfc4; color: #8a7d70; box-shadow: 0 4px 0 #b3a597; cursor: default; }
@@ -178,7 +178,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
   <div class="sub2" id="endWhy">Out of fuel</div>
   <div class="res" id="endDist">0 m</div>
   <div class="sub2" id="endBest"></div>
-  <div class="sub2" id="endGems"></div>
+  <div class="sub2" id="endGems"></div><div class="sub2" id="endNext" style="font-size:13px;opacity:.9;margin-top:2px"></div>
   <div class="sub2" id="endRec"></div>
   <div class="mis" id="misE"></div>
   <div class="row" hidden><button class="btn2" id="bReplay">▶ REPLAY BEST 5 S</button><button class="btn2" id="bClip" hidden>SHARE CLIP</button></div>
@@ -204,7 +204,12 @@ const SV = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem('dirts
   return o; })();
 function saveSV() { try { localStorage.setItem('dirtshot.v2', JSON.stringify(SV)); } catch (e) {} }
 const UPS = [{ k: 'tip', n: 'Diamond tip', d: 'Bites through rock and clay faster' }, { k: 'eng', n: 'Engine', d: 'More thrust and a higher top speed. Needed to reach orbit' }, { k: 'cool', n: 'Cooling', d: 'Heats up slower' }, { k: 'hull', n: 'Hull', d: 'Thicker armour – survive more hits' }, { k: 'frame', n: 'Crash frame', d: 'Shock-proof frame: survive crooked and sideways hits at higher speed' }, { k: 'fin', n: 'Wings', d: 'Fold-out wings: steer your flight through the air. Useless in vacuum' }, { k: 'lamp', n: 'Lamp', d: 'Lights up the deep, pulls in gems' }, { k: 'boost', n: 'Boost rocket', d: 'A BOOST button – thrust that works even in space' }];
-const COST = [25, 60, 120, 220, 380], UMAX = 5; const U = k => SV.up[k] || 0;
+// economy v2: 10 small levels per upgrade (each worth half an old level), each upgrade has its own base price and prices grow ×1.55 per level → maxing everything takes many hours of play
+const UMAX = 10, UBASE = { tip: 120, eng: 200, cool: 100, hull: 150, frame: 140, fin: 120, lamp: 80, boost: 220 }, nice = v => { const m = Math.pow(10, Math.max(0, Math.floor(Math.log10(v)) - 1)); return Math.round(v / m) * m; };
+const COSTK = (k, l) => nice(UBASE[k] * Math.pow(1.55, l)); const U = k => (SV.up[k] || 0) / 2;
+if (SV.eco !== 2) { SV.eco = 2; if (Object.keys(SV.up).length || SV.bank > 0) SV.ecoMsg = 1; SV.up = {}; SV.bank = 0; saveSV(); }
+const fmtG = n => n.toLocaleString('en-US');
+function nextGoal() { let best = null; for (const u of UPS) { const l = SV.up[u.k] || 0; if (l >= UMAX) continue; const c = COSTK(u.k, l); if (!best || c < best.c) best = { u, l, c }; } return best; }
 const dayNo = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
 
 /* ================= NOISE & TERRAIN ================= */
@@ -1092,7 +1097,7 @@ function drawItem(x, id, r) { const c = ITEMS[id][2] === 'f'; x.save(); x.lineCa
 function die(why) { if (D.dead) return; breakChain(true); FLY = []; D.dead = true; D.why = why; run = false; SFX.over(); if (why === 'Hull destroyed') nuke(D.x, D.y);
   $('pz').hidden = true; $('bst').hidden = true; $('zm').hidden = true; bstHeld = false; const r = endRun(); slowmo(0.6); deadT = 0; endPending = () => { $('endWhy').textContent = (MODE === 'daily' ? 'Daily run · ' : '') + why; $('endDist').textContent = r.m + ' m';
     $('endBest').textContent = (r.nb ? (MODE === 'daily' ? 'New daily best!' : 'New best!') : (MODE === 'daily' ? 'Daily best ' + SV.daily.best + ' m' : 'Best ' + best + ' m')) + ' · ' + r.dm + ' m deep' + (r.nd ? ' – record!' : '');
-    $('endGems').textContent = '◆ ' + gems + ' gems' + (runReward ? '  +  ◆ ' + runReward + ' missions' : '') + '  ·  bank ◆ ' + SV.bank; { const rc = SV.rec || {}, fm = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'), bits = []; if (S.laps) bits.push(`${S.laps} lap${S.laps > 1 ? 's' : ''} round the planet`); if (rc.lap) bits.push('best lap ' + fm(rc.lap)); if (S.coreN) bits.push(`through the core ×${S.coreN}`); if (S.moonLand) bits.push('moon landing'); xEndBits(bits); $('endRec').textContent = bits.join(' · '); } $('misE').innerHTML = misHTML(); show('ovEnd'); }; }
+    $('endGems').textContent = '◆ ' + gems + ' gems' + (runReward ? '  +  ◆ ' + runReward + ' missions' : '') + '  ·  bank ◆ ' + fmtG(SV.bank); { const g = nextGoal(), el = $('endNext'); if (el) { if (!g) el.textContent = 'Every upgrade maxed!'; else if (SV.bank >= g.c) el.innerHTML = `<b style="color:#c6ff3d">Ready:</b> ${g.u.n} Lv ${g.l + 1} – ◆ ${fmtG(g.c)} in the Workshop`; else { const pct = SV.bank / g.c; el.innerHTML = `Next: ${g.u.n} Lv ${g.l + 1} – ◆ ${fmtG(g.c - SV.bank)} to go<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.25);margin:4px auto 0;width:70%"><div style="height:100%;width:${Math.round(pct * 100)}%;border-radius:3px;background:#ffb02e"></div></div>`; } } } { const rc = SV.rec || {}, fm = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'), bits = []; if (S.laps) bits.push(`${S.laps} lap${S.laps > 1 ? 's' : ''} round the planet`); if (rc.lap) bits.push('best lap ' + fm(rc.lap)); if (S.coreN) bits.push(`through the core ×${S.coreN}`); if (S.moonLand) bits.push('moon landing'); xEndBits(bits); $('endRec').textContent = bits.join(' · '); } $('misE').innerHTML = misHTML(); show('ovEnd'); }; }
 let endPending = null, deadT = 0; const MACH1 = 3430; // 343 m/s at 10 px per metre
 let shocks = [], pathT = 0;
 function supImpact(x, sy, ang, out) { if (!thr('supimp', 0.8)) return; const M = Math.min(3, D.mach || 1), R = 70 + 45 * (M - 1), C = colOf(TOPM[biome(x)]); bigCrater(x, sy + (out ? 0 : R * 0.15), R * 1.5, R * 0.8, true, false); SFX.boom(0.7); shake = Math.max(shake, 26); flash = Math.max(flash, 0.15);
@@ -1288,11 +1293,11 @@ const SOFT = (() => { const c = document.createElement('canvas'); c.width = c.he
 const easeBack = a => { const c = 1.9; return 1 + (c + 1) * Math.pow(a - 1, 3) + c * Math.pow(a - 1, 2); };
 // ===== drill skins (bought with diamonds in the workshop); each leaves its own trail =====
 const SKINS = [{ k: 'classic', n: 'Classic', c: 0, d: 'The original striped digger', b: ['#ffd45a', '#ffad2e', '#d9761a'], s: '#2b2f38' },
-  { k: 'chrome', n: 'Chrome', c: 900, d: 'Mirror finish. Leaves cold blue sparks', b: ['#ffffff', '#c8d0dc', '#6a7484'], s: '#2a2f38', tr: '#bfe8ff' },
-  { k: 'gold', n: 'Gold', c: 1500, d: 'Solid gold. Sheds glitter as it goes', b: ['#fff3a0', '#ffd23a', '#a8780b'], s: '#6a4a08', tr: '#ffe066' },
-  { k: 'rocket', n: 'Rocket', c: 2200, d: 'White and red, with a fat exhaust plume', b: ['#ffffff', '#eceff3', '#b8bec8'], s: '#e8402a', tr: 'fire' },
-  { k: 'neon', n: 'Neon', c: 3000, d: 'Dark body, glowing pink stripes and trail', b: ['#3a2a5a', '#24183e', '#120a22'], s: '#ff3cf0', tr: '#ff5cf4' },
-  { k: 'rainbow', n: 'Rainbow', c: 5000, d: 'Every colour at once. Rainbow sparkle trail', b: null, s: '#ffffff', tr: 'rainbow' }];
+  { k: 'chrome', n: 'Chrome', c: 2500, d: 'Mirror finish. Leaves cold blue sparks', b: ['#ffffff', '#c8d0dc', '#6a7484'], s: '#2a2f38', tr: '#bfe8ff' },
+  { k: 'gold', n: 'Gold', c: 4500, d: 'Solid gold. Sheds glitter as it goes', b: ['#fff3a0', '#ffd23a', '#a8780b'], s: '#6a4a08', tr: '#ffe066' },
+  { k: 'rocket', n: 'Rocket', c: 6500, d: 'White and red, with a fat exhaust plume', b: ['#ffffff', '#eceff3', '#b8bec8'], s: '#e8402a', tr: 'fire' },
+  { k: 'neon', n: 'Neon', c: 9000, d: 'Dark body, glowing pink stripes and trail', b: ['#3a2a5a', '#24183e', '#120a22'], s: '#ff3cf0', tr: '#ff5cf4' },
+  { k: 'rainbow', n: 'Rainbow', c: 15000, d: 'Every colour at once. Rainbow sparkle trail', b: null, s: '#ffffff', tr: 'rainbow' }];
 function skin() { return SKINS.find(q => q.k === (SV.skin || 'classic')) || SKINS[0]; }
 function skinTrail(dt) { const sk = skin(); if (!sk.tr || !D || D.dead || D.tower) return; const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; if (sp < 250) return; skinTrail.a = (skinTrail.a || 0) + dt * Math.min(40, 10 + sp / 120);
   while (skinTrail.a > 1) { skinTrail.a--; const c = Math.cos(D.ang), sn = Math.sin(D.ang), bx = D.x - c * 50 / kAt(D.x, D.y), by = D.y - sn * 50;
@@ -1355,9 +1360,9 @@ function W2S(u, y) { const G2 = GV; if (!G2) return [0, 0]; const th = (u - cam.
 /* ================= v95: domino cities, demolition, avalanches, dams, traffic, aircraft, volcanoes, crystal caves, style, daily challenge, badges, drill types ================= */
 // ----- drill types (bought in the workshop) -----
 const DTYPES = [{ k: 'std', n: 'Standard', c: 0, d: 'Balanced all-rounder', hull: 1, spd: 1, turn: 1, thr: 1, crash: 1 },
-  { k: 'heavy', n: 'Heavy', c: 1200, d: 'Armoured tank: +80% hull and tougher in crashes, but slower and turns slowly', hull: 1.8, spd: 0.86, turn: 0.75, thr: 0.9, crash: 1.3 },
-  { k: 'light', n: 'Light', c: 1200, d: 'Fast and nimble: more speed and sharper turns, but fragile', hull: 0.6, spd: 1.15, turn: 1.3, thr: 1.15, crash: 0.8 },
-  { k: 'bomb', n: 'Bomber', c: 2000, d: 'Carries a warhead: blasts a crater every time it slams into the ground fast', hull: 1, spd: 1, turn: 1, thr: 1, crash: 1 }];
+  { k: 'heavy', n: 'Heavy', c: 6000, d: 'Armoured tank: +80% hull and tougher in crashes, but slower and turns slowly', hull: 1.8, spd: 0.86, turn: 0.75, thr: 0.9, crash: 1.3 },
+  { k: 'light', n: 'Light', c: 6000, d: 'Fast and nimble: more speed and sharper turns, but fragile', hull: 0.6, spd: 1.15, turn: 1.3, thr: 1.15, crash: 0.8 },
+  { k: 'bomb', n: 'Bomber', c: 10000, d: 'Carries a warhead: blasts a crater every time it slams into the ground fast', hull: 1, spd: 1, turn: 1, thr: 1, crash: 1 }];
 function DTY() { return DTYPES.find(q => q.k === (SV.dt || 'std')) || DTYPES[0]; }
 // ----- run state -----
 let VEH = [], AIRC = [], AWR = [], LBOMB = [], AVL = [], FLOODS = [], XC = { cityDone: new Set(), avl: new Set() }; const VSTATE = new Map(), DAMC = new Map(), VCC = new Map();
@@ -1565,7 +1570,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v124';
+const VER = 'v125';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -1928,14 +1933,14 @@ const keys = {}; let boostOn = false, bstHeld = false, zoomMul = 1; window.addEv
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 const OVS = ['ovAch', 'ovStart', 'ovEnd', 'ovHow', 'ovShop', 'ovSet', 'ovMus']; let backTo = 'ovStart';
 function show(id) { for (const o of OVS) $(o).hidden = o !== id; }
-function showMenu() { endPending = null; fillMissions(); $('sBest').textContent = SV.best + ' m'; $('sDeep').textContent = SV.deep + ' m'; $('sBank').textContent = '◆ ' + SV.bank; $('misS').innerHTML = misHTML(); $('bDaily').textContent = xDailyBtn(); $('pz').hidden = true; show('ovStart'); }
-function renderShop() { $('shopBank').textContent = '◆ ' + SV.bank; $('shopList').innerHTML = UPS.map(u => { const l = U(u.k), c = COST[l]; return `<div class="up"><b>${u.n}</b><button data-k="${u.k}" ${l >= UMAX || SV.bank < c ? 'disabled' : ''}>${l >= UMAX ? 'MAX' : '◆ ' + c}</button><small>${u.d}</small><div class="pips">${Array.from({ length: UMAX }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</div></div>`; }).join('')
+function showMenu() { endPending = null; fillMissions(); $('sBest').textContent = SV.best + ' m'; $('sDeep').textContent = SV.deep + ' m'; $('sBank').textContent = '◆ ' + fmtG(SV.bank); if (SV.ecoMsg) { SV.ecoMsg = 0; saveSV(); const n = document.createElement('div'); n.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;background:rgba(255,255,255,.96);color:#3a2414;border-radius:16px;padding:14px 16px;font:600 14px Nunito,sans-serif;box-shadow:0 6px 0 rgba(80,40,20,.35);text-align:center'; n.innerHTML = '<b style="font-size:17px">Upgrades rebalanced</b><br>Each upgrade now has 10 levels and takes real play to earn. Your upgrades and gem bank were reset – records, badges and skins are kept.<br><button style="margin-top:10px;padding:8px 22px;border:0;border-radius:12px;background:#ffb02e;font:800 14px Nunito,sans-serif;color:#3a2414">OK</button>'; n.querySelector('button').onclick = () => n.remove(); document.body.appendChild(n); } $('misS').innerHTML = misHTML(); $('bDaily').textContent = xDailyBtn(); $('pz').hidden = true; show('ovStart'); }
+function renderShop() { $('shopBank').textContent = '◆ ' + fmtG(SV.bank); $('shopList').innerHTML = UPS.map(u => { const l = SV.up[u.k] || 0, c = l >= UMAX ? 0 : COSTK(u.k, l); return `<div class="up"><b>${u.n} <span style="font-weight:700;opacity:.55;font-size:.85em">Lv ${l}/${UMAX}</span></b><button data-k="${u.k}" ${l >= UMAX || SV.bank < c ? 'disabled' : ''}>${l >= UMAX ? 'MAX' : '◆ ' + fmtG(c)}</button><small>${u.d}</small><div class="pips">${Array.from({ length: UMAX }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</div></div>`; }).join('')
   + '<div class="logo" style="font-size:26px;margin:14px 0 6px">Skins</div>' + SKINS.map(k => { const own = k.c === 0 || (SV.skins && SV.skins[k.k]), on = (SV.skin || 'classic') === k.k, sw = k.b ? `linear-gradient(${k.b[0]},${k.b[1]},${k.b[2]})` : 'linear-gradient(90deg,#f55,#fc3,#5e5,#5cf,#a6f)';
     return `<div class="up"><b><span style="display:inline-block;width:26px;height:14px;border-radius:7px;vertical-align:-2px;margin-right:6px;background:${sw};box-shadow:inset 0 0 0 2px ${k.s}"></span>${k.n}</b><button data-skin="${k.k}" ${on || (!own && SV.bank < k.c) ? 'disabled' : ''}>${on ? 'ON' : own ? 'USE' : '◆ ' + k.c}</button><small>${k.d}</small></div>`; }).join('')
   + '<div class="logo" style="font-size:26px;margin:14px 0 6px">Drill type</div>' + DTYPES.map(k => { const own = k.c === 0 || (SV.dts && SV.dts[k.k]), on = (SV.dt || 'std') === k.k; return `<div class="up"><b>${k.n}</b><button data-dt="${k.k}" ${on || (!own && SV.bank < k.c) ? 'disabled' : ''}>${on ? 'ON' : own ? 'USE' : '◆ ' + k.c}</button><small>${k.d}</small></div>`; }).join(''); }
 function openShop(from) { backTo = from; renderShop(); show('ovShop'); }
 $('shopList').addEventListener('click', e => { const bd = e.target.closest('button[data-dt]'); if (bd && !bd.disabled) { const k = DTYPES.find(q => q.k === bd.dataset.dt); if (!k) return; SV.dts = SV.dts || {}; if (k.c && !SV.dts[k.k]) { if (SV.bank < k.c) return; SV.bank -= k.c; SV.dts[k.k] = 1; SFX.gem(3); } SV.dt = k.k; saveSV(); audio(); buzz(20); renderShop(); return; } const b = e.target.closest('button[data-skin]'); if (!b || b.disabled) return; const k = SKINS.find(q => q.k === b.dataset.skin); if (!k) return; SV.skins = SV.skins || {}; if (k.c && !SV.skins[k.k]) { if (SV.bank < k.c) return; SV.bank -= k.c; SV.skins[k.k] = 1; SFX.gem(3); } SV.skin = k.k; saveSV(); audio(); buzz(20); renderShop(); });
-$('shopList').onclick = e => { const b = e.target.closest('button[data-k]'); if (!b || b.disabled) return; const k = b.dataset.k, l = U(k); if (l >= UMAX || SV.bank < COST[l]) return; SV.bank -= COST[l]; SV.up[k] = l + 1; saveSV(); audio(); SFX.gem(2); buzz(20); renderShop(); };
+$('shopList').onclick = e => { const b = e.target.closest('button[data-k]'); if (!b || b.disabled) return; const k = b.dataset.k, l = SV.up[k] || 0; if (l >= UMAX || SV.bank < COSTK(k, l)) return; SV.bank -= COSTK(k, l); SV.up[k] = l + 1; saveSV(); audio(); SFX.gem(2); buzz(20); renderShop(); };
 if (!SV.set.caveMig) { SV.set.cave = 1; SV.set.caveMig = 1; } /* realistic tunnel cave-ins are on by default */
 function setLbl() { $('tShk').lastChild.textContent = ['Off', 'Low', 'Full'][SV.set.shk === undefined ? 1 : SV.set.shk]; $('tCtl').lastChild.textContent = STICK() ? 'Joystick' : SLIDE() ? 'Sliders' : 'Tap sides'; $('tSnd').lastChild.textContent = SV.set.snd ? 'On' : 'Off'; $('tVib').lastChild.textContent = SV.set.vib ? 'On' : 'Off'; $('tQ').lastChild.textContent = SV.set.q ? 'High' : 'Low (faster)'; $('tCave').lastChild.textContent = SV.set.cave ? 'On' : 'Off (faster)'; $('tFps').lastChild.textContent = SV.set.fps ? 'On' : 'Off'; $('tPock').lastChild.textContent = SV.set.nopock ? 'Hidden (test)' : 'Shown'; $('tFlat').lastChild.textContent = SV.set.flat ? 'Off (faster)' : 'On'; $('tRend').lastChild.textContent = SV.set.rend === 'gl' ? 'Classic (WebGL)' : 'Fast (direct)'; $('tPf').lastChild.textContent = SV.set.pf ? 'On' : 'Off'; $('tTcpu').lastChild.textContent = SV.set.tgpu ? 'GPU' : 'CPU'; }
 function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').textContent = inGame ? 'RESUME' : 'BACK'; $('bQuit').hidden = !inGame; show('ovSet'); }
