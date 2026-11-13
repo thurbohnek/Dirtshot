@@ -442,7 +442,7 @@ function bldHit() { if (!D || D.dead || D.tower) return; const rr = TR + 8, sp =
   if (n) { const k = Math.pow(0.993, n); if (D.air) { D.vx *= k; D.vy *= k; } else D.s *= k; D.hull -= Math.min(n, 10) * (0.00022 + Math.min(0.0004, sp / 6000000)) / (Math.sqrt(HM) * frameF()); shake = Math.max(shake, 3 + n); if (thr('bcut', 0.06)) SFX.clang(); for (let i = 0; i < Math.min(10, n * 2); i++) parts.push({ k: 'spark', x: D.x, y: D.y, vx: (rnd() - 0.5) * 600 + vx * 0.2, vy: (rnd() - 0.7) * 500, t: 0, life: 0.4, s: 2 }); } }
 function towerDebris(dt) { stepBodies(dt); if (!TWR.dead && !DEB.length) return; for (const p of (TWR.dead ? TWR.pc.concat(DEB) : DEB)) { if (p.rest) { if (((frameNo + (p.L | 0)) & 7) === 0 && OPEN(mat(p.x, p.y + p.w / 2 + 6))) p.rest = false; else continue; } /* ground dug away under a resting piece: it falls again */ const oy = p.y; p.vy += 1300 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.va * dt; if (p.y > surf(p.x) + 6000) { p.rest = true; continue; }
   const ext = Math.abs(Math.sin(p.a)) * p.L / 2 + p.w / 2; if (!OPEN(mat(p.x, p.y + ext))) { p.y = Math.min(oy, p.y); const fl = Math.round(p.a / Math.PI) * Math.PI; p.a += (fl - p.a) * 0.12;
-    if (p.vy > 220) { p.vy *= -0.22; p.vx *= 0.6; p.va *= 0.5; if (thr('twrthud', 0.08)) { SFX.thump(0.25); dust(p.x, p.y + 4, 6, '#a89080', 120); } } else { p.vy = 0; p.vx *= 0.85; p.va *= 0.7; if (Math.abs(p.vx) < 5 && Math.abs(fl - p.a) < 0.01) { p.a = fl; p.rest = true; } } } } }
+    if (p.vy > 220) { p.vy *= -0.22; p.vx *= 0.6; p.va *= 0.5; if (p.vy < -160 && nearCam(p.x, 1500) && thr('twrthud', 0.35)) { SFX.thump(0.12); dust(p.x, p.y + 4, 6, '#a89080', 120); } } else { p.vy = 0; p.vx *= 0.85; p.va *= 0.7; if (Math.abs(p.vx) < 5 && Math.abs(fl - p.a) < 0.01) { p.a = fl; p.rest = true; } } } } }
 function drawTower(x, s) { const gy = surf(0), top = gy - TOWER_H; if (cam.x > 3000 || cam.x < -3000) return; const k = kAt(0, gy); x.save();
   if (!TWR.dead && (frameNo % 6) === 0) { let o = 0; for (const fx of [-150, 0, 150]) if (OPEN(mat(fx, surf(fx) + 14))) o++; if (o >= 2) { towerBreak(0, gy - 200, true); if (D && D.tower) { D.tower = null; D.air = true; D.vx = 0; D.vy = 0; } } }
   if (TWR.dead) { if (!TWR.gone) { x.strokeStyle = '#4a4e58'; x.lineWidth = 12; x.lineCap = 'round'; x.beginPath(); x.moveTo(-170 / k, gy + 6); x.lineTo(-145 / k, gy - 200); x.moveTo(170 / k, gy + 6); x.lineTo(145 / k, gy - 190); x.stroke(); barrel(x, gy - 130, gy + 6, k, false); }
@@ -1362,13 +1362,14 @@ function xReset() { VEH = []; AIRC = []; AWR = []; LBOMB = []; AVL = []; FLOODS 
 const nearCam = (x, m) => Math.abs(x - cam.x) < m;
 const grounded = (x, d) => !OPEN(mat(x, surf(Math.round(x)) + (d || 12)));
 /* pockets (water, gas, lava, nitro, fossils) that a crater or tunnel opens up must not hang in the air */
-function exposeSweep(left, right) { if ((frameNo % 12) !== 0) return; for (let ci = Math.floor(left / CW) - 1; ci <= Math.floor(right / CW) + 1; ci++) { const ch = chunks.get(ci); if (!ch) continue; const F = ch.F;
-    const open = (o, rx, ry) => { if (isCarved(o.x, o.y)) return true; for (let k = 0; k < 6; k++) { const a = k * TAU / 6; if (isCarved(o.x + Math.cos(a) * rx * 0.75, o.y + Math.sin(a) * ry * 0.75)) return true; } return false; };
+function exposeSweep(left, right) { if ((frameNo % 12) !== 0) return; const zones = (XC.craters || []).filter(c => T - c.t < 40).map(c => [c.x, c.y, c.r * 3 + 200]); if (CRB) zones.push([(CRB.x0 + CRB.x1) / 2, (CRB.y0 + CRB.y1) / 2, Math.max(CRB.x1 - CRB.x0, CRB.y1 - CRB.y0) * 0.75]); if (!zones.length) return; const inZ = o => zones.some(z => Math.hypot(o.x - z[0], o.y - z[1]) < z[2]);
+  for (let ci = Math.floor(left / CW) - 1; ci <= Math.floor(right / CW) + 1; ci++) { const ch = chunks.get(ci); if (!ch) continue; const F = ch.F;
+    const open = (o, rx, ry) => { if (!inZ(o)) return false; if (isCarved(o.x, o.y)) return true; for (let k = 0; k < 6; k++) { const a = k * TAU / 6; if (isCarved(o.x + Math.cos(a) * rx * 0.75, o.y + Math.sin(a) * ry * 0.75)) return true; } return false; };
     for (const w of F.water) if (!w.dry && open(w, w.rx, w.ry)) { w.dry = true; for (let i = 0; i < 14; i++) parts.push({ k: 'wat', x: w.x + (rnd() - 0.5) * w.rx, y: w.y + (rnd() - 0.5) * w.ry, vx: (rnd() - 0.5) * 300, vy: -rnd() * 200, t: 0, life: 2, s: 4 + rnd() * 3, g: 0 }); }
     for (const g of F.gas) if (g.gas > 0.05 && open(g, g.rx, g.ry)) { g.gas = 0; dust(g.x, g.y, 6, '#c8e070', 120); }
     for (const l of F.lava) if (!l.gone && open(l, l.rx, l.ry)) { l.gone = true; for (let i = 0; i < 16; i++) parts.push({ k: 'fire', x: l.x + (rnd() - 0.5) * l.rx, y: l.y + (rnd() - 0.5) * l.ry, vx: (rnd() - 0.5) * 200, vy: 100 + rnd() * 200, t: 0, life: 0.8, s: 10 + rnd() * 10 }); }
-    for (const n of F.nitro) if (n.alive && isCarved(n.x, n.y + 14)) { n.alive = false; at(0.1 + rnd() * 0.3, () => explode(n.x, n.y, 90, 420, 'nitro')); }
-    for (const o of F.fos) if (o.alive && isCarved(o.x, o.y)) { o.alive = false; DEB.push({ x: o.x, y: o.y, a: 0, L: 14, w: 9, c: '#e8dcc0', vx: 0, vy: 0, va: 1, rest: false }); } } }
+    for (const n of F.nitro) if (n.alive && inZ(n) && isCarved(n.x, n.y + 14) && isCarved(n.x, n.y + 30)) { n.alive = false; at(0.1 + rnd() * 0.3, () => explode(n.x, n.y, 90, 420, 'nitro')); }
+    for (const o of F.fos) if (o.alive && inZ(o) && isCarved(o.x, o.y)) { o.alive = false; DEB.push({ x: o.x, y: o.y, a: 0, L: 14, w: 9, c: '#e8dcc0', vx: 0, vy: 0, va: 1, rest: false }); } } }
 function stylePts(n, lbl) { S.style = (S.style || 0) + n; gems += Math.ceil(n / 10); say(`${lbl}  +${n} STYLE`, '#b48cff'); addChain(1); }
 function bump(k, n) { S[k] = (S[k] || 0) + (n || 1); }
 // ----- volcanoes: real cones in the volcanic biome (part of the terrain, so you can drill into them) -----
@@ -1443,7 +1444,7 @@ function drawHeli(x, c, t) { x.fillStyle = c; x.beginPath(); x.ellipse(0, 0, 34,
 function drawAir(x) { for (const a of AIRC) { if (FAST) setAff(x, a.x, a.y); x.save(); x.translate(a.x, a.y); x.scale(a.dir, 1); if (a.heli) drawHeli(x, a.c, T); else drawPlane(x, a.c); x.restore(); }
   for (const w of AWR) { if (FAST) setAff(x, w.x, w.y); x.save(); x.translate(w.x, w.y); x.rotate(w.a); x.scale(w.dir, 1); x.globalAlpha = 0.9; if (w.heli) drawHeli(x, '#4a3a30', T); else drawPlane(x, '#4a3a30'); x.restore(); } }
 // ----- avalanches: dig under a snowy peak and the snow comes down -----
-function avlTrigger(x, why) { const key = Math.round(x / 1500); if (XC.avl.has(key) || isMoon(x)) return; const sy = surf(Math.round(x)); if (sy > -760) return; XC.avl.add(key);
+function avlTrigger(x, why) { const key = Math.round(x / 1500); if (XC.avl.has(key) || isMoon(x) || T - (XC.avlT || -99) < 15) return; XC.avlT = T; const sy = surf(Math.round(x)); if (sy > -760) return; XC.avl.add(key);
   const dir = Math.sign(surf(Math.round(x) + 200) - surf(Math.round(x) - 200)) || 1; AVL.push({ x0: x, f: x, dir, v: 300, t: 0, h: 0, hit: new Set() }); bump('avl'); say('AVALANCHE!', '#e8f8ff', true); SFX.boom(0.6); noise({ f0: 400, f1: 60, dur: 4, gain: 0.5 }); quake = Math.max(quake, 0.4); }
 function stepAvalanche(dt) { if (D && !D.dead && !D.air && !D.tower && !isMoon(D.x) && D.y - surf(D.x) < 700 && mtnMask(D.x) > 0.3) avlTrigger(D.x);
   for (let i = AVL.length - 1; i >= 0; i--) { const a = AVL[i]; a.t += dt; const fx = Math.round(a.f), sl = (surf(fx + a.dir * 40) - surf(fx)) / 40; a.v = clamp(a.v + (sl * 1500 - 120) * dt, 0, 1500); if (a.t < 6 && !(a.v < 30 && a.t > 2)) a.h = Math.min(130, a.h + 90 * dt); else a.h -= 50 * dt; if (a.h <= 0) { AVL.splice(i, 1); continue; }
@@ -1560,7 +1561,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v121';
+const VER = 'v122';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
