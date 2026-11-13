@@ -438,7 +438,7 @@ function drawBuildings(x, left, right, t) { if ((frameNo % 240) === 0) for (cons
 function bldHit() { if (!D || D.dead || D.tower) return; const rr = TR + 8, sp = D.air ? Math.hypot(D.vx, D.vy) : D.s, vx = D.air ? D.vx : Math.cos(D.ang) * D.s, vy = D.air ? D.vy : Math.sin(D.ang) * D.s; let n = 0;
   for (const B of bldsIn(D.x - 500, D.x + 500)) { const s2 = bldSprite(B); if (D.x < B.x - s2.ox - rr || D.x > B.x - s2.ox + s2.W + rr || D.y < B.gy - s2.oy - rr || D.y > B.gy + 6) continue; bldCells(B); for (let q = 1; q <= 3; q++) { const f = q / 3, c = cutAt(B, D.px + (D.x - D.px) * f, D.py + (D.y - D.py) * f, rr, vx, vy); if (c) { B.touched = true; XC.thr = B; XC.thrT = T; } n += c; } }
   if (BOD.length) n += cutBodies(D.x, D.y, rr, vx, vy);
-  if (n) { const k = Math.pow(0.993, n); if (D.air) { D.vx *= k; D.vy *= k; } else D.s *= k; D.hull -= n * (0.0008 + Math.min(0.0017, sp / 1500000)) / (Math.sqrt(HM) * frameF()); shake = Math.max(shake, 3 + n); if (thr('bcut', 0.06)) SFX.clang(); for (let i = 0; i < Math.min(10, n * 2); i++) parts.push({ k: 'spark', x: D.x, y: D.y, vx: (rnd() - 0.5) * 600 + vx * 0.2, vy: (rnd() - 0.7) * 500, t: 0, life: 0.4, s: 2 }); } }
+  if (n) { const k = Math.pow(0.993, n); if (D.air) { D.vx *= k; D.vy *= k; } else D.s *= k; D.hull -= Math.min(n, 10) * (0.00022 + Math.min(0.0004, sp / 6000000)) / (Math.sqrt(HM) * frameF()); shake = Math.max(shake, 3 + n); if (thr('bcut', 0.06)) SFX.clang(); for (let i = 0; i < Math.min(10, n * 2); i++) parts.push({ k: 'spark', x: D.x, y: D.y, vx: (rnd() - 0.5) * 600 + vx * 0.2, vy: (rnd() - 0.7) * 500, t: 0, life: 0.4, s: 2 }); } }
 function towerDebris(dt) { stepBodies(dt); if (!TWR.dead && !DEB.length) return; for (const p of (TWR.dead ? TWR.pc.concat(DEB) : DEB)) { if (p.rest) { if (((frameNo + (p.L | 0)) & 7) === 0 && OPEN(mat(p.x, p.y + p.w / 2 + 6))) p.rest = false; else continue; } /* ground dug away under a resting piece: it falls again */ const oy = p.y; p.vy += 1300 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.va * dt; if (p.y > surf(p.x) + 6000) { p.rest = true; continue; }
   const ext = Math.abs(Math.sin(p.a)) * p.L / 2 + p.w / 2; if (!OPEN(mat(p.x, p.y + ext))) { p.y = Math.min(oy, p.y); const fl = Math.round(p.a / Math.PI) * Math.PI; p.a += (fl - p.a) * 0.12;
     if (p.vy > 220) { p.vy *= -0.22; p.vx *= 0.6; p.va *= 0.5; if (thr('twrthud', 0.08)) { SFX.thump(0.25); dust(p.x, p.y + 4, 6, '#a89080', 120); } } else { p.vy = 0; p.vx *= 0.85; p.va *= 0.7; if (Math.abs(p.vx) < 5 && Math.abs(fl - p.a) < 0.01) { p.a = fl; p.rest = true; } } } } }
@@ -1502,7 +1502,7 @@ function xDrill(dt) { styleTick(dt); crystalCheck(); dailyTick(); XC.achT -= dt;
 function xLand(sp) { if (DTY().k === 'bomb' && sp > 800 && (XC.bombT || 0) < T) { XC.bombT = T + 1; const sy = surf(Math.round(D.x)); explode(D.x, sy + 30, 115, 250, 'dbomb'); say('KABOOM!', '#ff6a3d', true); addChain(1); } }
 function xDraw(x, left, right, t, s) { drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v100';
+const VER = 'v101';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
