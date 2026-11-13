@@ -759,7 +759,7 @@ function stepPiece(p, dt) { p.life += dt; p.vy = Math.min(p.vy + G * 0.9 * dt, 1
   // treffer boret?
   if (D && !D.dead && !D.air && p.vy > 150 && Math.hypot(p.x - D.x, p.y - D.y) < Math.max(p.w, p.h) * 0.5 + 16) { p.dead = true; D.s *= 0.75; D.hull -= 0.012 * p.w / 10; crumble(p); if (p.w > 22 && thr('cavein', 2)) { say('CAVE-IN!', '#ffb36b', true); shake = Math.max(shake, 7); buzz(45); SFX.thump(0.3); } return; }
   // traff gulvet? sjekk punkter langs undersiden
-  let hit = false; const [a0, a1] = [p.pts[0], p.pts[1]]; for (let k = 0; k <= 4; k++) { const lx = a0[0] + (a1[0] - a0[0]) * k / 4, ly = a0[1] + (a1[1] - a0[1]) * k / 4; const wx = p.x + lx * c - ly * s, wy = p.y + lx * s + ly * c + 3; if (wy > surf(wx) + 2 && !cellOpen(wx, wy)) { hit = true; break; } }
+  let hit = false; const [a0, a1] = [p.pts[0], p.pts[1]]; for (let k = 0; k <= 4; k++) { const lx = a0[0] + (a1[0] - a0[0]) * k / 4, ly = a0[1] + (a1[1] - a0[1]) * k / 4; const wx = p.x + lx * c - ly * s, wy = p.y + lx * s + ly * c + 3; if (p.life > 0.06 && wy > surf(wx) + 2 && !cellOpen(wx, wy) && !cellOpen(wx, wy + 8)) { hit = true; break; } }
   if (!hit && p.y < Y1 + 100) return;
   p.dead = true; const spd = p.vy; if (spd > 650 && p.w > 34) { crumble(p, 0.5); } stamp(p);
   for (let i = 0; i < 5; i++) parts.push({ k: 'smoke', x: p.x + (rnd() - 0.5) * p.w, y: p.y + p.h * 0.3, vx: (rnd() - 0.5) * 50, vy: -20 - rnd() * 20, t: 0, life: 1.1, s: 8 + rnd() * 8 });
@@ -1221,7 +1221,7 @@ function step(dt) {
     if (OPEN(m) && D.solidT <= 0 && (m === AIR || OPEN(mat(D.x + Math.cos(D.ang) * (TIP + 22), D.y + Math.sin(D.ang) * (TIP + 22))))) { if (m === AIR) exitGround(); else dropIntoCavity(); return; }
     if (OPEN(m)) m = D.mat || SOIL; D.mat = m; 
     if (m === BED) { const L = Math.cos(D.ang) < 0; let am = L ? Math.PI - D.ang : D.ang; am = norm(am); am = -Math.abs(am) * 0.8 - 0.3; D.ang = L ? Math.PI - am : am; D.s *= 0.55; D.hull -= 0.1; SFX.clang(); shake = Math.max(shake, 6); say('Bedrock!', '#ccc'); for (let i = 0; i < 12; i++) parts.push({ k: 'spark', x: tx, y: ty, vx: (rnd() - 0.5) * 500, vy: -rnd() * 400, t: 0, life: 0.4, s: 2 }); buzz(60); }
-    { const wav = turn * DTY().turn * 4.3 * clamp(D.s / 200, 0.3, 1); D.gav += (wav - D.gav) * Math.min(1, dt * 9); { const pa = D.ang; D.ang = norm(D.ang + D.gav * dt); if (D.s < 160 && Math.abs(angDiff(D.ang, pa)) > 1e-4) pivotTurn(pa); }
+    { const wav = turn * DTY().turn * 4.3 * clamp(D.s / 200, 0.3, 1); D.gav += (wav - D.gav) * Math.min(1, dt * 9); { const pa = D.ang; D.ang = norm(D.ang + D.gav * dt); if (D.s < 30 && Math.abs(angDiff(D.ang, pa)) > 1e-4) pivotTurn(pa); }
       const slow = SLIDE() && thrV < 0.02 ? 0 : clamp(1 - D.s / 260, 0, 1); if (slow > 0) { const dir = Math.cos(D.ang) >= 0 ? 1 : -1; const toDown = angDiff(Math.PI / 2, D.ang); if (Math.abs(toDown) > 0.2) D.ang = norm(D.ang + Math.sign(toDown) * slow * 2.2 * dt); } }
     shake = Math.max(shake, 0.8 + D.s / 1100);
     const thrust = (THR * DTY().thr * (1 + 0.07 * U('eng')) + 200 * clamp(1 - D.s / 400, 0, 1)) * clamp(1.15 - D.s / 1700, 0, 1); const sn = Math.sin(D.ang), gin = (isMoon(D.x) ? GMOON / G : 1) * clamp((bodyR(D.x) - D.y) / bodyR(D.x), 0, 1); D.s += (thrust + G * gin * (sn > 0 ? 0.85 : 0.2) * sn) * dt; D.s *= Math.exp(-DRAG[m] * (m === ROCK || m === DEEP || m === GRAV || m === CLAY || m === COAL ? 1 - 0.08 * U('tip') : 1) * dt); if (SLIDE() && thrV < 0.995) { const tg = thrV * baseTop(); if (D.s > tg) D.s = Math.max(tg, D.s - (900 + (D.s - tg) * 3) * dt); if (thrV < 0.005 && D.s < 60) D.s = 0; } if (D.s > 250) { const pump = Math.abs(D.gav) * 0.05 * dt; D.s += D.s * pump; if (pump > 0.12 * dt && thr('carve', 2.5) && D.s > 1400) say('CARVE!', '#ffe08a'); if (pump > 0.08 * dt && D.s > 1100 && thr('cbc', 0.6)) addChain(1); }
@@ -1546,7 +1546,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v112';
+const VER = 'v113';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
