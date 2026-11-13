@@ -131,6 +131,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 .hud .bars { position: absolute; right: max(12px, env(safe-area-inset-right, 0px)); top: max(6px, env(safe-area-inset-top, 0px)); width: 40%; max-width: 280px; margin: 0; gap: 7px !important; }
 .hud .bar { font-size: 11px; } .hud .bar span { width: 38px; } .hud .bar i { height: 17px; border-radius: 9px; border-width: 2.5px; } .hud .bar i b { border-radius: 6px; }
 .dist, .gems, .dep, .dist small { font-variant-numeric: tabular-nums; }
+.tapgo { position: absolute; left: 0; right: 0; bottom: 18%; text-align: center; color: #fff; font: 400 22px var(--f-d); letter-spacing: 2px; opacity: 0; animation: tapgo 1.4s ease-in-out .2s infinite alternate; } @keyframes tapgo { from { opacity: .25; } to { opacity: 1; } }
 #intro { position: fixed; inset: 0; z-index: 30; background: #0E1330; display: grid; place-items: center; transition: opacity .5s ease; cursor: pointer; }
 #intro.out { opacity: 0; pointer-events: none; }
 #intro .in { display: flex; flex-direction: column; align-items: center; gap: 14px; }
@@ -1669,7 +1670,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v147';
+const VER = 'v148';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2200,7 +2201,7 @@ $('bSet').onclick = () => openSet(false);
 let ICONS = null; function openMus() { if (!ICONS) ICONS = ITEMS.map((it, i) => { const c = document.createElement('canvas'); c.width = c.height = 80; const g = c.getContext('2d'); g.translate(40, 40); drawItem(g, i, 32); return c.toDataURL(); });
   let n = 0; $('musG').innerHTML = ITEMS.map((it, i) => { const k = SV.coll[it[0]] || 0; if (k) n++; return `<div class="${k ? '' : 'no'}"><img src="${ICONS[i]}" alt=""><span>${k ? it[1] : '???'}<small>${it[2] === 'f' ? 'Fossil' : 'Treasure'}${k > 1 ? ' ×' + k : ''}</small></span></div>`; }).join(''); $('musN').textContent = `${n} of ${ITEMS.length} found – dig deep for the rare ones`; show('ovMus'); }
 $('bMus').onclick = openMus; $('bAch').onclick = () => { $('achL').innerHTML = achHTML(); show('ovAch'); }; $('bAchOk').onclick = () => showMenu(); $('bMusOk').onclick = () => showMenu();
-{ const it = $('intro'); let done = false; const end = () => { if (done) return; done = true; it.classList.add('out'); setTimeout(() => it.remove(), 600); }; it.onclick = end; setTimeout(end, REDUCED ? 900 : 2700); }
+{ const it = $('intro'); let done = false; const end = () => { if (done) return; done = true; audio(); it.classList.add('out'); setTimeout(() => it.remove(), 600); }; it.addEventListener('pointerdown', end); it.onclick = end; /* the first tap also switches the sound on (phones only allow audio after a real tap), so the menu music starts right away */ setTimeout(() => { if (!done) { const t = document.createElement('div'); t.className = 'tapgo'; t.textContent = SOUND ? 'TAP TO START  ♪' : 'TAP TO START'; it.appendChild(t); } }, REDUCED ? 600 : 2300); }
 showMenu();
 try { for (const m of [1, 2, 3, 4, 5, 10, 11, 12, 13, 15, 16, 17]) matTex(m); } catch (e) {}
 window.addEventListener('resize', resize); resize();
