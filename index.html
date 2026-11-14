@@ -404,7 +404,8 @@ function ensureBand(ch, k) { if (k < 0 || k >= NT || ch.band[k]) return; ch.band
       for (const sh of shs) if (inShaft(sh, wx, wy, 0)) ch.mask[i] = 1;
       for (const L of lks) if (inPool(L, wx, wy) || inDome(L, wx, wy)) ch.mask[i] = 1;
       for (const cv of caves) { const dx = wx - cv.x, dy = wy - cv.y, f = caveSh(cv, Math.atan2(dy / cv.ry, dx / cv.rx)); if ((dx * dx) / ((cv.rx * f - 3) ** 2) + (dy * dy) / ((cv.ry * f - 3) ** 2) < 1) ch.mask[i] = 1; } } }
-  if (WAPPLY) { const sv = WSB.get(ch.ci + ':' + k); if (sv) { ch.mask.set(sv.m, r0 * MCOLS); ch.cm.set(sv.c, r0 * MCOLS); (ch.dug || (ch.dug = {}))[k] = 1; } } }
+  /* the launch site stays untouched, so the tower always has solid ground (old holes start 300 m down) */
+  if (WAPPLY && !(Math.abs(ch.ci * CW + CW / 2) < 1000 && r0 * CELL + Y0 < 3000)) { const sv = WSB.get(ch.ci + ':' + k); if (sv) { ch.mask.set(sv.m, r0 * MCOLS); ch.cm.set(sv.c, r0 * MCOLS); (ch.dug || (ch.dug = {}))[k] = 1; } } }
 let tileCount = 0, tilesBuilt = 0, phMiss = 0; const MAXT = 140;
 // ===== launch tower: hold to charge, release to fire straight down the tube
 const TOWER_H = 900;
@@ -1706,7 +1707,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v154';
+const VER = 'v155';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
