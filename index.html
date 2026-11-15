@@ -105,6 +105,20 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 .up[data-sel] { cursor: pointer; } .pvb { grid-column: 1; justify-self: start; margin-top: 3px; font: 900 11px var(--f-b); letter-spacing: .5px; padding: 4px 10px; border-radius: 9px; background: #2b3a6a; color: #cfe6ff; cursor: pointer; } .pvb.play { background: #ffb02e; color: #3a2414; } .up.upsel { outline: 3px solid #ffb02e; outline-offset: -1px; }
 #ovShop .shop { max-height: 42vh; }
 #cargo { font: 900 11px/1.25 var(--f-b); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7); margin-top: 3px; } #cargo:empty { display: none; } #cargo i { font-style: normal; } #cargo .up { all: unset; color: #c6ff3d; animation: cgp .8s ease-in-out infinite alternate; } @keyframes cgp { to { opacity: .45; } }
+.bpbg .card { gap: 8px; } .bpbg .logo { font-size: clamp(46px, 13vw, 64px); }
+.bpwrap.menu .bp { aspect-ratio: auto !important; height: clamp(120px, 21vh, 175px); }
+.stats4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; font: 900 11px var(--f-b); letter-spacing: .04em; text-transform: uppercase; }
+.stats4 > * { background: rgba(10,30,70,.45); border: 1.5px solid rgba(200,230,255,.45); border-radius: 12px; padding: 5px 2px; color: #fff; }
+.stats4 b { display: block; font: 400 17px var(--f-d); letter-spacing: 0; text-transform: none; }
+.stats4 button { cursor: pointer; font: inherit; } .stats4 button b { color: #ffd84a; } .stats4 button.out { background: #c8322a; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile { position: relative; border: 0; border-radius: 14px; padding: 9px 6px 8px; font: 400 18px var(--f-d); cursor: pointer; background: linear-gradient(180deg, #fff, #ffe6c2); color: #5a2a0c; box-shadow: 0 4px 0 #b4561c; line-height: 1.05; }
+.tile small { display: block; font: 800 11px var(--f-b); opacity: .7; margin-top: 2px; } .tile.rkT { background: linear-gradient(180deg, #e6f6ff, #b9e2ff); color: #0b3550; box-shadow: 0 4px 0 #2b7fb0; } .tile.dly { background: linear-gradient(180deg, #fff6c8, #ffd970); }
+.tile #goalDot { position: absolute; top: 6px; right: 8px; }
+.links { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; }
+.sets[hidden], .secT[hidden] { display: none !important; }
+.secT { border: 0; background: none; color: #fff; font: 900 13px var(--f-b); letter-spacing: .1em; text-transform: uppercase; padding: 4px; cursor: pointer; text-shadow: 0 1px 0 rgba(60,30,10,.5); } .secT::after { content: ' \25BE'; } .secT.open::after { content: ' \25B4'; }
+.prk { background: rgba(255,255,255,.93); color: var(--ink); border-radius: 14px; padding: 10px 12px; text-align: left; font: 700 12.5px/1.35 var(--f-b); box-shadow: 0 4px 0 rgba(80,40,20,.3); } .prk .t { font: 400 18px var(--f-d); color: #0b5a8a; } .prk ul { list-style: none; margin: 4px 0 0; padding: 0; } .prk li.ok { color: #2e9a3a; } .prk li:before { content: '\25CB  '; } .prk li.ok:before { content: '\2713  '; } .prk .cg { margin-top: 5px; color: #b4561c; font-weight: 900; }
 .drChip { align-self: center; border: 0; border-radius: 14px; padding: 6px 16px; margin-top: -4px; font: 900 13px var(--f-b); letter-spacing: .5px; background: rgba(40,20,10,.45); color: #fff; border: 2px solid rgba(255,255,255,.55); cursor: pointer; } .drChip b { color: #ffd84a; } .drChip.out { background: #c8322a; }
 .adBtn { background: linear-gradient(180deg, #7dff9a, #2ec060); color: #0b3a18; box-shadow: 0 5px 0 #1d7a3a; }
 .pips { display: flex; gap: 3px; grid-column: 1; }
@@ -172,14 +186,12 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 <div class="ov bpbg" id="ovStart"><div class="card">
   <div class="logo">Dirtshot</div>
   <div class="bpwrap menu" id="bpMenu"></div>
-  <div class="stats"><div><b id="sBest">0 m</b>Best</div><div><b id="sDeep">0 m</b>Deepest</div><div><b id="sBank">◆ 0</b>Gems</div></div>
+  <div class="stats4"><div><b id="sBest">0 m</b>Best</div><div><b id="sDeep">0 m</b>Deepest</div><div><b id="sBank">◆ 0</b>Gems</div><button id="bDrills"><b id="sDr">3</b>Drills +</button></div>
   <div class="rankS" id="rankS"></div>
   <div class="mis" id="misS" style="display:none"></div>
   <button class="btn" id="bGo">DRILL!</button>
-  <button class="drChip" id="bDrills"></button>
-  <div class="row"><button class="btn2 daily" id="bDaily">DAILY RUN</button><button class="btn2" id="bShop">WORKSHOP</button></div>
-  <button class="btn2 rkBtn" id="bGoal">ROCKET &amp; RANK <span id="goalDot"></span></button>
-  <div><button class="link" id="bHow">How to play</button> <button class="link" id="bMus">Collection</button> <button class="link" id="bAch">Badges</button> <button class="link" id="bSet">Settings</button></div>
+  <div class="tiles"><button class="tile" id="bShop">Workshop<small id="tShopS"></small></button><button class="tile rkT" id="bGoal">Rocket<small id="goalSub"></small><span id="goalDot"></span></button><button class="tile dly" id="bDaily">Daily run<small id="dailyS"></small></button><button class="tile" id="bAch">Badges<small id="achS"></small></button></div>
+  <div class="links"><button class="link" id="bHow">How to play</button><button class="link" id="bMus">Collection</button><button class="link" id="bSet">Settings</button></div>
 </div></div>
 <div class="ov" id="ovHow" hidden><div class="card">
   <div class="logo" style="font-size:44px">How to play</div>
@@ -228,17 +240,22 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 </div></div>
 <div class="ov" id="ovSet" hidden><div class="card">
   <div class="logo" style="font-size:44px" id="setTitle">Settings</div>
-  <div class="sets">
+  <div id="pRocket"></div>
+  <button class="btn" id="bResume">RESUME</button>
+  <button class="secT" id="secMain">Settings</button>
+  <div class="sets" id="setsMain">
     <button class="tog" id="tCtl">Controls <span></span></button>
     <button class="tog" id="tSnd">Sound <span></span></button>
     <button class="tog" id="tVib">Vibration <span></span></button>
     <button class="tog" id="tShk">Screen shake <span></span></button>
     <button class="tog" id="tQ">Graphics <span></span></button>
     <button class="tog" id="tCave">Cave-ins <span></span></button>
-    <button class="tog" id="tFps">Show FPS <span></span></button>
-    <button class="tog" id="tPock">Gas &amp; water pockets <span></span></button><button class="tog" id="tFlat">Round world <span></span></button><button class="tog" id="tRend">Graphics engine <span></span></button><button class="tog" id="tTcpu">Tile painting <span></span></button><button class="tog" id="tPf">Performance meter <span></span></button><button class="tog" id="tRep">Copy performance report <span></span></button><button class="tog" id="tBench">Run benchmark (55 s) <span></span></button><button class="tog" id="tReset" style="color:#ff8a7a">Reset all progress <span></span></button>
+    <button class="tog" id="tPock">Gas &amp; water pockets <span></span></button>
   </div>
-  <button class="btn" id="bResume">RESUME</button>
+  <button class="secT" id="secAdv">Advanced</button>
+  <div class="sets" id="setsAdv" hidden>
+    <button class="tog" id="tFps">Show FPS <span></span></button><button class="tog" id="tFlat">Round world <span></span></button><button class="tog" id="tRend">Graphics engine <span></span></button><button class="tog" id="tTcpu">Tile painting <span></span></button><button class="tog" id="tPf">Performance meter <span></span></button><button class="tog" id="tRep">Copy performance report <span></span></button><button class="tog" id="tBench">Run benchmark (55 s) <span></span></button><button class="tog" id="tReset" style="color:#ff8a7a">Reset all progress <span></span></button>
+  </div>
   <button class="link" id="bQuit">Quit to menu</button>
 </div></div>
 <div class="ov" id="ovEnd" hidden><div class="card">
@@ -273,7 +290,7 @@ function saveSV() { try { localStorage.setItem('dirtshot.v2', JSON.stringify(SV)
 const UPS = [{ k: 'tip', n: 'Diamond tip', d: 'Bites through rock and clay faster' }, { k: 'eng', n: 'Engine', d: 'More thrust and a higher top speed. Needed to reach orbit' }, { k: 'cool', n: 'Cooling', d: 'Heats up slower' }, { k: 'hull', n: 'Hull', d: 'Thicker armour – survive more hits' }, { k: 'frame', n: 'Crash frame', d: 'Shock-proof frame: survive crooked and sideways hits at higher speed' }, { k: 'fin', n: 'Wings', d: 'Fold-out wings: steer your flight through the air. Useless in vacuum' }, { k: 'lamp', n: 'Lamp', d: 'Lights up the deep, pulls in gems' }, { k: 'boost', n: 'Boost rocket', d: 'A BOOST button – thrust that works even in space' }, { k: 'rep', n: 'Auto repair', d: 'Repair bots patch the hull while you play – a moment after the last hit' }];
 // economy v2: 10 small levels per upgrade (each worth half an old level), each upgrade has its own base price and prices grow ×1.55 per level → maxing everything takes many hours of play
 const UMAX = 10, UBASE = { tip: 240, eng: 400, cool: 200, hull: 300, frame: 280, fin: 240, lamp: 160, boost: 440, rep: 380 }, nice = v => { const m = Math.pow(10, Math.max(0, Math.floor(Math.log10(v)) - 1)); return Math.round(v / m) * m; };
-const COSTK = (k, l) => nice(UBASE[k] * Math.pow(1.55, l)); const U = k => (SV.up[k] || 0) / 2;
+const COSTK = (k, l) => nice(UBASE[k] * Math.pow(1.45, l)); const U = k => (SV.up[k] || 0) / 2;
 if (SV.eco !== 2) { SV.eco = 2; if (Object.keys(SV.up).length || SV.bank > 0) SV.ecoMsg = 1; SV.up = {}; SV.bank = 0; saveSV(); }
 const fmtG = n => n.toLocaleString('en-US');
 function nextGoal() { let best = null; for (const u of UPS) { const l = SV.up[u.k] || 0; if (l >= UMAX) continue; const c = COSTK(u.k, l); if (!best || c < best.c) best = { u, l, c }; } return best; }
@@ -352,13 +369,13 @@ function genFeatures(ci) { const moon = ci > MCI / 2, cm = moon ? (((ci - MCI) %
   const nN = 1 + (R() < 0.5 ? 1 : 0); for (let i = 0; i < nN; i++) { let x = x0 + R() * CW, y = surf(x) + 70 + R() * 20000; if (F.gas.length && R() < 0.4) { const g = F.gas[0]; x = g.x + g.rx * 0.9; y = g.y; } if (!F.caves.some(c => inEll(c, x, y, 30))) F.nitro.push({ x, y, alive: true, ph: R() * 6, rot: (R() - 0.5) * 1.6 }); }
   const nE = 20 + (R() * 12 | 0); for (let i = 0; i < nE; i++) { const x = x0 + R() * CW, d = 50 + R() * 23000; const k = d < 600 ? 0 : d < 2400 ? 1 : d < 7000 ? 2 : 3; F.gems.push({ x, y: surf(x) + d, k, alive: true, ph: R() * 6 }); }
   { const R2 = rngFor(cm + 700000); F.bub = []; /* bubbles removed – small random cavities instead */ const nb = 1 + (R2() < 0.6 ? 1 : 0) + (R2() < 0.3 ? 1 : 0); for (let i = 0; i < nb; i++) { const x = x0 + R2() * CW, d = 220 + R2() * 15000, y = surf(x) + d, rx = (45 + R2() * 75) / kd(d), ry = 30 + R2() * 40, far = q => Math.hypot(q.x - x, q.y - y) > 260 + (q.rx || 0); if (F.caves.every(c => !inEll(c, x, y, Math.max(rx, ry) + 60)) && F.gas.every(far) && F.water.every(far) && F.nitro.every(far) && F.lava.every(far) && F.coal.every(far)) F.caves.push({ x, y, rx, ry, ph: R2() * 6 }); } }
-  if (bio !== 3 && cm > 8 && R() < 0.07) { const xa = x0 + R() * 70, L = 220 + R() * 190, y = surf(xa) + 170 + R() * 650, sl = (R() - 0.5) * 0.12; if (!F.caves.some(c => Math.abs(c.y - y) < 150)) F.shafts.push({ xa, xb: xa + L, y, sl, h: 46, v: R() < 0.55 ? xa + 20 + R() * (L - 40) : null, trig: false }); }
+  { let rr = 1; /* old mines are rare now and sized to the drill (same random sequence as before, so saved worlds still line up) */ if (bio !== 3 && cm > 8 && (rr = R()) < 0.07) { const xa = x0 + R() * 70, L = 220 + R() * 190, y = surf(xa) + 170 + R() * 650, sl = (R() - 0.5) * 0.12; if (!F.caves.some(c => Math.abs(c.y - y) < 150)) { const vr = R() < 0.55 ? xa + 20 + R() * (L - 40) : null; if (rr < 0.022) { const Lb = L * 0.8; F.shafts.push({ xa, xb: xa + Lb, y: y + 40, sl: sl * 0.8, h: 34, v: vr !== null && (vr - xa - 20) / (L - 40) < 0.5 ? Math.min(vr, xa + Lb - 20) : null, trig: false }); } } } }
   if (R() < 0.4) { const x = x0 + R() * CW, d = 260 + R() * 21000, pool = d < 1200 ? [0, 1, 2, 5, 6] : d < 5000 ? [1, 2, 3, 6, 7] : [3, 4, 7, 8, 9]; F.fos.push({ x, y: surf(x) + d, id: pool[R() * pool.length | 0], alive: true, ph: R() * 6 }); }
   F.sand = []; const nS = bio !== 0 ? 0 : R() < 0.65 ? 1 + (R() < 0.4 ? 1 : 0) : 0; for (let i = 0; i < nS; i++) { const x = x0 + R() * CW, d = 30 + R() * 420; F.sand.push({ x, y: surf(x) + d, rx: 55 + R() * 70, ry: 18 + R() * 26, rot: (R() - 0.5) * 0.3 }); }
   return F; }
 /* ===== TERRENG I RUTER (256×256), bygges når de trengs ===== */
 const TH = 256, NT = Math.ceil((Y1 - Y0) / TH), RPT = TH / CELL;
-function inShaft(sh, x, y, pad) { if (x >= sh.xa - pad && x <= sh.xb + pad) { const cy = sh.y + sh.sl * (x - sh.xa); if (Math.abs(y - cy) < sh.h / 2 + pad) return true; } if (sh.v !== null && Math.abs(x - sh.v) < 19 + pad && y < sh.y + sh.sl * (sh.v - sh.xa) && y > surf(sh.v) - 40) return true; return false; }
+function inShaft(sh, x, y, pad) { if (x >= sh.xa - pad && x <= sh.xb + pad) { const cy = sh.y + sh.sl * (x - sh.xa); if (Math.abs(y - cy) < sh.h / 2 + pad) return true; } if (sh.v !== null && Math.abs(x - sh.v) < 14 + pad && y < sh.y + sh.sl * (sh.v - sh.xa) && y > surf(sh.v) - 4) return true; return false; }
 /* lava lakes: big pools deep down in caverns, on a coarse grid (independent of chunks) */
 const LAKEW = 2048, LAKES = new Map();
 function lakeOf(r) { if (LAKES.has(r)) return LAKES.get(r); let L = null; const NL = CPL / LAKEW, rr = ((r % NL) + NL) % NL; if (rr >= 2 && rr < NL - 1 && !isMoon(r * LAKEW)) { const R = rngFor(rr * 7 + 50000), cx = r * LAKEW + 450 + R() * (LAKEW - 900), volc = biome(cx) === 3; if (R() < (volc ? 0.95 : 0.7)) { const d = volc ? 1300 + R() * 17000 : 9000 + R() * 12000, sy = surf(cx), ly = sy + d, kd = Math.max(0.2, (RPL - d) / RPL), rx = (380 + R() * 440) / kd; L = { x: cx, y: ly, rx, ry: 90 + R() * 120, dh: 160 + R() * 130, ph: R() * 6 }; } } LAKES.set(r, L); return L; }
@@ -388,7 +405,7 @@ function worldSave() { if (!WLIVE || MODE !== 'free' || BENCH || window.__film) 
   for (const [r, dm] of DAMC) if (dm && dm.broke) { const o = {}; for (const q in dm) if (isPrim(dm[q])) o[q] = dm[q]; WSG.dams[r] = o; }
   puts.push(['g', WSG]); if (!WDB) return; try { const st = WDB.transaction('w', 'readwrite').objectStore('w'); for (const [k, v] of puts) st.put(v, WID + '|' + k); } catch (e) {} }
 function worldWipe() { const w = WLD(), old = WID; if (WDB) try { WDB.transaction('w', 'readwrite').objectStore('w').delete(IDBKeyRange.bound(old + '|', old + '|￿')); } catch (e) {} w.seed = 1 + (Math.random() * 1000 | 0); w.n++; w.drills = 3; w.bought = 0; saveSV(); return worldLoad(); }
-const drillPrice = () => nice(1500 * Math.pow(1.35, WLD().bought || 0));
+const drillPrice = () => nice(1500 * Math.pow(1.15, WLD().bought || 0));
 document.addEventListener('visibilitychange', () => { if (document.hidden) try { worldSave(); } catch (e) {} });
 function getChunk(ci) { let ch = chunks.get(ci); if (ch) return ch; const cg0 = performance.now(); try { return getChunk0(ci); } finally { PF.cg += performance.now() - cg0; PF.ncg++; } }
 function getChunk0(ci) { let ch; const x0 = ci * CW, F = genFeatures(ci); if (WAPPLY) { const wd = WSF.get(ci); if (wd) featApply(F, wd); } const NB = [genFeatures(ci - 1), F, genFeatures(ci + 1)];
@@ -749,11 +766,17 @@ function buildTile0(ch, k) {
   const poly = (topF, botF) => { x.beginPath(); xs.forEach((wx, i) => { const y = topF(wx) - top; i ? x.lineTo(wx - x0, y) : x.moveTo(wx - x0, y); }); for (let i = xs.length - 1; i >= 0; i--) x.lineTo(xs[i] - x0, botF(xs[i]) - top); x.closePath(); };
   const ss = xs.map(surf), sMin = Math.min(...ss), sMax = Math.max(...ss);
   const bio = ch.bio, LM = ch.LM, layers = [[w => surf(w), w => surf(w) + B1(w), ch.mtn ? ROCK : TOPM[bio]], [w => surf(w) + B1(w), w => surf(w) + B2(w), LM[0]], [w => surf(w) + B2(w), w => surf(w) + B3(w), LM[1]], [w => surf(w) + B3(w), w => surf(w) + B4(w), LM[2]], [w => surf(w) + B4(w), w => surf(w) + B5(w), LM[3]], [w => surf(w) + B5(w), w => surf(w) + B6(w), LM[4]], [w => surf(w) + B6(w), w => surf(w) + B7(w), LM[5]], [w => surf(w) + B7(w), () => Y1 + 10, LM[6]]];
-  for (const [tf, bf, m] of layers) { let tmin = 1e9, bmax = -1e9; for (const wx of xs) { tmin = Math.min(tmin, tf(wx)); bmax = Math.max(bmax, bf(wx)); } if (bmax < top || tmin > top + H) continue;
+  let prevM = -1; for (const [tf, bf, m] of layers) { const pm = prevM; prevM = m; let tmin = 1e9, bmax = -1e9; for (const wx of xs) { tmin = Math.min(tmin, tf(wx)); bmax = Math.max(bmax, bf(wx)); } if (bmax < top || tmin > top + H) continue;
     const C = MCOL[m]; poly(tf, bf); let pt = null; try { pt = texPat(x, m); } catch (e) { pt = null; } x.fillStyle = C[0]; x.fill(); if (pt) { try { const kt = Math.max(0.05, kAt(x0, top + H / 2)), P = 256 / kt; x.save(); x.translate(-(((x0 % P) + P) % P), -(((top % 256) + 256) % 256)); x.scale(1 / kt, 1); x.fillStyle = pt; x.fill(); } catch (e) {} x.restore(); } x.save(); x.clip();
     if (m === 1 && bio === 0 && sMin < top + H && sMax + 40 > top) { x.strokeStyle = '#5a3a22'; x.lineWidth = 1.2; x.globalAlpha = 0.5; for (let i = 0; i < 10; i++) { let px = R() * W, py = surf(x0 + px) - top + 6; x.beginPath(); x.moveTo(px, py); for (let q = 0; q < 5; q++) { px += (R() - 0.5) * 10; py += 5 + R() * 6; x.lineTo(px, py); } x.stroke(); } }
     if (m !== 5) for (let q = 1; q <= 6; q++) { const off = q * 26 + 5; x.strokeStyle = q % 2 ? C[1] : C[2]; x.globalAlpha = 0.18; x.lineWidth = 1 + (q % 3); x.beginPath(); xs.forEach((wx, i) => { const y = tf(wx) - top + off + 4 * Math.sin(wx / 37 + q); i ? x.lineTo(wx - x0, y) : x.moveTo(wx - x0, y); }); x.stroke(); }
-    x.globalAlpha = 1; x.restore(); x.save(); poly(tf, bf); x.clip(); x.strokeStyle = 'rgba(255,255,255,0.12)'; x.lineWidth = 6; x.beginPath(); xs.forEach((wx, i) => { const y = tf(wx) - top + 3; i ? x.lineTo(wx - x0, y) : x.moveTo(wx - x0, y); }); x.stroke(); x.restore(); }
+    x.globalAlpha = 1; x.restore(); x.save(); poly(tf, bf); x.clip(); if (pm >= 0 && pm !== m && MCOL[pm]) { /* feather: the layer above bleeds softly into this one */ const PC = MCOL[pm][0]; for (const [lw, al] of [[46, 0.16], [26, 0.22], [12, 0.3]]) { x.strokeStyle = PC; x.globalAlpha = al; x.lineWidth = lw; x.beginPath(); xs.forEach((wx, i) => { const y = tf(wx) - top + 2 * Math.sin(wx / 9); i ? x.lineTo(wx - x0, y) : x.moveTo(wx - x0, y); }); x.stroke(); } x.globalAlpha = 1; } x.strokeStyle = 'rgba(255,255,255,0.07)'; x.lineWidth = 6; x.beginPath(); xs.forEach((wx, i) => { const y = tf(wx) - top + 3; i ? x.lineTo(wx - x0, y) : x.moveTo(wx - x0, y); }); x.stroke(); x.restore(); }
+  /* biome edges: the top layer of a neighbour with another biome reaches in along a ragged, feathered border instead of a straight vertical cut */
+  { const topOf = cj => { const xn = cj * CW; return !isMoon(xn) && surf(xn + CW / 2) < -480 ? ROCK : TOPM[biome(xn + CW / 2)]; }, m0 = ch.mtn ? ROCK : TOPM[bio], wav = (bi, y) => 62 * Math.sin(y / 47 + bi * 1.7) + 30 * Math.sin(y / 17 + bi * 3.1) + 14 * Math.sin(y / 6.1 + bi * 0.7);
+    for (const side of [-1, 1]) { const mN = topOf(ch.ci + side); if (mN === m0 || !MCOL[mN]) continue; const bi = side < 0 ? ch.ci : ch.ci + 1, ex = side < 0 ? 0 : CW, outX = side < 0 ? -12 : CW + 12, pts = []; for (let y = -8; y <= H + 8; y += 6) pts.push([ex + wav(bi, top + y), y]);
+      x.save(); poly(w => surf(w), w => surf(w) + B1(w)); x.clip(); const path = () => { x.beginPath(); x.moveTo(outX, -8); for (const [px, py] of pts) x.lineTo(px, py); x.lineTo(outX, H + 8); x.closePath(); };
+      path(); x.fillStyle = MCOL[mN][0]; x.fill(); let pt = null; try { pt = texPat(x, mN); } catch (e) {} if (pt) { try { const kt = Math.max(0.05, kAt(x0, top + H / 2)), P = 256 / kt; x.save(); path(); x.clip(); x.translate(-(((x0 % P) + P) % P), -(((top % 256) + 256) % 256)); x.scale(1 / kt, 1); x.fillStyle = pt; x.fillRect(-W, -H, W * 3 * kt + 600, H * 3); x.restore(); } catch (e) {} }
+      for (const [lw, al, c] of [[34, 0.14, MCOL[mN][0]], [16, 0.22, MCOL[mN][0]], [30, 0.12, MCOL[m0][0]]]) { x.strokeStyle = c; x.globalAlpha = al; x.lineWidth = lw; x.beginPath(); pts.forEach(([px, py], i) => i ? x.lineTo(px + (c === MCOL[m0][0] ? -side * 8 : side * 8), py) : x.moveTo(px, py)); x.stroke(); } x.globalAlpha = 1; x.restore(); } }
   // småstein
   for (let i = 0; i < 5; i++) { const px = R() * W, wx = x0 + px, d = 8 + R() * 360, py = surf(wx) + d - top; if (py < -8 || py > H + 8) continue; const sz = 2 + R() * 4; x.fillStyle = R() < 0.5 ? '#8b8478' : '#a39a8c'; x.beginPath(); x.ellipse(px, py, sz, sz * 0.7, R() * 3, 0, TAU); x.fill(); x.fillStyle = 'rgba(255,255,255,0.25)'; x.beginPath(); x.arc(px - sz * 0.3, py - sz * 0.3, sz * 0.3, 0, TAU); x.fill(); }
   const inT = e => Math.abs(e.x - (x0 + CW / 2)) < CW / 2 + e.rx + 8 && e.y + e.rx + 8 > top && e.y - e.rx - 8 < top + H;
@@ -771,11 +794,11 @@ function buildTile0(ch, k) {
   // mørk kopi bak (gangvegger) – før grotter skjæres
   const T0 = { fg, bg: null, ctx: x, top, H, kr }; let bx = null; const mkBg = () => { if (!bx) { ensureBg(T0); bx = T0.bg ? T0.bg.getContext('2d') : null; } return bx; };
   for (const FF of ch.NB) for (const sh of FF.shafts) { if (sh.xb < x0 - 30 || sh.xa > x0 + CW + 30) continue; if (!mkBg()) continue; const cy = X => sh.y + sh.sl * (X - sh.xa) - top;
-    if (sh.v !== null) { const vt = surf(sh.v) - 40 - top, vb = cy(sh.v); if (vb > -20 && vt < H + 20) { x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; x.fillRect(sh.v - 19 - x0, vt, 38, vb - vt); x.restore();
-      bx.save(); bx.scale(0.5, 0.5); bx.fillStyle = '#6b4a2c'; for (let yy = Math.ceil(vt / 40) * 40; yy < vb; yy += 40) bx.fillRect(sh.v - 19 - x0, yy, 38, 5); bx.fillRect(sh.v - 19 - x0, vt, 5, vb - vt); bx.fillRect(sh.v + 14 - x0, vt, 5, vb - vt); bx.restore(); } }
+    if (sh.v !== null) { const vt = surf(sh.v) - 4 - top, vb = cy(sh.v); if (vb > -20 && vt < H + 20) { x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; x.fillRect(sh.v - 14 - x0, vt, 28, vb - vt); x.restore();
+      bx.save(); bx.scale(0.5, 0.5); bx.fillStyle = '#6b4a2c'; for (let yy = Math.ceil(vt / 22) * 22; yy < vb; yy += 22) bx.fillRect(sh.v - 9 - x0, yy, 18, 3); bx.fillRect(sh.v - 10 - x0, vt, 3, vb - vt); bx.fillRect(sh.v + 7 - x0, vt, 3, vb - vt); bx.restore(); } }
     x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; x.beginPath(); x.moveTo(sh.xa - x0, cy(sh.xa) - sh.h / 2); x.lineTo(sh.xb - x0, cy(sh.xb) - sh.h / 2); x.lineTo(sh.xb - x0, cy(sh.xb) + sh.h / 2); x.lineTo(sh.xa - x0, cy(sh.xa) + sh.h / 2); x.closePath(); x.fill(); x.restore();
     bx.save(); bx.scale(0.5, 0.5); bx.lineCap = 'butt';
-    for (let X = sh.xa + 14; X < sh.xb - 6; X += 56) { const y0 = cy(X); bx.fillStyle = '#7a5530'; bx.fillRect(X - x0 - 4, y0 - sh.h / 2, 8, sh.h); bx.fillRect(X - x0 - 16, y0 - sh.h / 2, 32, 7); bx.fillStyle = '#4a3018'; bx.fillRect(X - x0 - 4, y0 - sh.h / 2, 2, sh.h); }
+    for (let X = sh.xa + 14; X < sh.xb - 6; X += 70) { const y0 = cy(X); bx.fillStyle = '#7a5530'; bx.fillRect(X - x0 - 3, y0 - sh.h / 2, 5, sh.h); bx.fillRect(X - x0 - 11, y0 - sh.h / 2, 22, 4); bx.fillStyle = '#4a3018'; bx.fillRect(X - x0 - 4, y0 - sh.h / 2, 2, sh.h); }
     bx.strokeStyle = '#5a3a1e'; bx.lineWidth = 4; for (let X = sh.xa + 4; X < sh.xb; X += 14) { const y0 = cy(X) + sh.h / 2 - 4; bx.beginPath(); bx.moveTo(X - x0, y0); bx.lineTo(X - x0 + 6, y0); bx.stroke(); }
     bx.strokeStyle = '#a8adb5'; bx.lineWidth = 2.5; bx.beginPath(); bx.moveTo(sh.xa - x0, cy(sh.xa) + sh.h / 2 - 7); bx.lineTo(sh.xb - x0, cy(sh.xb) + sh.h / 2 - 7); bx.stroke();
     bx.strokeStyle = '#e8c070'; bx.lineWidth = 1.5; bx.beginPath(); for (let X = sh.xa + 40; X < sh.xb; X += 112) { bx.moveTo(X - x0, cy(X) - sh.h / 2 + 7); bx.lineTo(X - x0, cy(X) - sh.h / 2 + 15); } bx.stroke(); bx.restore(); }
@@ -1746,7 +1769,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v158';
+const VER = 'v159';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2201,7 +2224,7 @@ function launchRocket() { const to = (SV.pmax || 0) + 1, svg = rocketSVG(); SV.p
   try { SFX.mach(3, true); } catch (e) {} buzz([60, 40, 120]); setTimeout(() => { L.hidden = true; renderGoal(); show('ovGoal'); }, 3400); }
 const OVS = ['ovAch', 'ovStart', 'ovEnd', 'ovHow', 'ovShop', 'ovSet', 'ovMus', 'ovGoal', 'ovDrills']; let backTo = 'ovStart';
 function show(id) { for (const o of OVS) $(o).hidden = o !== id; }
-function showMenu() { endPending = null; drChip(); fillMissions(); $('sBest').textContent = SV.best + ' m'; $('sDeep').textContent = SV.deep + ' m'; $('sBank').textContent = '◆ ' + fmtG(SV.bank); rankCheck(true); $('bpMenu').innerHTML = bpSVG({ labels: true, vb: '28 -4 384 222' }) + `<div class="tblk"><span>DS-1 DRILL · ${PL().n}</span><span>Studio.grane</span><span>RANK ${(SV.rank || 0) + 1}/11</span></div>`; { const w = $('bpMenu'); w.classList.remove('draw'); void w.offsetWidth; w.classList.add('draw'); } rankCheck(true); SV.rankUp = []; $('rankS').innerHTML = rankHTML(false) + ((SV.planet || 0) ? `<div style="margin-top:3px;opacity:.85">Planet ${PL().n} · gems ×${PL().gem}</div>` : ''); $('goalDot').className = goalReady() ? 'on' : ''; if (SV.ecoMsg) { SV.ecoMsg = 0; saveSV(); const n = document.createElement('div'); n.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;background:rgba(255,255,255,.96);color:#3a2414;border-radius:16px;padding:14px 16px;font:600 14px Nunito,sans-serif;box-shadow:0 6px 0 rgba(80,40,20,.35);text-align:center'; n.innerHTML = '<b style="font-size:17px">Upgrades rebalanced</b><br>Each upgrade now has 10 levels and takes real play to earn. Your upgrades and gem bank were reset – records, badges and skins are kept.<br><button style="margin-top:10px;padding:8px 22px;border:0;border-radius:12px;background:#ffb02e;font:800 14px Nunito,sans-serif;color:#3a2414">OK</button>'; n.querySelector('button').onclick = () => n.remove(); document.body.appendChild(n); } $('misS').innerHTML = misHTML(); $('bDaily').textContent = xDailyBtn(); $('pz').hidden = true; show('ovStart'); }
+function showMenu() { endPending = null; drChip(); fillMissions(); $('sBest').textContent = SV.best + ' m'; $('sDeep').textContent = SV.deep + ' m'; $('sBank').textContent = '◆ ' + fmtG(SV.bank); rankCheck(true); $('bpMenu').innerHTML = bpSVG({ labels: true, vb: '28 -4 384 222' }) + `<div class="tblk"><span>DS-1 DRILL · ${PL().n}</span><span>Studio.grane</span><span>RANK ${(SV.rank || 0) + 1}/11</span></div>`; { const w = $('bpMenu'); w.classList.remove('draw'); void w.offsetWidth; w.classList.add('draw'); } rankCheck(true); SV.rankUp = []; $('rankS').innerHTML = rankHTML(false) + ((SV.planet || 0) ? `<div style="margin-top:3px;opacity:.85">Planet ${PL().n} · gems ×${PL().gem}</div>` : ''); $('goalDot').className = goalReady() ? 'on' : ''; if (SV.ecoMsg) { SV.ecoMsg = 0; saveSV(); const n = document.createElement('div'); n.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;background:rgba(255,255,255,.96);color:#3a2414;border-radius:16px;padding:14px 16px;font:600 14px Nunito,sans-serif;box-shadow:0 6px 0 rgba(80,40,20,.35);text-align:center'; n.innerHTML = '<b style="font-size:17px">Upgrades rebalanced</b><br>Each upgrade now has 10 levels and takes real play to earn. Your upgrades and gem bank were reset – records, badges and skins are kept.<br><button style="margin-top:10px;padding:8px 22px;border:0;border-radius:12px;background:#ffb02e;font:800 14px Nunito,sans-serif;color:#3a2414">OK</button>'; n.querySelector('button').onclick = () => n.remove(); document.body.appendChild(n); } $('misS').innerHTML = misHTML(); menuSubs(); $('pz').hidden = true; show('ovStart'); }
 /* ===== BLUEPRINT: a technical drawing of the drill that changes with every upgrade level ===== */
 const BP_PARTS = { tip: [338, 92, 'DIAMOND TIP'], eng: [112, 104, 'ENGINE'], cool: [172, 70, 'COOLING'], hull: [232, 80, 'HULL'], frame: [214, 104, 'CRASH FRAME'], fin: [215, 150, 'WINGS'], lamp: [288, 82, 'LAMP'], boost: [196, 124, 'BOOST'], rep: [252, 70, 'AUTO REPAIR'] };
 const BP_LBL = { tip: [392, 34, 'end'], eng: [40, 30, 'start'], cool: [150, 6, 'middle'], hull: [262, 14, 'middle'], frame: [300, 186, 'middle'], fin: [176, 200, 'middle'], lamp: [380, 6, 'end'], boost: [40, 186, 'start'], rep: [396, 150, 'end'] };
@@ -2248,7 +2271,12 @@ $('shopList').addEventListener('click', e => { const pv = e.target.closest('[dat
 $('shopList').onclick = e => { const b = e.target.closest('button[data-k]'); if (!b) { const r = e.target.closest('[data-sel]'); if (r) { bpSel = r.dataset.sel; renderShop(); } return; } if (b.disabled) { bpSel = b.dataset.k; renderShop(); return; } const k = b.dataset.k, l = SV.up[k] || 0; if (l >= UMAX || SV.bank < COSTK(k, l)) return; SV.bank -= COSTK(k, l); SV.up[k] = l + 1; bpSel = k; bpInst = k; saveSV(); audio(); SFX.gem(2); buzz(20); renderShop(); };
 if (!SV.set.caveMig) { SV.set.cave = 1; SV.set.caveMig = 1; } /* realistic tunnel cave-ins are on by default */
 function setLbl() { $('tShk').lastChild.textContent = ['Off', 'Low', 'Full'][SV.set.shk === undefined ? 1 : SV.set.shk]; $('tCtl').lastChild.textContent = STICK() ? 'Joystick' : SLIDE() ? 'Sliders' : 'Tap sides'; $('tSnd').lastChild.textContent = SV.set.snd ? 'On' : 'Off'; $('tVib').lastChild.textContent = SV.set.vib ? 'On' : 'Off'; $('tQ').lastChild.textContent = SV.set.q ? 'High' : 'Low (faster)'; $('tCave').lastChild.textContent = SV.set.cave ? 'On' : 'Off (faster)'; $('tFps').lastChild.textContent = SV.set.fps ? 'On' : 'Off'; $('tPock').lastChild.textContent = SV.set.nopock ? 'Hidden (test)' : 'Shown'; $('tFlat').lastChild.textContent = SV.set.flat ? 'Off (faster)' : 'On'; $('tRend').lastChild.textContent = SV.set.rend === 'gl' ? 'Classic (WebGL)' : 'Fast (direct)'; $('tPf').lastChild.textContent = SV.set.pf ? 'On' : 'Off'; $('tTcpu').lastChild.textContent = SV.set.tgpu ? 'GPU' : 'CPU'; }
-function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').textContent = inGame ? 'RESUME' : 'BACK'; $('bQuit').hidden = !inGame; show('ovSet'); }
+function rocketPanel() { if (!canFly()) return ''; const mk = MK(), b = rkBuilt(), here = (SV.planet || 0) === (SV.pmax || 0); let li = ''; for (const p of RPARTS) { const v = statOf(p.st), n = p.need[mk], done = b[p.k]; li += `<li class="${done ? 'ok' : ''}">${p.n}: ${done ? 'built' : `${fmtG(Math.min(v, n))}/${fmtG(n)} ${p.u}${v >= n ? ' – ◆' + fmtG(p.c[mk]) + ' to build' : ''}`}</li>`; }
+  const cg = D && D.cargo && Object.keys(D.cargo).length ? `<div class="cg">Carrying: ${Object.keys(D.cargo).map(k => CARGO[k][0] + (D.cargo[k] > 1 ? ' ×' + D.cargo[k] : '')).join(', ')} – get it to the surface!</div>` : '';
+  return `<div class="prk"><div class="t">Rocket Mk ${mk ? 'II' : 'I'} → ${PLANETS[(SV.pmax || 0) + 1].n}</div>${here ? '' : `<div>Build it on ${PLANETS[SV.pmax || 0].n}.</div>`}<ul>${li}</ul>${cg}</div>`; }
+function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').textContent = inGame ? 'RESUME' : 'BACK'; $('bQuit').hidden = !inGame; $('pRocket').innerHTML = inGame ? rocketPanel() : ''; $('setsMain').hidden = !!inGame; $('secMain').hidden = !inGame; $('secMain').classList.toggle('open', !inGame); $('setsAdv').hidden = true; $('secAdv').classList.remove('open'); show('ovSet'); }
+$('secMain').onclick = () => { const h = !$('setsMain').hidden; $('setsMain').hidden = h; $('secMain').classList.toggle('open', !h); };
+$('secAdv').onclick = () => { const h = !$('setsAdv').hidden; $('setsAdv').hidden = h; $('secAdv').classList.toggle('open', !h); };
 function pause() { if (!run || paused || !D || D.dead) return; paused = true; touches.clear(); $('pz').hidden = true; openSet(true); }
 function resume() { if (!paused) { if (!$('ovSet').hidden) showMenu(); return; } paused = false; touches.clear(); last = performance.now(); show(null); $('pz').hidden = false; }
 $('tCtl').onclick = () => { const o = ['stick', 'slide', 'tap'], c = SV.set.ctl || 'stick'; SV.set.ctl = o[(o.indexOf(c) + 1) % 3]; saveSV(); setLbl(); };
@@ -2270,11 +2298,12 @@ $('bResume').onclick = () => resume();
 $('bQuit').onclick = () => { paused = false; run = false; endRun(); showMenu(); };
 $('pz').onclick = () => pause();
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
-function drChip() { const n = WLD().drills || 0, c = $('bDrills'); if (!c) return; c.className = 'drChip' + (n ? '' : ' out'); c.innerHTML = n ? `DRILLS LEFT: <b>${n}</b> &nbsp;+` : 'OUT OF DRILLS &nbsp;+'; }
+function drChip() { const n = WLD().drills || 0, c = $('bDrills'); if (!c) return; c.className = n ? '' : 'out'; $('sDr').textContent = n; menuSubs(); }
 function showDrills(why) { const w = WLD(), n = w.drills || 0, pr = drillPrice(); $('drTxt').innerHTML = (why ? '<b>' + why + '</b><br>' : '') + `You have <b>${n}</b> drill${n === 1 ? '' : 's'} on ${PL().n}. Every crash costs one – and everything you blew up stays blown up.<br>Bank: ◆ ${fmtG(SV.bank)}`; $('bBuyDr').innerHTML = `BUY A DRILL &middot; ◆ ${fmtG(pr)}`; $('bBuyDr').disabled = SV.bank < pr; $('bNewW').textContent = 'NEW WORLD'; $('bNewW').dataset.arm = ''; show('ovDrills'); }
 async function startFree() { audio(); hold = false; if (WREADY) await WREADY; if ((WLD().drills || 0) <= 0) { showDrills('Out of drills!'); return; } reset(false); }
 $('bGo').onclick = () => startFree();
 $('bDrills').onclick = () => showDrills();
+function menuSubs() { try { const g = nextGoal(); $('tShopS').textContent = g ? `next: ${g.u.n} ◆${fmtG(g.c)}` : 'all maxed'; const b = rkBuilt(), n = RPARTS.filter(q => b[q.k]).length; $('goalSub').textContent = canFly() ? `Mk ${MK() ? 'II' : 'I'} · ${n}/6 parts` : 'all planets reached'; $('dailyS').textContent = xDailyBtn().replace('DAILY: ', '').toLowerCase(); $('achS').textContent = `${badgeN()}/${ACH.length}`; } catch (e) {} }
 $('bBuyDr').onclick = () => { const pr = drillPrice(), w = WLD(); if (SV.bank < pr) return; SV.bank -= pr; w.drills = (w.drills || 0) + 1; w.bought = (w.bought || 0) + 1; saveSV(); try { SFX.bank(); } catch (e) {} showDrills(); };
 /* placeholder until real ads are added: the button simply grants the 3 drills */
 $('bAdDr').onclick = () => { const w = WLD(); w.drills = (w.drills || 0) + 3; saveSV(); try { SFX.bank(); } catch (e) {} showDrills(); };
