@@ -213,6 +213,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 </div></div>
 <div class="ov" id="ovGoal" hidden><div class="card">
   <div class="logo" style="font-size:44px">Rocket</div>
+  <div class="bank" id="goalBank">◆ 0</div>
   <div class="sub2" id="gPlanet"></div>
   <div id="gRocket"></div>
   <div class="shop" id="gParts" style="max-height:none"></div>
@@ -1837,7 +1838,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v162';
+const VER = 'v163';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2284,7 +2285,7 @@ function rocketSVG() { const b = rkBuilt(), on = k => !!b[k], st = k => on(k) ? 
   <rect x="30" y="196" width="140" height="14" rx="4" ${on('pad') ? 'fill="#8a8f99"' : st('pad')}/>${on('pad') ? '<rect x="40" y="186" width="8" height="10" fill="#6a6f79"/><rect x="152" y="186" width="8" height="10" fill="#6a6f79"/>' : ''}
   </svg>`; }
 function goalReady() { const b = rkBuilt(), mk = MK(); if (!canFly()) return false; if (RPARTS.every(p => b[p.k])) return true; return RPARTS.some(p => !b[p.k] && partOK(p, mk) && SV.bank >= p.c[mk]); }
-function renderGoal() { const mk = MK(), b = rkBuilt(), here = (SV.planet || 0) === (SV.pmax || 0);
+function renderGoal() { $('goalBank').textContent = '◆ ' + fmtG(SV.bank); const mk = MK(), b = rkBuilt(), here = (SV.planet || 0) === (SV.pmax || 0);
   $('gPlanet').innerHTML = `Planet <b>${PL().n}</b> – ${PL().d}${(SV.pmax || 0) > 0 ? `<div class="planets" style="margin-top:6px">${PLANETS.slice(0, (SV.pmax || 0) + 1).map((q, i) => `<button data-pl="${i}" class="${i === (SV.planet || 0) ? 'on' : ''}">${q.n}</button>`).join('')}</div>` : ''}`;
   $('gRocket').innerHTML = canFly() ? rocketSVG() : '<div class="sub2">You have flown to every planet!</div>';
   $('gParts').innerHTML = !canFly() ? '' : `<div class="sub2" style="margin:-4px 0 2px">Rocket Mk ${mk ? 'II' : 'I'} → ${PLANETS[(SV.pmax || 0) + 1].n}${here ? '' : ` · build it on ${PLANETS[SV.pmax || 0].n}`}</div>` + RPARTS.map(p => { const ok = partOK(p, mk), done = b[p.k], c = p.c[mk];
