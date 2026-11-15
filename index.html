@@ -1873,7 +1873,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v171';
+const VER = 'v172';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2465,9 +2465,9 @@ function BP3(cv, o) { const me = { cv, o, yaw: o.yaw ?? -0.65, pitch: o.pitch ??
         x.strokeStyle = `rgba(${col},${al * 0.22})`; x.lineWidth = (st === 1 ? 2.6 : 4.2) * (fl ? 1.8 : 1); x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke();
         x.strokeStyle = `rgba(${col},${al})`; x.lineWidth = st === 1 ? 0.8 : 1.4; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); } x.setLineDash([]); return out; };
     const pk = me.lastPull; let pxf = null; if (pk && e > 0) { /* the pulled-out part floats up and grows, the drill sinks back and dims */ const g = bp3Geo(pk, Math.max(1, me.lv(pk)), 0); let mnx = 1e9, mny = 1e9, mnz = 1e9, mxx = -1e9, mxy = -1e9, mxz = -1e9; for (const s of g) for (const q of [0, 3]) { mnx = Math.min(mnx, s[q]); mxx = Math.max(mxx, s[q]); mny = Math.min(mny, s[q + 1]); mxy = Math.max(mxy, s[q + 1]); mnz = Math.min(mnz, s[q + 2]); mxz = Math.max(mxz, s[q + 2]); }
-      const cx0 = (mnx + mxx) / 2, cy0 = (mny + mxy) / 2, cz0 = (mnz + mxz) / 2, big = Math.max(mxx - mnx, mxy - mny, mxz - mnz, 20), k2 = 1 + (clamp((o.vert ? 120 : 150) / big, 0.8, 3.2) - 1) * e, ty = (o.vert ? 52 : 34) * e, tc = 1 - e; pxf = p => [cx0 * tc + (p[0] - cx0) * k2, cy0 * tc + ty + (p[1] - cy0) * k2, cz0 * tc + (p[2] - cz0) * k2]; }
+      const cx0 = (mnx + mxx) / 2, cy0 = (mny + mxy) / 2, cz0 = (mnz + mxz) / 2, big = Math.max(mxx - mnx, mxy - mny, mxz - mnz, 20), k2 = 1 + (clamp((o.vert ? 210 : 160) / big, 0.8, 4) - 1) * e, ty = (o.vert ? 10 : 0) * e, tc = 1 - e; pxf = p => [cx0 * tc + (p[0] - cx0) * k2, cy0 * tc + ty + (p[1] - cy0) * k2, cz0 * tc + (p[2] - cz0) * k2]; }
     const dsh = o.vert ? 0.5 : 0.35, dxf = e > 0 ? p => [p[0] * (1 - dsh * e), p[1] * (1 - dsh * e) - (o.vert ? 62 : 58) * e, p[2] * (1 - dsh * e)] : null;
-    for (const k of BP3K) { const l = me.lv(k), isP = pk === k && e > 0; me.pts.set(k, drawSet(k, l, (me.sel === k || isP) ? 'sel' : '', isP ? pxf : dxf, isP ? 1 : 1 - 0.75 * e)); if ((me.sel === k || isP) && me.nextOf && l < UMAX) drawSet(k, l + 1, 'next', isP ? pxf : dxf, isP ? 1 : 1 - 0.75 * e); }
+    for (const k of BP3K) { const l = me.lv(k), isP = pk === k && e > 0; if (!isP && e > 0.97) { me.pts.set(k, []); continue; } me.pts.set(k, drawSet(k, l, (me.sel === k || isP) ? 'sel' : '', isP ? pxf : dxf, isP ? 1 : 1 - e)); if ((me.sel === k || isP) && me.nextOf && l < UMAX) drawSet(k, l + 1, 'next', isP ? pxf : dxf, isP ? 1 : 1 - e); }
     x.globalCompositeOperation = 'source-over';
     const lk = pk && e > 0.5 ? pk : me.sel; if (lk && me.pts.get(lk)) { const ss = me.pts.get(lk); let mx = 1e9, my = 1e9, Mx = -1e9; for (const s of ss) { mx = Math.min(mx, s[0], s[2]); my = Math.min(my, s[1], s[3]); Mx = Math.max(Mx, s[0], s[2]); } const lx = clamp((mx + Mx) / 2, 60, W - 60), ly = Math.max(14, my - 10), u = UPS.find(q => q.k === lk);
       x.font = '900 11px Nunito, sans-serif'; x.textAlign = 'center'; x.fillStyle = '#ffd25a'; x.strokeStyle = 'rgba(8,30,70,0.8)'; x.lineWidth = 3; const tx = (u ? u.n : lk).toUpperCase() + '  MK ' + me.lv(lk); x.strokeText(tx, lx, ly); x.fillText(tx, lx, ly); }
