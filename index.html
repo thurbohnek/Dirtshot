@@ -1911,7 +1911,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v178';
+const VER = 'v179';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2410,7 +2410,17 @@ function launchRocket() { const to = (SV.pmax || 0) + 1, svg = rocketSVG(); SV.p
   $('lTxt').innerHTML = `Next stop:<br>${PLANETS[to].n}`; L.hidden = false; for (const e of L.querySelectorAll('.lstars,.lrk,.ltxt')) { e.style.animation = 'none'; void e.offsetWidth; e.style.animation = ''; }
   try { SFX.mach(3, true); } catch (e) {} buzz([60, 40, 120]); setTimeout(() => { L.hidden = true; renderGoal(); show('ovGoal'); }, 3400); }
 const OVS = ['ovProg', 'ovStart', 'ovEnd', 'ovHow', 'ovShop', 'ovSet', 'ovGoal', 'ovDrills']; let backTo = 'ovStart';
-function show(id) { for (const o of OVS) $(o).hidden = o !== id; }
+function show(id) { for (const o of OVS) $(o).hidden = o !== id; if (id !== 'ovStart') navGuard(); }
+/* Android back button / back swipe: keep one history entry while away from the start menu, and step back through the menus when it is popped */
+function navGuard() { try { if (!(history.state && history.state.ds)) history.pushState({ ds: 1 }, ''); } catch (e) {} }
+function navBack() { if (!$('ovLaunch').hidden) { navGuard(); return; } const v = OVS.find(o => !$(o).hidden);
+  if (!v) { if (run && D && !D.dead && !paused) pause(); else navGuard(); return; }
+  if (v === 'ovStart') return;
+  if (v === 'ovShop') { if (bpPull) { bpPull = null; renderShop(); navGuard(); } else $('bShopOk').click(); return; }
+  if (v === 'ovSet') { if (paused) resume(); else if (!$('setsAdv').hidden) { $('setsAdv').hidden = true; navGuard(); } else showMenu(); return; }
+  if (v === 'ovEnd') { $('bMenu').click(); return; }
+  const bk = { ovHow: 'bHowOk', ovGoal: 'bGoalOk', ovProg: 'bProgOk', ovDrills: 'bDrOk' }[v]; if (bk) $(bk).click(); else showMenu(); }
+addEventListener('popstate', () => { try { navBack(); } catch (e) {} });
 function showMenu() { endPending = null; $('nDType').textContent = DTY().n; drChip(); fillMissions(); $('sBest').textContent = SV.best + ' m'; $('sDeep').textContent = SV.deep + ' m'; $('sBank').textContent = fmtG(SV.bank); rankCheck(true); $('nRank').textContent = `Rank ${(SV.rank || 0) + 1} · ${RANKS[SV.rank || 0][0]}`; $('nPlanet').innerHTML = (SV.planet || 0) ? `<b>${PL().n}</b> ×${PL().gem}` : ''; $('nNext').innerHTML = goalCardHTML(); { const g = nextGoal(); $('shopDot').className = 'ndot' + (g && SV.bank >= g.c ? ' on' : ''); } rankCheck(true); SV.rankUp = []; $('rankS').innerHTML = rankHTML(false) + ((SV.planet || 0) ? `<div style="margin-top:3px;opacity:.85">Planet ${PL().n} · gems ×${PL().gem}</div>` : ''); $('goalDot').className = 'ndot' + (goalReady() ? ' on' : ''); if (SV.ecoMsg) { SV.ecoMsg = 0; saveSV(); const n = document.createElement('div'); n.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;background:rgba(255,255,255,.96);color:#3a2414;border-radius:16px;padding:14px 16px;font:600 14px Nunito,sans-serif;box-shadow:0 6px 0 rgba(80,40,20,.35);text-align:center'; n.innerHTML = '<b style="font-size:17px">Upgrades rebalanced</b><br>Each upgrade now has 10 levels and takes real play to earn. Your upgrades and gem bank were reset – records, badges and skins are kept.<br><button style="margin-top:10px;padding:8px 22px;border:0;border-radius:12px;background:#ffb02e;font:800 14px Nunito,sans-serif;color:#3a2414">OK</button>'; n.querySelector('button').onclick = () => n.remove(); document.body.appendChild(n); } $('misS').innerHTML = misHTML(); menuSubs(); $('pz').hidden = true; show('ovStart'); }
 /* ===== BLUEPRINT: a technical drawing of the drill that changes with every upgrade level ===== */
 const BP_PARTS = { tip: [338, 92, 'DIAMOND TIP'], eng: [112, 104, 'ENGINE'], cool: [172, 70, 'COOLING'], hull: [232, 80, 'HULL'], frame: [214, 104, 'CRASH FRAME'], fin: [215, 150, 'WINGS'], lamp: [288, 82, 'LAMP'], boost: [196, 124, 'BOOST'], rep: [252, 70, 'AUTO REPAIR'], sbrk: [292, 126, 'RETRO THRUSTERS'] };
