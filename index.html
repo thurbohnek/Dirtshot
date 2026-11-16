@@ -1946,7 +1946,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v191';
+const VER = 'v192';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2033,18 +2033,23 @@ function drawLODf(x, left, right, vtop, vbot) { const Rb = GV.Rb, n = 240, st = 
   if (right - left < 30000) { x.fillStyle = 'rgba(28,14,8,0.6)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) for (const cv of cavesOf(ci)) { if (cv.y + cv.ry < vtop || cv.y - cv.ry > vbot) continue; setAff(x, cv.x, cv.y); x.beginPath(); x.ellipse(cv.x, cv.y, cv.rx, cv.ry, 0, 0, TAU); x.fill(); } x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); }
   try { drawDugLOD(x, left, right, vtop, vbot, true); } catch (e) {}
   { x.fillStyle = 'rgba(30,16,10,0.92)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci); if (!ch || !ch.polys) continue; for (const Pp of ch.polys) { if (Pp.drawnF === frameNo) continue; Pp.drawnF = frameNo; x.beginPath(); Pp.pts.forEach(([a, b], i) => { const q = P(a, b); i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); }); x.closePath(); x.fill(); } } } /* craters stay visible in the far view */
-  if (D && D.trail && D.trail.length > 3) { x.strokeStyle = 'rgba(22,12,8,0.95)'; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = Math.max(TR * 2 * GV.s, 3); x.beginPath(); for (let i = 0; i < D.trail.length; i += 2) { const px = D.trail[i], py = D.trail[i + 1]; if (px < left - 3000 || px > right + 3000) continue; const q = P(px, py); if (i === 0 || Math.abs(px - D.trail[i - 2]) > 3000) x.moveTo(q[0], q[1]); else x.lineTo(q[0], q[1]); } x.stroke(); } }
+  /* the drill's trail is no longer drawn here: it also ran through the air. The dug cells themselves show the tunnels */ }
 // far-away view: the layers as smooth bands (no tiles), plus caves and the drill's own trail
 /* every tunnel ever dug, for the far view: one tiny picture per dug band (32×32 cells), from the live chunk or from the saved world */
 const LODC = new Map(); let WSBI = null, WSBN = -1;
 function wsbIndex() { if (WSBN === WSB.size && WSBI) return WSBI; WSBI = new Map(); for (const key of WSB.keys()) { const [ci, k] = key.split(':').map(Number); (WSBI.get(ci) || WSBI.set(ci, []).get(ci)).push(k); } WSBN = WSB.size; return WSBI; }
-function dugImg(ci, k, m, ver, al = 165) { const key = ci + ':' + k, c0 = LODC.get(key); if (c0 && c0.v === ver) return c0.c; const c = (c0 && c0.c) || document.createElement('canvas'); c.width = MCOLS; c.height = RPT; const x = c.getContext('2d'), id = x.createImageData(MCOLS, RPT), d = id.data, y0 = Y0 + k * TH;
+function dugImg(ci, k, m, ver, al = 165) { const key = ci + ':' + k, c0 = LODC.get(key); if (c0 && c0.v === ver) return c0.c; m = noBlocks(m); const c = (c0 && c0.c) || document.createElement('canvas'); c.width = MCOLS; c.height = RPT; const x = c.getContext('2d'), id = x.createImageData(MCOLS, RPT), d = id.data, y0 = Y0 + k * TH;
   const sf = []; for (let i = 0; i < MCOLS; i++) sf.push(surf(ci * CW + i * CELL + 4)); let any = 0;
   for (let r = 0; r < RPT; r++) for (let i = 0; i < MCOLS; i++) { const wy = y0 + r * CELL + 4; if (!m[r * MCOLS + i] || wy < sf[i] + 10) continue; const o = (r * MCOLS + i) * 4; d[o] = 22; d[o + 1] = 13; d[o + 2] = 9; d[o + 3] = al; any = 1; }
   x.putImageData(id, 0, 0); const e = { c: any ? c : null, v: ver }; LODC.set(key, e); if (LODC.size > 6000) LODC.delete(LODC.keys().next().value); return e.c; }
 /* holes saved before v189 were not marked as dug: work them out by comparing with the untouched band */
 function natMask(ci, k) { const keep = chunks.get(ci), wa = WAPPLY; WAPPLY = false; chunks.delete(ci); let m; try { const t = getChunk0(ci); ensureBand(t, k); m = t.mask.slice(k * RPT * MCOLS, Math.min(MROWS, (k + 1) * RPT) * MCOLS); } finally { chunks.delete(ci); if (keep) chunks.set(ci, keep); WAPPLY = wa; } return m; }
-function legacyPd(ci, k, m) { const n = natMask(ci, k), o = new Uint8Array(m.length); for (let i = 0; i < m.length; i++) o[i] = m[i] && !n[i] ? 1 : 0; return o; }
+function legacyPd(ci, k, m) { const n = natMask(ci, k), o = new Uint8Array(m.length); for (let i = 0; i < m.length; i++) if (m[i] && !n[i]) o[i] = 1; return o; }
+function noBlocks(src) { const o = Uint8Array.from(src), m = o;
+  /* a drill tunnel is at most ~8 cells wide. Solid areas much wider than that come from ground that was generated differently when it was saved: drop them (and their rim) so no dark blocks appear */
+  const C = MCOLS, Rn = (m.length / C) | 0, blk = new Uint8Array(m.length), H = 6;
+  for (let r = 0; r < Rn; r++) for (let c = 0; c < C; c++) { let full = 1; for (let dr = -H; dr <= H && full; dr++) for (let dc = -H; dc <= H; dc++) { const rr = r + dr, cc = c + dc; if (rr < 0 || rr >= Rn || cc < 0 || cc >= C) continue; if (!o[rr * C + cc]) { full = 0; break; } } if (full) for (let dr = -H; dr <= H; dr++) for (let dc = -H; dc <= H; dc++) { const rr = r + dr, cc = c + dc; if (rr >= 0 && rr < Rn && cc >= 0 && cc < C) blk[rr * C + cc] = 1; } }
+  for (let i = 0; i < o.length; i++) if (blk[i]) o[i] = 0; return o; }
 let PDB = 0;
 function drawDugLOD(x, left, right, vtop, vbot, fast) { const WI = wsbIndex(); PDB = 4; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci), ks = ch && ch.dug ? Object.keys(ch.dug).map(Number) : WI.get(ci); if (!ks) continue;
     for (const k of ks) { const ty = Y0 + k * TH; if (ty > vbot || ty + TH < vtop) continue; let img;
@@ -2065,7 +2070,7 @@ function drawLOD(x, left, right, vtop, vbot) { const n = 240, st = (right - left
   x.strokeStyle = 'rgba(255,255,255,0.18)'; x.lineWidth = 6 / GV.sy; x.beginPath(); for (let j = 0; j <= n; j++) j ? x.lineTo(us[j], ss[j]) : x.moveTo(us[j], ss[j]); x.stroke();
   if (right - left < 30000) { x.fillStyle = 'rgba(28,14,8,0.6)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) for (const cv of cavesOf(ci)) { if (cv.y + cv.ry < vtop || cv.y - cv.ry > vbot) continue; x.beginPath(); x.ellipse(cv.x, cv.y, cv.rx, cv.ry, 0, 0, TAU); x.fill(); } }
   try { drawDugLOD(x, left, right, vtop, vbot, false); } catch (e) {}
-  if (D && D.trail && D.trail.length > 3) { x.strokeStyle = 'rgba(22,12,8,0.95)'; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = Math.max(TR * 2, 3 / GV.sy); x.beginPath(); for (let i = 0; i < D.trail.length; i += 2) { const px = D.trail[i], py = D.trail[i + 1]; if (i === 0 || Math.abs(px - D.trail[i - 2]) > 3000) x.moveTo(px, py); else x.lineTo(px, py); } x.stroke(); } }
+  /* the drill's trail is no longer drawn here: it also ran through the air. The dug cells themselves show the tunnels */ }
 // the moon hangs fixed in space; the planet's centre is the origin
 let MDIST = RPL * 4.2, MANG = 0.42, MCX = Math.sin(MANG) * MDIST, MCY = -Math.cos(MANG) * MDIST;
 // global cartesian of a flat point (planet centre at 0,0; north pole straight up)
