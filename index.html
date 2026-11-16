@@ -913,7 +913,7 @@ function isCarved(wx, wy) { return maskAt(Math.floor(wx / CELL), Math.floor((wy 
 function carve(wx, wy, r, toX, toY) { const seg = toX !== undefined; if (!seg) { toX = wx; toY = wy; } const k = kAt(wx, wy), rx = Math.min(r / k, 3000); if (Math.abs(toX - wx) > 4000) return; const ax = Math.min(wx, toX), bx = Math.max(wx, toX), ay = Math.min(wy, toY), by = Math.max(wy, toY);
   forTiles(ax - rx - 8, bx + rx + 8, ay - r - 8, by + r + 8, (x, ox, oy) => { x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; x.lineCap = 'round'; x.fillStyle = x.strokeStyle = '#000'; x.translate(wx - ox, wy - oy); x.scale(rx / r, 1);
     x.lineWidth = r * 2; x.beginPath(); x.moveTo(0, 0); x.lineTo((toX - wx) * r / rx + 0.01, toY - wy); x.stroke(); if (seg) { x.globalCompositeOperation = 'source-atop'; x.strokeStyle = 'rgba(25,12,6,0.07)'; x.lineWidth = r * 2 + 12; x.stroke(); } x.restore(); }, rx > 200);
-  const q = r / rx; for (let gy = Math.floor((ay - r - Y0) / CELL); gy <= Math.floor((by + r - Y0) / CELL); gy++) for (let gx = Math.floor((ax - rx) / CELL); gx <= Math.floor((bx + rx) / CELL); gx++) { const c = cellAt(gx, gy); if (!c || c.ch.mask[c.i]) continue; const px = gx * CELL + 4, py = Y0 + gy * CELL + 4; const d = segDist((px - wx) * q, py, 0, wy, (toX - wx) * q, toY); if (d < r - 3) (c.ch.mask[c.i] = 1, (c.ch.dug || (c.ch.dug = {}))[(c.i / MCOLS / RPT) | 0] = 1); } }
+  const q = r / rx; for (let gy = Math.floor((ay - r - Y0) / CELL); gy <= Math.floor((by + r - Y0) / CELL); gy++) for (let gx = Math.floor((ax - rx) / CELL); gx <= Math.floor((bx + rx) / CELL); gx++) { const c = cellAt(gx, gy); if (!c || c.ch.mask[c.i]) continue; const px = gx * CELL + 4, py = Y0 + gy * CELL + 4; const d = segDist((px - wx) * q, py, 0, wy, (toX - wx) * q, toY); if (d < r - 3) (c.ch.mask[c.i] = 1, (c.ch.dug || (c.ch.dug = {}))[(c.i / MCOLS / RPT) | 0] = 1, c.ch.lodV = (c.ch.lodV || 0) + 1); } }
 function crater(wx, wy, r) { if (r > 40) queueIslands(wx - r * 3, wx + r * 3, Math.min(wy - r * 3, surf(Math.round(wx)) - 400), wy + r * 2.5); const pts = [], NP = r > 120 ? 48 : 22, kk = 1 / kAt(wx, wy); for (let i = 0; i < NP; i++) { const a = i / NP * TAU; pts.push([Math.cos(a) * r * (0.8 + 0.35 * rnd()) * kk, Math.sin(a) * r * (0.8 + 0.35 * rnd())]); } addPoly(pts.map(([a, b]) => [wx + a, wy + b]), false);
   forTiles(wx - r * 1.3 * kk, wx + r * 1.3 * kk, wy - r * 1.3, wy + r * 1.3, (x, ox, oy) => { x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.globalAlpha = 1; x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(wx + p[0] - ox, wy + p[1] - oy) : x.moveTo(wx + p[0] - ox, wy + p[1] - oy)); x.closePath(); x.fill(); x.restore(); });
   for (let gy = Math.floor((wy - r - Y0) / CELL); gy <= Math.floor((wy + r - Y0) / CELL); gy++) for (let gx = Math.floor((wx - r * kk) / CELL); gx <= Math.floor((wx + r * kk) / CELL); gx++) { const c = cellAt(gx, gy); if (!c || c.ch.mask[c.i]) continue; if (Math.hypot((gx * CELL + 4 - wx) / kk, Y0 + gy * CELL + 4 - wy) < r * 0.82) (c.ch.mask[c.i] = 1, (c.ch.dug || (c.ch.dug = {}))[(c.i / MCOLS / RPT) | 0] = 1); } }
@@ -1946,7 +1946,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v187';
+const VER = 'v188';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2031,9 +2031,22 @@ function drawLODf(x, left, right, vtop, vbot) { const Rb = GV.Rb, n = 240, st = 
       x.beginPath(); let q = P(us[j0], top(j0)); x.moveTo(q[0], q[1]); for (let j = j0 + 1; j <= j1; j++) { q = P(us[j], top(j)); x.lineTo(q[0], q[1]); } for (let j = j1; j >= j0; j--) { q = P(us[j], bot(j)); x.lineTo(q[0], q[1]); } x.closePath(); x.fillStyle = MCOL[m][0]; x.fill(); j0 = j1; } }
   x.strokeStyle = 'rgba(255,255,255,0.18)'; x.lineWidth = 2; x.beginPath(); for (let j = 0; j <= n; j++) { const q = P(us[j], ss[j]); j ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); } x.stroke();
   if (right - left < 30000) { x.fillStyle = 'rgba(28,14,8,0.6)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) for (const cv of cavesOf(ci)) { if (cv.y + cv.ry < vtop || cv.y - cv.ry > vbot) continue; setAff(x, cv.x, cv.y); x.beginPath(); x.ellipse(cv.x, cv.y, cv.rx, cv.ry, 0, 0, TAU); x.fill(); } x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); }
+  try { drawDugLOD(x, left, right, vtop, vbot, true); } catch (e) {}
   { x.fillStyle = 'rgba(30,16,10,0.92)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci); if (!ch || !ch.polys) continue; for (const Pp of ch.polys) { if (Pp.drawnF === frameNo) continue; Pp.drawnF = frameNo; x.beginPath(); Pp.pts.forEach(([a, b], i) => { const q = P(a, b); i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); }); x.closePath(); x.fill(); } } } /* craters stay visible in the far view */
   if (D && D.trail && D.trail.length > 3) { x.strokeStyle = 'rgba(22,12,8,0.95)'; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = Math.max(TR * 2 * GV.s, 3); x.beginPath(); for (let i = 0; i < D.trail.length; i += 2) { const px = D.trail[i], py = D.trail[i + 1]; if (px < left - 3000 || px > right + 3000) continue; const q = P(px, py); if (i === 0 || Math.abs(px - D.trail[i - 2]) > 3000) x.moveTo(q[0], q[1]); else x.lineTo(q[0], q[1]); } x.stroke(); } }
 // far-away view: the layers as smooth bands (no tiles), plus caves and the drill's own trail
+/* every tunnel ever dug, for the far view: one tiny picture per dug band (32×32 cells), from the live chunk or from the saved world */
+const LODC = new Map(); let WSBI = null, WSBN = -1;
+function wsbIndex() { if (WSBN === WSB.size && WSBI) return WSBI; WSBI = new Map(); for (const key of WSB.keys()) { const [ci, k] = key.split(':').map(Number); (WSBI.get(ci) || WSBI.set(ci, []).get(ci)).push(k); } WSBN = WSB.size; return WSBI; }
+function dugImg(ci, k, m, ver) { const key = ci + ':' + k, c0 = LODC.get(key); if (c0 && c0.v === ver) return c0.c; const c = (c0 && c0.c) || document.createElement('canvas'); c.width = MCOLS; c.height = RPT; const x = c.getContext('2d'), id = x.createImageData(MCOLS, RPT), d = id.data, y0 = Y0 + k * TH;
+  const sf = []; for (let i = 0; i < MCOLS; i++) sf.push(surf(ci * CW + i * CELL + 4)); let any = 0;
+  for (let r = 0; r < RPT; r++) for (let i = 0; i < MCOLS; i++) { const wy = y0 + r * CELL + 4; if (!m[r * MCOLS + i] || wy < sf[i] + 10) continue; const o = (r * MCOLS + i) * 4; d[o] = 30; d[o + 1] = 16; d[o + 2] = 10; d[o + 3] = 240; any = 1; }
+  x.putImageData(id, 0, 0); const e = { c: any ? c : null, v: ver }; LODC.set(key, e); if (LODC.size > 6000) LODC.delete(LODC.keys().next().value); return e.c; }
+function drawDugLOD(x, left, right, vtop, vbot, fast) { const WI = wsbIndex(); for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci), ks = ch && ch.dug ? Object.keys(ch.dug).map(Number) : WI.get(ci); if (!ks) continue;
+    for (const k of ks) { const ty = Y0 + k * TH; if (ty > vbot || ty + TH < vtop) continue; let img;
+      if (ch && ch.dug && ch.dug[k]) img = dugImg(ci, k, ch.mask.subarray(k * RPT * MCOLS, Math.min(MROWS, (k + 1) * RPT) * MCOLS), 'c' + (ch.lodV || 0)); else { const sv = WSB.get(ci + ':' + k); if (!sv) continue; img = dugImg(ci, k, sv.m, 's'); }
+      if (!img) continue; if (fast) setAff(x, ci * CW + CW / 2, ty + TH / 2); x.drawImage(img, ci * CW, ty, CW, TH); } }
+  if (fast) x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); }
 function drawLOD(x, left, right, vtop, vbot) { const n = 240, st = (right - left) / n, us = []; for (let i = 0; i <= n; i++) us.push(Math.round(left + i * st)); const ss = us.map(surf), Bs = [B1, B2, B3, B4, B5, B6, B7].map(f => us.map(f));
   const bioOf = u => biome(u), mats = u => { const b = bioOf(u); return [TOPM[b], ...LAYM[isMoon(u) ? 2 : 1]]; };
   const yb = Math.min(vbot, Y1 + 4);
@@ -2044,6 +2057,7 @@ function drawLOD(x, left, right, vtop, vbot) { const n = 240, st = (right - left
   // grass/snow rim
   x.strokeStyle = 'rgba(255,255,255,0.18)'; x.lineWidth = 6 / GV.sy; x.beginPath(); for (let j = 0; j <= n; j++) j ? x.lineTo(us[j], ss[j]) : x.moveTo(us[j], ss[j]); x.stroke();
   if (right - left < 30000) { x.fillStyle = 'rgba(28,14,8,0.6)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) for (const cv of cavesOf(ci)) { if (cv.y + cv.ry < vtop || cv.y - cv.ry > vbot) continue; x.beginPath(); x.ellipse(cv.x, cv.y, cv.rx, cv.ry, 0, 0, TAU); x.fill(); } }
+  try { drawDugLOD(x, left, right, vtop, vbot, false); } catch (e) {}
   if (D && D.trail && D.trail.length > 3) { x.strokeStyle = 'rgba(22,12,8,0.95)'; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = Math.max(TR * 2, 3 / GV.sy); x.beginPath(); for (let i = 0; i < D.trail.length; i += 2) { const px = D.trail[i], py = D.trail[i + 1]; if (i === 0 || Math.abs(px - D.trail[i - 2]) > 3000) x.moveTo(px, py); else x.lineTo(px, py); } x.stroke(); } }
 // the moon hangs fixed in space; the planet's centre is the origin
 let MDIST = RPL * 4.2, MANG = 0.42, MCX = Math.sin(MANG) * MDIST, MCY = -Math.cos(MANG) * MDIST;
