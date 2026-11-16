@@ -166,6 +166,57 @@ canvas.bp3 { display: block; width: 100%; cursor: grab; } canvas.menu3 { height:
 @keyframes lift { 0% { transform: scale(1); } 40% { transform: scale(1.12) translateY(-6px); } 100% { transform: scale(1); } }
 @keyframes wm { to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { #intro polyline { animation-duration: .01s; } #intro svg, #intro .wm { animation-duration: .01s; } }
+
+/* ===== new menu structure: one top strip, the world above, a cream sheet below ===== */
+.ov[hidden] { display: none !important; }
+.ov.nv { display: block; padding: 0; overflow: hidden; background: linear-gradient(180deg, rgba(10,20,40,.08), rgba(30,15,5,.28)); }
+.ov.nv.nspace { background: linear-gradient(180deg, #0c1a40 0, #1a2450 40%, #3a5aa0 100%); }
+.nscr { position: relative; height: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; color: var(--ink); }
+.ntop { display: flex; align-items: center; gap: 8px; padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px 8px; flex: none; }
+.nsp { flex: 1; }
+.nback { width: 44px; height: 44px; border-radius: 14px; border: 0; background: rgba(255,255,255,.9); color: var(--ink); font: 900 26px/1 var(--f-b); box-shadow: 0 3px 0 rgba(80,40,20,.3); cursor: pointer; flex: none; }
+.nttl { flex: 1; font: 400 26px/1 var(--f-d); color: #fff; text-shadow: 0 2px 0 rgba(60,30,10,.45); }
+.nchip { display: flex; align-items: center; gap: 5px; height: 36px; padding: 0 12px; border-radius: 18px; border: 0; background: rgba(46,30,20,.72); color: #fff; font: 400 17px var(--f-d); font-variant-numeric: tabular-nums; flex: none; cursor: pointer; }
+span.nchip { cursor: default; } .nchip .g { color: #ffd84a; } .nchip.nrk { font: 800 13px var(--f-b); } .nchip.out { background: #c8322a; }
+.nlogo { text-align: center; margin-top: 10px; font: 400 clamp(56px, 17vw, 74px)/.9 var(--f-d); color: #ffcf3d; text-shadow: 0 4px 0 #b4561c, 0 8px 0 rgba(60,25,10,.4); transform: rotate(-4deg); }
+.ndrill { display: flex; justify-content: center; margin-top: 4px; flex: 1 1 auto; min-height: 0; align-items: center; } .ndrill svg { max-height: 100%; animation: nfl 3s ease-in-out infinite; } @keyframes nfl { 50% { transform: translateY(-6px) rotate(-2deg); } }
+.nsheet { margin-top: auto; background: #fff8ee; border-radius: 24px 24px 0 0; padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 18px); display: flex; flex-direction: column; gap: 11px; box-shadow: 0 -4px 0 rgba(80,40,20,.25); text-align: left; flex: none; max-height: 78%; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.nsheet.nfill { flex: 1 1 auto; max-height: none; min-height: 0; }
+.nh { font: 900 12px var(--f-b); letter-spacing: .12em; text-transform: uppercase; color: #7a5a40; margin: 2px 0 -4px; }
+.ncard { display: block; width: 100%; box-sizing: border-box; text-align: left; border: 0; background: #fff; border-radius: 16px; padding: 11px 14px; box-shadow: 0 3px 0 rgba(80,40,20,.18); color: var(--ink); font: 700 13px/1.35 var(--f-b); }
+.nct { font: 400 18px/1.15 var(--f-d); color: var(--ink); } .ncs { font: 700 13px/1.35 var(--f-b); color: #5e4a3c; }
+.nbest { display: flex; justify-content: space-between; gap: 8px; font: 800 14px var(--f-b); color: #5e4a3c; } .nbest b { color: var(--ink); }
+.nsheet .btn { min-height: 60px; font-size: 28px; }
+.nbs { border: 0; border-radius: 16px; padding: 10px 14px; min-height: 48px; font: 400 19px var(--f-d); background: #fff; color: #5a2a0c; box-shadow: 0 4px 0 #d9b48a; cursor: pointer; }
+.nbs:active { transform: translateY(2px); box-shadow: 0 2px 0 #d9b48a; } .nbs:disabled { opacity: .5; }
+.nbs.nwide { display: flex; align-items: center; justify-content: space-between; } .nbs.nwide small { font: 800 13px var(--f-b); color: #5e4a3c; }
+.nbs.nad { background: #2e9a3a; color: #fff; box-shadow: 0 4px 0 #1f6a28; }
+.nrow { display: flex; gap: 10px; } .nrow > * { flex: 1; } .nrow[hidden] { display: none; }
+.ngoalc { cursor: pointer; display: flex; flex-direction: column; gap: 5px; } .ngoalc:empty { display: none; }
+.ngoalc .nl { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.nprog { height: 8px; border-radius: 4px; background: #eadccb; overflow: hidden; } .nprog i { display: block; height: 100%; border-radius: 4px; background: #ff9a2e; } .nprog.ok i { background: #2e9a3a; }
+.nok { color: #1f7a2c !important; font-weight: 900; }
+.nnav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 2px; }
+.nnb { position: relative; border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font: 800 12px var(--f-b); color: #5a2a0c; min-height: 56px; cursor: pointer; } .nnb svg { width: 26px; height: 26px; }
+.ndot { position: absolute; top: 2px; right: calc(50% - 22px); width: 10px; height: 10px; border-radius: 50%; background: #e8402a; border: 2px solid #fff8ee; display: none; } .ndot.on { display: block; }
+.nlink { border: 0; background: none; font: 800 13px var(--f-b); color: #7a5a40; text-decoration: underline; cursor: pointer; align-self: center; padding: 2px 8px; }
+.ntabs { display: flex; gap: 6px; background: #efe3d4; border-radius: 14px; padding: 4px; flex: none; }
+.ntab { flex: 1; border: 0; border-radius: 11px; min-height: 38px; background: none; font: 800 14px var(--f-b); color: #5e4a3c; cursor: pointer; } .ntab.on { background: #fff; color: var(--ink); box-shadow: 0 2px 0 rgba(80,40,20,.15); }
+.nlist { display: flex; flex-direction: column; gap: 9px; } .nlist[hidden] { display: none; }
+.nlist .up { box-shadow: 0 3px 0 rgba(80,40,20,.18); background: #fff; border-radius: 16px; padding: 10px 12px; }
+.nlist .up b { color: var(--ink); } .nlist .up.upsel { outline: 3px solid #ff9a2e; outline-offset: -1px; }
+.nlist .up .nfx { grid-column: 1; font: 700 12.5px var(--f-b); color: #5e4a3c; } .nlist .up .nfx em { font-style: normal; color: #1f7a2c; font-weight: 900; }
+.nbpw { margin: 0 12px 10px; flex: none; } .nbpw .bpwrap { margin: 0; } canvas.ws3 { height: clamp(170px, 30vh, 300px); }
+.ngp { text-align: center; color: #cfe6ff; font: 800 13px/1.35 var(--f-b); padding: 0 16px; } .ngp b { color: #fff; } .ngp button { margin: 6px 3px 0; }
+.ngr { display: flex; justify-content: center; padding: 6px 0; flex: 1 1 auto; min-height: 0; } .ngr svg { max-height: 100%; height: auto; }
+.npause { text-align: center; color: #fff; margin-top: 14px; } .npause[hidden] { display: none; } .npd { font: 400 46px/1 var(--f-d); text-shadow: 0 3px 0 rgba(60,30,10,.45); } .npb { font: 800 14px var(--f-b); margin-top: 4px; text-shadow: 0 1px 0 rgba(60,30,10,.5); }
+.nsets { padding: 2px 14px; display: flex; flex-direction: column; } .nsets[hidden] { display: none; }
+.nsets .tog { background: none; box-shadow: none; border-radius: 0; padding: 0; min-height: 48px; border-bottom: 1px solid #efe3d4; font: 800 15px var(--f-b); color: var(--ink); } .nsets .tog:last-child { border-bottom: 0; } .nsets .tog span { font: 700 13px var(--f-b); color: #5e4a3c; }
+.nend { text-align: center; color: #fff; margin-top: 8px; flex: 1 1 auto; } .nwhy { font: 900 15px var(--f-b); text-shadow: 0 2px 0 rgba(60,30,10,.5); } .nend .res { font-size: clamp(56px, 18vw, 76px); margin-top: 4px; }
+.nbestpill:empty { display: none; } .nbestpill { display: inline-block; margin-top: 8px; padding: 6px 14px; border-radius: 14px; background: rgba(46,30,20,.6); color: #fff; font: 800 13px var(--f-b); } .nbestpill.new { background: #ffd84a; color: #5a2a0c; font-weight: 900; letter-spacing: .06em; }
+#ovHow .how { color: var(--ink); text-shadow: none; } #pRocket:empty { display: none; }
+#gRank .rk, #achL, #musN { color: var(--ink); text-shadow: none; } #gRank .rk { background: #fff; border-radius: 16px; padding: 12px 14px; box-shadow: 0 3px 0 rgba(80,40,20,.18); }
+#gLaunch:empty { display: none; }
 </style>
 </head>
 <body>
@@ -188,92 +239,89 @@ canvas.bp3 { display: block; width: 100%; cursor: grab; } canvas.menu3 { height:
   </svg>
   <div class="wm">studio<span>.</span>grane</div>
 </div></div>
-<div class="ov bpbg" id="ovStart"><div class="card">
-  <div class="logo">Dirtshot</div>
-  <div class="bpwrap menu" id="bpMenu"></div>
-  <div class="stats4"><div><b id="sBest">0 m</b>Best</div><div><b id="sDeep">0 m</b>Deepest</div><div><b id="sBank">◆ 0</b>Gems</div><button id="bDrills"><b id="sDr">3</b>Drills +</button></div>
-  <div class="rankS" id="rankS"></div>
-  <div class="mis" id="misS" style="display:none"></div>
-  <button class="btn" id="bGo">DRILL!</button>
-  <div class="tiles"><button class="tile" id="bShop">Workshop<small id="tShopS"></small></button><button class="tile rkT" id="bGoal">Rocket<small id="goalSub"></small><span id="goalDot"></span></button><button class="tile dly" id="bDaily">Daily run<small id="dailyS"></small></button><button class="tile" id="bAch">Badges<small id="achS"></small></button></div>
-  <div class="links"><button class="link" id="bHow">How to play</button><button class="link" id="bMus">Collection</button><button class="link" id="bSet">Settings</button></div>
-</div></div>
-<div class="ov" id="ovHow" hidden><div class="card">
-  <div class="logo" style="font-size:44px">How to play</div>
-  <div class="how">
-    <b>Left thumb</b> is a joystick: point it where you want the drill to go – let go and it keeps its heading. <b>Right thumb</b> sets the speed from 0 to 100 % of the drill's normal top speed – it speeds up or brakes to hold it. Speed you build with perfect dives and combos goes on top at 100 %. The slider stays where you leave it.<br>Out in <b>space</b>, pinch with two fingers (or use + / −) to zoom in and out.<br>Other controls in Settings → Controls: <b>Sliders</b> (slide the left thumb sideways to rotate) or <b>Tap sides</b> (hold a side to turn, both to brake).<br>The drill only bites when there's earth ahead – in <b>caverns</b> it falls like a rock. Soft ground <b>caves in</b> behind you.<br>In the air, keep holding to <b>flip</b>. Buy <b>wings</b> in the workshop to steer your flight. Land nose-first along the slope for a <b>perfect dive</b>; land sideways and you lie there until you rotate the nose down.<br>
-    The earth eats your speed – pop out and fly to get it back. <b>Old bombs</b> blow you sky-high, a hot drill ignites <b>gas</b>, <b>water</b> cools you.<br>Spend gems in the <b>Workshop</b>. The <b>Daily run</b> is the same ground for everyone today – race your own ghost.
+<div class="ov nv" id="ovStart"><div class="nscr">
+  <div class="ntop"><button class="nchip nrk" id="nRank">Rank 1</button><span class="nsp"></span><span class="nchip"><span class="g">◆</span><b id="sBank">0</b></span><button class="nchip" id="bDrills" aria-label="Drills"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 7 L13 7 L18 10 L13 13 L3 13 Z" fill="#ffcf3d"></path><path d="M6 7v6M9 7v6" stroke="#2e1e14" stroke-width="1.6"></path></svg><b id="sDr">3</b></button></div>
+  <div class="nlogo">Dirtshot</div>
+  <div class="ndrill" aria-hidden="true"><svg viewBox="0 0 220 120" width="220" height="120"><g transform="translate(110 58) rotate(28)"><rect x="-58" y="-19" width="86" height="38" rx="16" fill="#ffcf3d" stroke="#3a2414" stroke-width="4"></rect><path d="M-34 -19v38M-16 -19v38M2 -19v38" stroke="#3a2414" stroke-width="6"></path><circle cx="16" cy="0" r="7" fill="#9ff0ff" stroke="#3a2414" stroke-width="3"></circle><path d="M28 -19 L66 0 L28 19 Z" fill="#d6dbe4" stroke="#3a2414" stroke-width="4" stroke-linejoin="round"></path><path d="M38 -13 L48 11 M50 -7 L56 6" stroke="#3a2414" stroke-width="2.5"></path><path d="M-58 -9 L-74 -14 L-74 14 L-58 9" fill="#ff9a2e" stroke="#3a2414" stroke-width="3.5" stroke-linejoin="round"></path></g></svg></div>
+  <div class="nsheet">
+    <div class="nbest"><span>Best <b id="sBest">0 m</b></span><span id="nPlanet"></span><span>Deepest <b id="sDeep">0 m</b></span></div>
+    <button class="btn" id="bGo">DRILL!</button>
+    <button class="nbs nwide" id="bDaily"><span>Daily run</span><small id="dailyS"></small></button>
+    <button class="ncard ngoalc" id="nNext"></button>
+    <div class="nnav">
+      <button class="nnb" id="bShop"><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5a5 5 0 0 0 6 6l-9 9a2.5 2.5 0 0 1-4-4l9-9a5 5 0 0 0-2-2z"></path></svg>Workshop<span class="ndot" id="shopDot"></span></button>
+      <button class="nnb" id="bGoal"><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3c4 3 5 8 4 13H9C8 11 9 6 13 3z"></path><path d="M9 16l-3 4h4M17 16l3 4h-4M11 21h4"></path></svg>Rocket<span class="ndot" id="goalDot"></span></button>
+      <button class="nnb" id="bProg"><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3l3 6 6 1-4.5 4 1 6.5L13 17l-5.5 3.5 1-6.5L4 10l6-1z"></path></svg>Progress<span class="ndot" id="progDot"></span></button>
+      <button class="nnb" id="bSet"><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="13" r="3.5"></circle><path d="M13 3v3M13 20v3M3 13h3M20 13h3M6 6l2 2M18 18l2 2M6 20l2-2M18 8l2-2"></path></svg>Settings</button>
+    </div>
+    <button class="nlink" id="bHow">How to play</button>
   </div>
-  <button class="btn" id="bHowOk">GOT IT</button>
+  <div hidden><span id="tShopS"></span><span id="goalSub"></span><span id="achS"></span><div id="rankS"></div><div id="misS"></div><div id="bpMenu"></div></div>
 </div></div>
-<div class="ov" id="ovShop" hidden><div class="card">
-  <div class="logo" style="font-size:44px">Workshop</div>
-  <div class="bank" id="shopBank">◆ 0</div>
-  <div id="shopBp"></div>
-  <div class="shop" id="shopList"></div>
-  <button class="btn" id="bShopOk">DONE</button>
+<div class="ov nv" id="ovHow" hidden><div class="nscr">
+  <div class="ntop"><button class="nback" id="bHowOk" aria-label="Back">‹</button><div class="nttl">How to play</div></div>
+  <div class="nsheet nfill"><div class="how">
+    <b>Left thumb</b> is a joystick: point it where you want the drill to go – let go and it keeps its heading. <b>Right thumb</b> sets the speed from 0 to 100 % of the drill's normal top speed. Speed you build with perfect dives and combos goes on top at 100 %.<br>Pinch with two fingers (or use + / −) to zoom; <b>AUTO</b> gives the camera back.<br>The drill only bites when there's earth ahead – in <b>caverns</b> it falls like a rock. Soft ground <b>caves in</b> behind you.<br>Land nose-first along the slope for a <b>perfect dive</b>. Buy <b>wings</b> to steer your flight.<br>Everything you find only counts once you bring it up to the surface – things from moons and comets must come home to the planet.<br>The earth eats your speed – pop out and fly to get it back. <b>Old bombs</b> blow you sky-high, a hot drill ignites <b>gas</b>, <b>water</b> cools you.<br>Spend gems in the <b>Workshop</b>, build the <b>Rocket</b> to reach new worlds. The <b>Daily run</b> is the same ground for everyone today.
+  </div></div>
 </div></div>
-<div class="ov" id="ovGoal" hidden><div class="card">
-  <div class="logo" style="font-size:44px">Rocket</div>
-  <div class="bank" id="goalBank">◆ 0</div>
-  <div class="sub2" id="gPlanet"></div>
-  <div id="gRocket"></div>
-  <div class="shop" id="gParts" style="max-height:none"></div>
-  <div id="gLaunch"></div>
-  <div class="logo" style="font-size:34px;margin-top:8px">Pilot rank</div>
-  <div id="gRank"></div>
-  <button class="btn" id="bGoalOk">DONE</button>
+<div class="ov nv" id="ovShop" hidden><div class="nscr">
+  <div class="ntop"><button class="nback" id="bShopOk" aria-label="Back">‹</button><div class="nttl">Workshop</div><span class="nchip"><span class="g">◆</span><b id="shopBank">0</b></span></div>
+  <div class="nbpw" id="shopBp"></div>
+  <div class="nsheet nfill">
+    <div class="ntabs" id="shopTabs" role="tablist"><button class="ntab on" data-tab="dig">Dig</button><button class="ntab" data-tab="body">Body</button><button class="ntab" data-tab="fly">Flight</button><button class="ntab" data-tab="style">Style</button></div>
+    <div class="nlist" id="shopList"></div>
+  </div>
+</div></div>
+<div class="ov nv nspace" id="ovGoal" hidden><div class="nscr">
+  <div class="ntop"><button class="nback" id="bGoalOk" aria-label="Back">‹</button><div class="nttl">Rocket</div><span class="nchip"><span class="g">◆</span><b id="goalBank">0</b></span></div>
+  <div class="ngp" id="gPlanet"></div>
+  <div class="ngr" id="gRocket"></div>
+  <div class="nsheet nfill"><div class="nh">Parts</div><div class="nlist" id="gParts"></div><div id="gLaunch"></div></div>
 </div></div>
 <div id="ovLaunch" hidden><div class="lstars"></div><div class="lrk"></div><div class="ltxt" id="lTxt"></div></div>
-<div class="ov" id="ovDrills" hidden><div class="card">
-  <div class="logo" style="font-size:42px">Drills</div>
-  <div class="sub2" id="drTxt"></div>
+<div class="ov nv" id="ovDrills" hidden><div class="nscr">
+  <div class="ntop"><button class="nback" id="bDrOk" aria-label="Back">‹</button><div class="nttl">Drills</div></div>
+  <div class="nsheet"><div class="ncs" id="drTxt" style="font-size:14px"></div>
   <button class="btn" id="bBuyDr">BUY A DRILL</button>
-  <button class="btn2 adBtn" id="bAdDr">&#9654; WATCH AD &middot; +3 DRILLS</button>
-  <button class="btn2" id="bNewW">NEW WORLD</button>
-  <button class="btn2" id="bDrOk">BACK</button>
+  <button class="nbs nad" id="bAdDr">&#9654; Watch ad · +3 drills</button>
+  <button class="nbs" id="bNewW">New world</button></div>
 </div></div>
-<div class="ov" id="ovMus" hidden><div class="card">
-  <div class="logo" style="font-size:44px">Collection</div>
-  <div class="sub2" id="musN"></div>
-  <div class="musg" id="musG"></div>
-  <button class="btn" id="bMusOk">DONE</button>
-</div></div>
-<div class="ov" id="ovAch" hidden><div class="card">
-  <div class="logo" style="font-size:44px">Badges</div>
-  <div id="achL"></div>
-  <button class="btn" id="bAchOk">DONE</button>
-</div></div>
-<div class="ov" id="ovSet" hidden><div class="card">
-  <div class="logo" style="font-size:44px" id="setTitle">Settings</div>
-  <div id="pRocket"></div>
-  <button class="btn" id="bResume">RESUME</button>
-  <button class="secT" id="secMain">Settings</button>
-  <div class="sets" id="setsMain">
-    <button class="tog" id="tCtl">Controls <span></span></button>
-    <button class="tog" id="tSnd">Sound <span></span></button>
-    <button class="tog" id="tVib">Vibration <span></span></button>
-    <button class="tog" id="tShk">Screen shake <span></span></button>
-    <button class="tog" id="tQ">Graphics <span></span></button>
-    <button class="tog" id="tCave">Cave-ins <span></span></button>
-    <button class="tog" id="tPock">Gas &amp; water pockets <span></span></button>
+<div class="ov nv" id="ovProg" hidden><div class="nscr">
+  <div class="ntop"><button class="nback" id="bProgOk" aria-label="Back">‹</button><div class="nttl">Progress</div><span class="nchip"><span class="g">◆</span><b id="progBank">0</b></span></div>
+  <div class="nsheet nfill">
+    <div class="ntabs" id="progTabs" role="tablist"><button class="ntab on" data-pt="rank">Rank</button><button class="ntab" data-pt="badges">Badges</button><button class="ntab" data-pt="finds">Finds</button></div>
+    <div class="nlist" id="pRank"><div id="gRank"></div></div>
+    <div class="nlist" id="pBadges" hidden><div id="achL"></div></div>
+    <div class="nlist" id="pFinds" hidden><div class="ncs" id="musN"></div><div class="musg" id="musG"></div></div>
   </div>
-  <button class="secT" id="secAdv">Advanced</button>
-  <div class="sets" id="setsAdv" hidden>
-    <button class="tog" id="tFps">Show FPS <span></span></button><button class="tog" id="tFlat">Round world <span></span></button><button class="tog" id="tRend">Graphics engine <span></span></button><button class="tog" id="tTcpu">Tile painting <span></span></button><button class="tog" id="tPf">Performance meter <span></span></button><button class="tog" id="tRep">Copy performance report <span></span></button><button class="tog" id="tBench">Run benchmark (55 s) <span></span></button><button class="tog" id="tReset" style="color:#ff8a7a">Reset all progress <span></span></button>
-  </div>
-  <button class="link" id="bQuit">Quit to menu</button>
 </div></div>
-<div class="ov" id="ovEnd" hidden><div class="card">
-  <div class="sub2" id="endWhy">Out of fuel</div>
-  <div class="res" id="endDist">0 m</div>
-  <div class="sub2" id="endBest"></div>
-  <div class="sub2" id="endGems"></div><div class="sub2" id="endNext" style="font-size:13px;opacity:.9;margin-top:2px"></div>
-  <div class="sub2" id="endRec"></div>
-  <div class="mis" id="misE"></div>
-  <div class="row" hidden><button class="btn2" id="bReplay">▶ REPLAY BEST 5 S</button><button class="btn2" id="bClip" hidden>SHARE CLIP</button></div>
-  <button class="btn" id="bAgain">AGAIN</button>
-  <div class="row"><button class="btn2" id="bShop2">WORKSHOP</button><button class="btn2" id="bMenu">MENU</button></div>
+<div class="ov nv" id="ovSet" hidden><div class="nscr">
+  <div class="ntop"><button class="nback" id="bSetBack" aria-label="Back">‹</button><div class="nttl" id="setTitle">Settings</div><span class="nchip" id="setGems"><span class="g">◆</span><b id="setBank">0</b></span></div>
+  <div class="npause" id="pauseInfo"><div class="npd" id="pDist">0 m</div><div class="npb" id="pBest"></div></div>
+  <div class="nsheet">
+    <button class="btn" id="bResume">RESUME</button>
+    <div class="nrow" id="pBtns"><button class="nbs" id="bRestart">Restart</button><button class="nbs" id="bQuit">Quit</button></div>
+    <div id="pRocket"></div>
+    <div class="nh">Settings</div>
+    <div class="ncard nsets" id="setsMain"><button class="tog" id="tCtl">Controls <span></span></button><button class="tog" id="tSnd">Sound <span></span></button><button class="tog" id="tVib">Vibration <span></span></button><button class="tog nmore" id="secAdv">More settings <span>Graphics, shake, cave-ins ›</span></button></div>
+    <div class="ncard nsets" id="setsAdv" hidden>
+      <button class="tog" id="tShk">Screen shake <span></span></button><button class="tog" id="tQ">Graphics <span></span></button><button class="tog" id="tCave">Cave-ins <span></span></button><button class="tog" id="tPock">Gas &amp; water pockets <span></span></button>
+      <button class="tog" id="tFps">Show FPS <span></span></button><button class="tog" id="tFlat">Round world <span></span></button><button class="tog" id="tRend">Graphics engine <span></span></button><button class="tog" id="tTcpu">Tile painting <span></span></button><button class="tog" id="tPf">Performance meter <span></span></button><button class="tog" id="tRep">Copy performance report <span></span></button><button class="tog" id="tBench">Run benchmark (55 s) <span></span></button><button class="tog" id="tReset" style="color:#c8322a">Reset all progress <span></span></button>
+    </div>
+    <span hidden id="secMain"></span>
+  </div>
+</div></div>
+<div class="ov nv" id="ovEnd" hidden><div class="nscr">
+  <div class="ntop"><span class="nsp"></span><span class="nchip"><span class="g">◆</span><b id="endBank">0</b></span><button class="nchip" id="endDrills" aria-label="Drills"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 7 L13 7 L18 10 L13 13 L3 13 Z" fill="#ffcf3d"></path><path d="M6 7v6M9 7v6" stroke="#2e1e14" stroke-width="1.6"></path></svg><b id="endDr">0</b></button></div>
+  <div class="nend"><div class="nwhy" id="endWhy">Out of fuel</div><div class="res" id="endDist">0 m</div><div class="nbestpill" id="endBest"></div></div>
+  <div class="nsheet">
+    <div class="ncard"><div class="ncs">Earned this run</div><div class="nct" id="endGems"></div><div class="ncs" id="endRec"></div></div>
+    <button class="ncard ngoalc" id="endNext"></button>
+    <div class="mis" id="misE"></div>
+    <div class="nrow" hidden><button class="btn2" id="bReplay">▶ REPLAY BEST 5 S</button><button class="btn2" id="bClip" hidden>SHARE CLIP</button></div>
+    <button class="btn" id="bAgain">AGAIN</button>
+    <div class="nrow"><button class="nbs" id="bShop2">Workshop</button><button class="nbs" id="bMenu">Menu</button></div>
+  </div>
 </div></div>
 <script>
 (() => { const P = CanvasRenderingContext2D.prototype, oe = P.ellipse, oa = P.arc, F = v => (v > 0 && isFinite(v)) ? v : 0.001;
@@ -299,6 +347,8 @@ const UMAX = 10, UBASE = { tip: 240, eng: 400, cool: 200, hull: 300, frame: 280,
 const COSTK = (k, l) => nice(UBASE[k] * Math.pow(1.45, l)); const U = k => (SV.up[k] || 0) / 2;
 if (SV.eco !== 2) { SV.eco = 2; if (Object.keys(SV.up).length || SV.bank > 0) SV.ecoMsg = 1; SV.up = {}; SV.bank = 0; saveSV(); }
 const fmtG = n => n.toLocaleString('en-US');
+function goalCardHTML() { const g = nextGoal(); if (!g) return '<div class="nct" style="font-size:16px">Every upgrade maxed!</div>'; const ok = SV.bank >= g.c, pct = Math.min(1, SV.bank / g.c);
+  return `<div class="nl"><span class="nct" style="font-size:16px">Next: ${g.u.n} Lv ${g.l + 1}</span><span class="ncs">◆ ${fmtG(g.c)}</span></div><div class="nprog${ok ? ' ok' : ''}"><i style="width:${Math.round(pct * 100)}%"></i></div><div class="ncs${ok ? ' nok' : ''}">${ok ? 'Ready to buy in the Workshop' : '◆ ' + fmtG(g.c - SV.bank) + ' to go'}</div>`; }
 function nextGoal() { let best = null; for (const u of UPS) { const l = SV.up[u.k] || 0; if (l >= UMAX) continue; const c = COSTK(u.k, l); if (!best || c < best.c) best = { u, l, c }; } return best; }
 const dayNo = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
 
@@ -1363,7 +1413,7 @@ function muteDrill() { if (!hum || !AC) return; const t = AC.currentTime; for (c
 function die(why) { if (D.dead) return; breakChain(true); FLY = []; D.dead = true; D.why = why; run = false; if (MODE === 'free' && !BENCH && !window.__film) { const w = WLD(); w.drills = Math.max(0, (w.drills || 0) - 1); saveSV(); wreckLeave(); } try { worldSave(); } catch (e) {} muteDrill(); PV = null; SFX.over(); if (why === 'Hull destroyed') nuke(D.x, D.y);
   $('pz').hidden = true; $('bst').hidden = true; $('zm').hidden = true; bstHeld = false; const r = endRun(); slowmo(0.6); deadT = 0; endPending = () => { $('endWhy').textContent = (MODE === 'daily' ? 'Daily run · ' : '') + why; $('endDist').textContent = r.m + ' m';
     $('endBest').textContent = (r.nb ? (MODE === 'daily' ? 'New daily best!' : 'New best!') : (MODE === 'daily' ? 'Daily best ' + SV.daily.best + ' m' : 'Best ' + best + ' m')) + ' · ' + r.dm + ' m deep' + (r.nd ? ' – record!' : '');
-    $('endGems').textContent = '◆ ' + gems + ' gems' + (runReward ? '  +  ◆ ' + runReward + ' missions' : '') + '  ·  bank ◆ ' + fmtG(SV.bank) + (MODE === 'free' ? '  ·  drills left ' + (WLD().drills || 0) : ''); { const g = nextGoal(), el = $('endNext'); if (el && SV.rankUp && SV.rankUp.length) { const r = SV.rankUp.pop(); SV.rankUp = []; saveSV(); el.innerHTML = `<b style="color:#ffd84a;font-size:16px">★ RANK UP: ${RANKS[r][0]}!</b> ◆+${fmtG(rankRew(r))}`; } else if (el) { if (!g) el.textContent = 'Every upgrade maxed!'; else if (SV.bank >= g.c) el.innerHTML = `<b style="color:#c6ff3d">Ready:</b> ${g.u.n} Lv ${g.l + 1} – ◆ ${fmtG(g.c)} in the Workshop`; else { const pct = SV.bank / g.c; el.innerHTML = `Next: ${g.u.n} Lv ${g.l + 1} – ◆ ${fmtG(g.c - SV.bank)} to go<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.25);margin:4px auto 0;width:70%"><div style="height:100%;width:${Math.round(pct * 100)}%;border-radius:3px;background:#ffb02e"></div></div>`; } } } { const rc = SV.rec || {}, fm = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'), bits = []; if (S.laps) bits.push(`${S.laps} lap${S.laps > 1 ? 's' : ''} round the planet`); if (rc.lap) bits.push('best lap ' + fm(rc.lap)); if (S.coreN) bits.push(`through the core ×${S.coreN}`); if (S.moonLand) bits.push('moon landing'); xEndBits(bits); $('endRec').textContent = bits.join(' · '); } $('misE').innerHTML = misHTML(); show('ovEnd'); }; }
+    $('endGems').innerHTML = '◆ ' + fmtG(gems) + (runReward ? ` <span class="ncs nok">+ ◆ ${fmtG(runReward)} missions</span>` : ''); $('endBank').textContent = fmtG(SV.bank); $('endDr').textContent = WLD().drills || 0; $('endDrills').hidden = MODE !== 'free'; $('endBest').classList.toggle('new', !!r.nb); { const g = nextGoal(), el = $('endNext'); if (el && SV.rankUp && SV.rankUp.length) { const r = SV.rankUp.pop(); SV.rankUp = []; saveSV(); el.innerHTML = `<div class="nct" style="color:#b4561c">★ Rank up: ${RANKS[r][0]}!</div><div class="ncs nok">◆+${fmtG(rankRew(r))}</div>`; } else if (el) el.innerHTML = goalCardHTML(); } { const rc = SV.rec || {}, fm = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0'), bits = []; if (S.laps) bits.push(`${S.laps} lap${S.laps > 1 ? 's' : ''} round the planet`); if (rc.lap) bits.push('best lap ' + fm(rc.lap)); if (S.coreN) bits.push(`through the core ×${S.coreN}`); if (S.moonLand) bits.push('moon landing'); xEndBits(bits); $('endRec').textContent = bits.join(' · '); } $('misE').innerHTML = misHTML(); show('ovEnd'); }; }
 let endPending = null, deadT = 0; const MACH1 = 3430; // 343 m/s at 10 px per metre
 let shocks = [], pathT = 0;
 function supImpact(x, sy, ang, out) { if (!thr('supimp', 0.8)) return; const M = Math.min(3, D.mach || 1), R = 70 + 45 * (M - 1), C = colOf(TOPM[biome(x)]); bigCrater(x, sy + (out ? 0 : R * 0.15), R * 1.5, R * 0.8, true, false); SFX.boom(0.7); shake = Math.max(shake, 26); flash = Math.max(flash, 0.15);
@@ -1853,7 +1903,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v176';
+const VER = 'v177';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2341,7 +2391,7 @@ function rocketSVG() { const b = rkBuilt(), on = k => !!b[k], st = k => on(k) ? 
   <rect x="30" y="196" width="140" height="14" rx="4" ${on('pad') ? 'fill="#8a8f99"' : st('pad')}/>${on('pad') ? '<rect x="40" y="186" width="8" height="10" fill="#6a6f79"/><rect x="152" y="186" width="8" height="10" fill="#6a6f79"/>' : ''}
   </svg>`; }
 function goalReady() { const b = rkBuilt(), mk = MK(); if (!canFly()) return false; if (RP().every(p => b[p.k])) return true; return RP().some(p => !b[p.k] && partOK(p, mk) && SV.bank >= nOf(p.c, mk)); }
-function renderGoal() { $('goalBank').textContent = '◆ ' + fmtG(SV.bank); const mk = MK(), b = rkBuilt(), here = (SV.planet || 0) === (SV.pmax || 0);
+function renderGoal() { $('goalBank').textContent = fmtG(SV.bank); const mk = MK(), b = rkBuilt(), here = (SV.planet || 0) === (SV.pmax || 0);
   $('gPlanet').innerHTML = `Planet <b>${PL().n}</b> – ${PL().d}${(SV.pmax || 0) > 0 ? `<div class="planets" style="margin-top:6px">${PLANETS.slice(0, (SV.pmax || 0) + 1).map((q, i) => `<button data-pl="${i}" class="${i === (SV.planet || 0) ? 'on' : ''}">${q.n}</button>`).join('')}</div>` : ''}`;
   $('gRocket').innerHTML = canFly() ? rocketSVG() : '<div class="sub2">You reached the last world so far – more planets are on the way!</div>';
   $('gParts').innerHTML = !canFly() ? '' : `<div class="sub2" style="margin:-4px 0 2px">Rocket ${ROCKETS[mk].n} → ${PLANETS[(SV.pmax || 0) + 1].n}${here ? '' : ` · build it on ${PLANETS[SV.pmax || 0].n}`}</div>` + RP().map(p => { const ok = partOK(p, mk), done = b[p.k], c = nOf(p.c, mk);
@@ -2351,9 +2401,9 @@ function renderGoal() { $('goalBank').textContent = '◆ ' + fmtG(SV.bank); cons
 function launchRocket() { const to = (SV.pmax || 0) + 1, svg = rocketSVG(); SV.pmax = to; SV.planet = to; rankCheck(true); saveSV(); applyPlanet(); worldLoad(); const L = $('ovLaunch'); L.querySelector('.lrk').innerHTML = svg.replace('</svg>', '<path d="M84 186 Q100 260 116 186 Z" fill="#ffb02e"><animate attributeName="d" values="M84 186 Q100 250 116 186 Z;M84 186 Q100 270 116 186 Z;M84 186 Q100 250 116 186 Z" dur=".15s" repeatCount="indefinite"/></path></svg>').replace('width="170" height="196"', 'width="90" height="104"');
   $('lTxt').innerHTML = `Next stop:<br>${PLANETS[to].n}`; L.hidden = false; for (const e of L.querySelectorAll('.lstars,.lrk,.ltxt')) { e.style.animation = 'none'; void e.offsetWidth; e.style.animation = ''; }
   try { SFX.mach(3, true); } catch (e) {} buzz([60, 40, 120]); setTimeout(() => { L.hidden = true; renderGoal(); show('ovGoal'); }, 3400); }
-const OVS = ['ovAch', 'ovStart', 'ovEnd', 'ovHow', 'ovShop', 'ovSet', 'ovMus', 'ovGoal', 'ovDrills']; let backTo = 'ovStart';
+const OVS = ['ovProg', 'ovStart', 'ovEnd', 'ovHow', 'ovShop', 'ovSet', 'ovGoal', 'ovDrills']; let backTo = 'ovStart';
 function show(id) { for (const o of OVS) $(o).hidden = o !== id; }
-function showMenu() { endPending = null; drChip(); fillMissions(); $('sBest').textContent = SV.best + ' m'; $('sDeep').textContent = SV.deep + ' m'; $('sBank').textContent = '◆ ' + fmtG(SV.bank); rankCheck(true); $('bpMenu').innerHTML = '<canvas class="bp3 menu3"></canvas>' + `<div class="tblk"><span>DS-1 DRILL · ${PL().n}</span><span>Studio.grane</span><span>RANK ${(SV.rank || 0) + 1}/11</span></div>`; { if (BPM3) BPM3.dead = true; BPM3 = BP3($('bpMenu').querySelector('canvas'), { still: true, hint: 'TAP TO OPEN THE BLUEPRINT', onPick: k => { bpPull = k || null; if (k) bpSel = k; openShop('ovStart'); } }); } rankCheck(true); SV.rankUp = []; $('rankS').innerHTML = rankHTML(false) + ((SV.planet || 0) ? `<div style="margin-top:3px;opacity:.85">Planet ${PL().n} · gems ×${PL().gem}</div>` : ''); $('goalDot').className = goalReady() ? 'on' : ''; if (SV.ecoMsg) { SV.ecoMsg = 0; saveSV(); const n = document.createElement('div'); n.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;background:rgba(255,255,255,.96);color:#3a2414;border-radius:16px;padding:14px 16px;font:600 14px Nunito,sans-serif;box-shadow:0 6px 0 rgba(80,40,20,.35);text-align:center'; n.innerHTML = '<b style="font-size:17px">Upgrades rebalanced</b><br>Each upgrade now has 10 levels and takes real play to earn. Your upgrades and gem bank were reset – records, badges and skins are kept.<br><button style="margin-top:10px;padding:8px 22px;border:0;border-radius:12px;background:#ffb02e;font:800 14px Nunito,sans-serif;color:#3a2414">OK</button>'; n.querySelector('button').onclick = () => n.remove(); document.body.appendChild(n); } $('misS').innerHTML = misHTML(); menuSubs(); $('pz').hidden = true; show('ovStart'); }
+function showMenu() { endPending = null; drChip(); fillMissions(); $('sBest').textContent = SV.best + ' m'; $('sDeep').textContent = SV.deep + ' m'; $('sBank').textContent = fmtG(SV.bank); rankCheck(true); $('nRank').textContent = `Rank ${(SV.rank || 0) + 1} · ${RANKS[SV.rank || 0][0]}`; $('nPlanet').innerHTML = (SV.planet || 0) ? `<b>${PL().n}</b> ×${PL().gem}` : ''; $('nNext').innerHTML = goalCardHTML(); { const g = nextGoal(); $('shopDot').className = 'ndot' + (g && SV.bank >= g.c ? ' on' : ''); } rankCheck(true); SV.rankUp = []; $('rankS').innerHTML = rankHTML(false) + ((SV.planet || 0) ? `<div style="margin-top:3px;opacity:.85">Planet ${PL().n} · gems ×${PL().gem}</div>` : ''); $('goalDot').className = 'ndot' + (goalReady() ? ' on' : ''); if (SV.ecoMsg) { SV.ecoMsg = 0; saveSV(); const n = document.createElement('div'); n.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;background:rgba(255,255,255,.96);color:#3a2414;border-radius:16px;padding:14px 16px;font:600 14px Nunito,sans-serif;box-shadow:0 6px 0 rgba(80,40,20,.35);text-align:center'; n.innerHTML = '<b style="font-size:17px">Upgrades rebalanced</b><br>Each upgrade now has 10 levels and takes real play to earn. Your upgrades and gem bank were reset – records, badges and skins are kept.<br><button style="margin-top:10px;padding:8px 22px;border:0;border-radius:12px;background:#ffb02e;font:800 14px Nunito,sans-serif;color:#3a2414">OK</button>'; n.querySelector('button').onclick = () => n.remove(); document.body.appendChild(n); } $('misS').innerHTML = misHTML(); menuSubs(); $('pz').hidden = true; show('ovStart'); }
 /* ===== BLUEPRINT: a technical drawing of the drill that changes with every upgrade level ===== */
 const BP_PARTS = { tip: [338, 92, 'DIAMOND TIP'], eng: [112, 104, 'ENGINE'], cool: [172, 70, 'COOLING'], hull: [232, 80, 'HULL'], frame: [214, 104, 'CRASH FRAME'], fin: [215, 150, 'WINGS'], lamp: [288, 82, 'LAMP'], boost: [196, 124, 'BOOST'], rep: [252, 70, 'AUTO REPAIR'], sbrk: [292, 126, 'RETRO THRUSTERS'] };
 const BP_LBL = { tip: [392, 34, 'end'], eng: [40, 30, 'start'], cool: [150, 6, 'middle'], hull: [262, 14, 'middle'], frame: [300, 186, 'middle'], fin: [176, 200, 'middle'], lamp: [380, 6, 'end'], boost: [40, 186, 'start'], rep: [396, 150, 'end'], sbrk: [396, 200, 'end'] };
@@ -2464,9 +2514,11 @@ function bpPanel() { const h = $('shopBp'); if (!h.querySelector('canvas.bp3')) 
     $('bpCap').onclick = e => { if (e.target.closest('[data-bpback]')) { bpPull = null; renderShop(); return; } const b = e.target.closest('[data-bpup]'); if (b && !b.disabled) bpBuy(b.dataset.bpup); }; }
   BPS3.sel = bpPull ? null : bpSel; BPS3.pull = bpPull; $('bpCap').innerHTML = bpCapHTML(); }
 function bpBuy(k) { const l = SV.up[k] || 0; if (l >= UMAX || SV.bank < COSTK(k, l)) return; SV.bank -= COSTK(k, l); SV.up[k] = l + 1; bpSel = k; bpInst = k; saveSV(); audio(); SFX.gem(2); buzz(20); renderShop(); }
-function renderShop() { $('shopBank').textContent = '◆ ' + fmtG(SV.bank); bpPanel(); if (bpInst) { BPS3 && BPS3.flash(bpInst); bpInst = null; } $('shopList').innerHTML = UPS.map(u => { const l = SV.up[u.k] || 0, c = l >= UMAX ? 0 : COSTK(u.k, l); return `<div class="up${bpSel === u.k ? ' upsel' : ''}" data-sel="${u.k}"><b>${u.n} <span style="font-weight:700;opacity:.55;font-size:.85em">Lv ${l}/${UMAX}</span></b><button data-k="${u.k}" ${l >= UMAX || SV.bank < c ? 'disabled' : ''}>${l >= UMAX ? 'MAX' : '◆ ' + fmtG(c)}</button><small>${u.d}</small><div class="pips">${Array.from({ length: UMAX }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</div></div>`; }).join('')
-  + '<div class="logo" style="font-size:26px;margin:14px 0 6px">Engine sound</div>' + ENGV.map(v => { const own = !v.c || (SV.engs && SV.engs[v.k]), on = (SV.eng || 'electric') === v.k; return `<div class="up"><b>${v.n}</b><button data-ev="${v.k}" ${on || (!own && SV.bank < v.c) ? 'disabled' : ''}>${on ? 'ON' : own ? 'USE' : '◆ ' + fmtG(v.c)}</button><small>${v.d}</small><span class="pvb" data-pv="${v.k}">▶ LISTEN</span></div>`; }).join('')
-  + '<div class="logo" style="font-size:26px;margin:14px 0 6px">Skins</div>' + SKINS.map(k => { const own = k.c === 0 || (SV.skins && SV.skins[k.k]), on = (SV.skin || 'classic') === k.k, sw = k.b ? `linear-gradient(${k.b[0]},${k.b[1]},${k.b[2]})` : 'linear-gradient(90deg,#f55,#fc3,#5e5,#5cf,#a6f)';
+/* "Top speed +68 % · thrust +18 %" and the next level's text become "Top speed +68 → +81 % · thrust +18 → +21 %" */
+function effDiff(a, b) { if (!b) return a; const re = /[+−-]?\d+(?:\.\d+)?/g, na = a.match(re) || [], nb = b.match(re) || []; if (a.replace(re, '#') !== b.replace(re, '#') || na.length !== nb.length) return `${a} → <em>${b}</em>`; let i = 0; return a.replace(re, m => { const v = nb[i++]; return v === m ? m : `${m} → <em>${v}</em>`; }); }
+let SHOPTAB = 'dig'; const SHOPTABS = { dig: ['tip', 'eng', 'cool', 'lamp'], body: ['hull', 'frame', 'rep'], fly: ['fin', 'boost', 'sbrk'] };
+function renderShop() { if (bpPull) for (const t in SHOPTABS) if (SHOPTABS[t].includes(bpPull)) SHOPTAB = t; for (const b of $('shopTabs').children) b.classList.toggle('on', b.dataset.tab === SHOPTAB); $('shopBank').textContent = fmtG(SV.bank); bpPanel(); if (bpInst) { BPS3 && BPS3.flash(bpInst); bpInst = null; } $('shopList').innerHTML = SHOPTAB !== 'style' ? UPS.filter(u => SHOPTABS[SHOPTAB].includes(u.k)).map(u => { const l = SV.up[u.k] || 0, c = l >= UMAX ? 0 : COSTK(u.k, l); return `<div class="up${bpSel === u.k ? ' upsel' : ''}" data-sel="${u.k}"><b>${u.n} <span style="font:800 13px var(--f-b);color:#5e4a3c">${l >= UMAX ? 'Max' : `Lv ${l} → ${l + 1}`}</span></b><button data-k="${u.k}" ${l >= UMAX || SV.bank < c ? 'disabled' : ''}>${l >= UMAX ? 'MAX' : '◆ ' + fmtG(c)}</button><div class="nfx">${effDiff(BP_EFF[u.k](l), l < UMAX ? BP_EFF[u.k](l + 1) : null)}</div><div class="pips">${Array.from({ length: UMAX }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</div></div>`; }).join('') : '<div class="nh">Engine sound</div>' + ENGV.map(v => { const own = !v.c || (SV.engs && SV.engs[v.k]), on = (SV.eng || 'electric') === v.k; return `<div class="up"><b>${v.n}</b><button data-ev="${v.k}" ${on || (!own && SV.bank < v.c) ? 'disabled' : ''}>${on ? 'ON' : own ? 'USE' : '◆ ' + fmtG(v.c)}</button><small>${v.d}</small><span class="pvb" data-pv="${v.k}">▶ LISTEN</span></div>`; }).join('')
+  + '<div class="nh">Skins</div>' + SKINS.map(k => { const own = k.c === 0 || (SV.skins && SV.skins[k.k]), on = (SV.skin || 'classic') === k.k, sw = k.b ? `linear-gradient(${k.b[0]},${k.b[1]},${k.b[2]})` : 'linear-gradient(90deg,#f55,#fc3,#5e5,#5cf,#a6f)';
     return `<div class="up"><b><span style="display:inline-block;width:26px;height:14px;border-radius:7px;vertical-align:-2px;margin-right:6px;background:${sw};box-shadow:inset 0 0 0 2px ${k.s}"></span>${k.n}</b><button data-skin="${k.k}" ${on || (!own && (k.c < 0 || SV.bank < k.c)) ? 'disabled' : ''}>${on ? 'ON' : own ? 'USE' : k.c < 0 ? 'COMET' : '◆ ' + k.c}</button><small>${k.d}</small></div>`; }).join('')
   + '<div class="logo" style="font-size:26px;margin:14px 0 6px">Drill type</div>' + DTYPES.map(k => { const own = k.c === 0 || (SV.dts && SV.dts[k.k]), on = (SV.dt || 'std') === k.k; return `<div class="up"><b>${k.n}</b><button data-dt="${k.k}" ${on || (!own && SV.bank < k.c) ? 'disabled' : ''}>${on ? 'ON' : own ? 'USE' : '◆ ' + k.c}</button><small>${k.d}</small></div>`; }).join(''); }
 function openShop(from) { backTo = from; renderShop(); show('ovShop'); }
@@ -2477,9 +2529,9 @@ function setLbl() { $('tShk').lastChild.textContent = ['Off', 'Low', 'Full'][SV.
 function rocketPanel() { if (!canFly()) return ''; const mk = MK(), b = rkBuilt(), here = (SV.planet || 0) === (SV.pmax || 0); let li = ''; for (const p of RP()) { const done = b[p.k], ok = partOK(p, mk); li += `<li class="${done ? 'ok' : ''}">${p.n}: ${done ? 'built' : partReqs(p, mk).map(([st, n, u]) => `${fmtG(Math.min(statOf(st), n))}/${fmtG(n)} ${u}`).join(', ') + (ok ? ' – ◆' + fmtG(nOf(p.c, mk)) + ' to build' : '')}</li>`; }
   const cg = D && D.cargo && Object.keys(D.cargo).length ? `<div class="cg">Carrying: ${Object.keys(D.cargo).map(k => CARGO[k][0] + (D.cargo[k] > 1 ? ' ×' + D.cargo[k] : '')).join(', ')} – get it to the surface!</div>` : '';
   return `<div class="prk"><div class="t">Rocket ${ROCKETS[mk].n} → ${PLANETS[(SV.pmax || 0) + 1].n}</div>${here ? '' : `<div>Build it on ${PLANETS[SV.pmax || 0].n}.</div>`}<ul>${li}</ul>${cg}</div>`; }
-function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').textContent = inGame ? 'RESUME' : 'BACK'; $('bQuit').hidden = !inGame; $('pRocket').innerHTML = inGame ? rocketPanel() : ''; $('setsMain').hidden = !!inGame; $('secMain').hidden = !inGame; $('secMain').classList.toggle('open', !inGame); $('setsAdv').hidden = true; $('secAdv').classList.remove('open'); show('ovSet'); }
-$('secMain').onclick = () => { const h = !$('setsMain').hidden; $('setsMain').hidden = h; $('secMain').classList.toggle('open', !h); };
-$('secAdv').onclick = () => { const h = !$('setsAdv').hidden; $('setsAdv').hidden = h; $('secAdv').classList.toggle('open', !h); };
+function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').hidden = !inGame; $('pBtns').hidden = !inGame; $('pauseInfo').hidden = !inGame; $('bSetBack').hidden = !!inGame; $('setBank').textContent = inGame ? fmtG(gems) + ' this run' : fmtG(SV.bank); if (inGame) { $('pDist').textContent = ($('dist').firstChild || {}).textContent || ''; $('pBest').textContent = 'Best ' + SV.best + ' m · ' + Math.max(0, Math.round((S && S.maxDep) || 0)) + ' m deep'; } $('pRocket').innerHTML = inGame ? rocketPanel() : ''; $('setsAdv').hidden = true; show('ovSet'); }
+$('bSetBack').onclick = () => showMenu(); $('bRestart').onclick = () => { paused = false; run = false; endRun(); if (MODE === 'daily') { audio(); hold = false; reset(true); } else startFree(); };
+$('secAdv').onclick = () => { $('setsAdv').hidden = !$('setsAdv').hidden; };
 function pause() { if (!run || paused || !D || D.dead) return; paused = true; touches.clear(); $('pz').hidden = true; openSet(true); }
 function resume() { if (!paused) { if (!$('ovSet').hidden) showMenu(); return; } paused = false; touches.clear(); last = performance.now(); show(null); $('pz').hidden = false; }
 $('tCtl').onclick = () => { const o = ['stick', 'slide', 'tap'], c = SV.set.ctl || 'stick'; SV.set.ctl = o[(o.indexOf(c) + 1) % 3]; saveSV(); setLbl(); };
@@ -2501,7 +2553,7 @@ $('bResume').onclick = () => resume();
 $('bQuit').onclick = () => { paused = false; run = false; endRun(); showMenu(); };
 $('pz').onclick = () => pause();
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
-function drChip() { const n = WLD().drills || 0, c = $('bDrills'); if (!c) return; c.className = n ? '' : 'out'; $('sDr').textContent = n; menuSubs(); }
+function drChip() { const n = WLD().drills || 0, c = $('bDrills'); if (!c) return; c.className = 'nchip' + (n ? '' : ' out'); $('sDr').textContent = n; menuSubs(); }
 function showDrills(why) { const w = WLD(), n = w.drills || 0, pr = drillPrice(); $('drTxt').innerHTML = (why ? '<b>' + why + '</b><br>' : '') + `You have <b>${n}</b> drill${n === 1 ? '' : 's'} on ${PL().n}. Every crash costs one – and everything you blew up stays blown up.<br>Bank: ◆ ${fmtG(SV.bank)}`; $('bBuyDr').innerHTML = `BUY A DRILL &middot; ◆ ${fmtG(pr)}`; $('bBuyDr').disabled = SV.bank < pr; $('bNewW').textContent = 'NEW WORLD'; $('bNewW').dataset.arm = ''; show('ovDrills'); }
 async function startFree() { audio(); hold = false; if (WREADY) await WREADY; if ((WLD().drills || 0) <= 0) { showDrills('Out of drills!'); return; } reset(false); }
 $('bGo').onclick = () => startFree();
@@ -2519,13 +2571,17 @@ $('ovGoal').addEventListener('click', e => { const t = e.target.closest('button'
   if (t.dataset.pl !== undefined) { try { worldSave(); } catch (e) {} SV.planet = +t.dataset.pl; saveSV(); applyPlanet(); worldLoad(); renderGoal(); return; }
   const p = RP().find(q => q.k === t.dataset.rp); if (!p || t.disabled) return; const mk = MK(), c = nOf(p.c, mk); if (SV.bank < c || !partOK(p, mk)) return; SV.bank -= c; rkBuilt()[p.k] = 1; rankCheck(); saveSV(); audio(); SFX.gem(3); buzz([20, 30, 60]); renderGoal(); });
 $('bShop').onclick = () => { bpPull = null; openShop('ovStart'); }; $('bShop2').onclick = () => { bpPull = null; openShop('ovEnd'); };
-$('bShopOk').onclick = () => backTo === 'ovEnd' ? (show('ovEnd')) : showMenu();
+$('bShopOk').onclick = () => backTo === 'ovEnd' ? (show('ovEnd')) : showMenu(); $('shopTabs').onclick = e => { const b = e.target.closest('[data-tab]'); if (!b) return; SHOPTAB = b.dataset.tab; bpPull = null; renderShop(); };
 $('bMenu').onclick = () => showMenu();
 $('bHow').onclick = () => show('ovHow'); $('bHowOk').onclick = () => showMenu();
 $('bSet').onclick = () => openSet(false);
-let ICONS = null; function openMus() { if (!ICONS) ICONS = ITEMS.map((it, i) => { const c = document.createElement('canvas'); c.width = c.height = 80; const g = c.getContext('2d'); g.translate(40, 40); drawItem(g, i, 32); return c.toDataURL(); });
-  let n = 0; $('musG').innerHTML = ITEMS.map((it, i) => { const k = SV.coll[it[0]] || 0; if (k) n++; return `<div class="${k ? '' : 'no'}"><img src="${ICONS[i]}" alt=""><span>${k ? it[1] : '???'}<small>${it[2] === 'f' ? 'Fossil' : 'Treasure'}${k > 1 ? ' ×' + k : ''}</small></span></div>`; }).join(''); $('musN').textContent = `${n} of ${ITEMS.length} found – dig deep for the rare ones`; show('ovMus'); }
-$('bMus').onclick = openMus; $('bAch').onclick = () => { $('achL').innerHTML = achHTML(); show('ovAch'); }; $('bAchOk').onclick = () => showMenu(); $('bMusOk').onclick = () => showMenu();
+let ICONS = null; function openMus(noShow) { if (!ICONS) ICONS = ITEMS.map((it, i) => { const c = document.createElement('canvas'); c.width = c.height = 80; const g = c.getContext('2d'); g.translate(40, 40); drawItem(g, i, 32); return c.toDataURL(); });
+  let n = 0; $('musG').innerHTML = ITEMS.map((it, i) => { const k = SV.coll[it[0]] || 0; if (k) n++; return `<div class="${k ? '' : 'no'}"><img src="${ICONS[i]}" alt=""><span>${k ? it[1] : '???'}<small>${it[2] === 'f' ? 'Fossil' : 'Treasure'}${k > 1 ? ' ×' + k : ''}</small></span></div>`; }).join(''); $('musN').textContent = `${n} of ${ITEMS.length} found – dig deep for the rare ones`; }
+function openProg(tab) { $('progBank').textContent = fmtG(SV.bank); $('gRank').innerHTML = rankHTML(true); $('achL').innerHTML = achHTML(); openMus(true); progTab(tab || 'rank'); show('ovProg'); }
+function progTab(t) { for (const b of $('progTabs').children) b.classList.toggle('on', b.dataset.pt === t); $('pRank').hidden = t !== 'rank'; $('pBadges').hidden = t !== 'badges'; $('pFinds').hidden = t !== 'finds'; }
+$('progTabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (b) progTab(b.dataset.pt); };
+$('bProg').onclick = () => openProg('rank'); $('nRank').onclick = () => openProg('rank'); $('bProgOk').onclick = () => showMenu();
+$('nNext').onclick = () => { const g = nextGoal(); bpPull = g ? g.u.k : null; if (g) bpSel = g.u.k; openShop('ovStart'); }; $('endNext').onclick = () => { const g = nextGoal(); bpPull = g ? g.u.k : null; if (g) bpSel = g.u.k; openShop('ovEnd'); }; $('endDrills').onclick = () => showDrills();
 /* phones only unlock audio on the END of a tap (pointerup / touchend / click), not on pointerdown – so unlock on all of them */
 ['pointerup', 'touchend', 'click', 'keydown'].forEach(ev => window.addEventListener(ev, () => { const a = audio(); if (a && a.state !== 'running') a.resume(); }, { capture: true, passive: true }));
 { const it = $('intro'); let done = false; const end = () => { if (done) return; done = true; audio(); it.classList.add('out'); setTimeout(() => it.remove(), 600); }; it.addEventListener('pointerup', end); it.onclick = end; /* the first tap also switches the sound on (phones only allow audio after a real tap), so the menu music starts right away */ setTimeout(() => { if (!done) { const t = document.createElement('div'); t.className = 'tapgo'; t.textContent = SOUND ? 'TAP TO START  ♪' : 'TAP TO START'; it.appendChild(t); } }, REDUCED ? 600 : 2300); }
