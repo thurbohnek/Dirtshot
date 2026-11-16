@@ -217,6 +217,10 @@ span.nchip { cursor: default; } .nchip .g { color: #ffd84a; } .nchip.nrk { font:
 #ovHow .how { color: var(--ink); text-shadow: none; } #pRocket:empty { display: none; }
 #gRank .rk, #achL, #musN { color: var(--ink); text-shadow: none; } #gRank .rk { background: #fff; border-radius: 16px; padding: 12px 14px; box-shadow: 0 3px 0 rgba(80,40,20,.18); }
 #gLaunch:empty { display: none; }
+#tTest[hidden], .ntest[hidden] { display: none; } .ntest { display: flex; flex-direction: column; gap: 10px; } .ntest .nh { margin: 4px 0 -2px; }
+.tgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .tgrid .nbs { font-size: 16px; min-height: 44px; padding: 6px 8px; box-shadow: 0 3px 0 #d9b48a; background: #fff8ee; }
+.tseg { display: flex; flex-wrap: wrap; gap: 6px; background: #efe3d4; border-radius: 14px; padding: 4px; } .tseg button { flex: 1 1 auto; border: 0; border-radius: 11px; min-height: 38px; padding: 0 10px; background: none; font: 800 14px var(--f-b); color: #5e4a3c; cursor: pointer; } .tseg button.on { background: #fff; color: var(--ink); box-shadow: 0 2px 0 rgba(80,40,20,.15); }
+.trow { display: grid; grid-template-columns: 1fr 44px 34px 44px; align-items: center; gap: 6px; font: 800 14px var(--f-b); color: var(--ink); } .trow b { text-align: center; font: 400 18px var(--f-d); } .trow button { height: 40px; border: 0; border-radius: 12px; font: 900 22px/1 var(--f-b); background: linear-gradient(180deg, #9ff0ff, #3dc4ff); color: #0b3550; box-shadow: 0 3px 0 #1a6f9a; cursor: pointer; } .trow button:disabled { background: #e8ded2; color: #a89a8c; box-shadow: 0 3px 0 #cbbcab; }
 /* text rules: card title Lilita 18 ink · meta Nunito 800 13 · body Nunito 700 13/1.35 · gains green · buy 17 */
 .ndtc { display: flex; justify-content: center; margin: 2px 0 10px; flex: none; } .nchip.ndt { height: 40px; gap: 8px; font: 800 14px var(--f-b); } .nchip.ndt b { font: 400 17px var(--f-d); }
 .nlist .up { gap: 4px 12px; padding: 12px 14px; } .nlist .up b { font: 400 18px/1.1 var(--f-d); color: var(--ink); }
@@ -316,6 +320,8 @@ span.nchip { cursor: default; } .nchip .g { color: #ffd84a; } .nchip.nrk { font:
       <button class="tog" id="tShk">Screen shake <span></span></button><button class="tog" id="tQ">Graphics <span></span></button><button class="tog" id="tCave">Cave-ins <span></span></button><button class="tog" id="tPock">Gas &amp; water pockets <span></span></button>
       <button class="tog" id="tFps">Show FPS <span></span></button><button class="tog" id="tFlat">Round world <span></span></button><button class="tog" id="tRend">Graphics engine <span></span></button><button class="tog" id="tTcpu">Tile painting <span></span></button><button class="tog" id="tPf">Performance meter <span></span></button><button class="tog" id="tRep">Copy performance report <span></span></button><button class="tog" id="tBench">Run benchmark (55 s) <span></span></button><button class="tog" id="tReset" style="color:#c8322a">Reset all progress <span></span></button>
     </div>
+    <button class="nbs nwide" id="tTest">Test mode <small>unlock everything ›</small></button>
+    <div class="ncard ntest" id="setsTest" hidden></div>
     <span hidden id="secMain"></span>
   </div>
 </div></div>
@@ -1911,7 +1917,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v179';
+const VER = 'v180';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2548,7 +2554,25 @@ function setLbl() { $('tShk').lastChild.textContent = ['Off', 'Low', 'Full'][SV.
 function rocketPanel() { if (!canFly()) return ''; const mk = MK(), b = rkBuilt(), here = (SV.planet || 0) === (SV.pmax || 0); let li = ''; for (const p of RP()) { const done = b[p.k], ok = partOK(p, mk); li += `<li class="${done ? 'ok' : ''}">${p.n}: ${done ? 'built' : partReqs(p, mk).map(([st, n, u]) => `${fmtG(Math.min(statOf(st), n))}/${fmtG(n)} ${u}`).join(', ') + (ok ? ' – ◆' + fmtG(nOf(p.c, mk)) + ' to build' : '')}</li>`; }
   const cg = D && D.cargo && Object.keys(D.cargo).length ? `<div class="cg">Carrying: ${Object.keys(D.cargo).map(k => CARGO[k][0] + (D.cargo[k] > 1 ? ' ×' + D.cargo[k] : '')).join(', ')} – get it to the surface!</div>` : '';
   return `<div class="prk"><div class="t">Rocket ${ROCKETS[mk].n} → ${PLANETS[(SV.pmax || 0) + 1].n}</div>${here ? '' : `<div>Build it on ${PLANETS[SV.pmax || 0].n}.</div>`}<ul>${li}</ul>${cg}</div>`; }
-function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').hidden = !inGame; $('pBtns').hidden = !inGame; $('pauseInfo').hidden = !inGame; $('bSetBack').hidden = !!inGame; $('setBank').textContent = inGame ? fmtG(gems) + ' this run' : fmtG(SV.bank); if (inGame) { $('pDist').textContent = ($('dist').firstChild || {}).textContent || ''; $('pBest').textContent = 'Best ' + SV.best + ' m · ' + Math.max(0, Math.round((S && S.maxDep) || 0)) + ' m deep'; } $('pRocket').innerHTML = inGame ? rocketPanel() : ''; $('setsAdv').hidden = true; show('ovSet'); }
+function openSet(inGame) { setLbl(); $('setTitle').textContent = inGame ? 'Paused' : 'Settings'; $('bResume').hidden = !inGame; $('pBtns').hidden = !inGame; $('pauseInfo').hidden = !inGame; $('bSetBack').hidden = !!inGame; $('setBank').textContent = inGame ? fmtG(gems) + ' this run' : fmtG(SV.bank); if (inGame) { $('pDist').textContent = ($('dist').firstChild || {}).textContent || ''; $('pBest').textContent = 'Best ' + SV.best + ' m · ' + Math.max(0, Math.round((S && S.maxDep) || 0)) + ' m deep'; } $('pRocket').innerHTML = inGame ? rocketPanel() : ''; $('setsAdv').hidden = true; $('tTest').hidden = !!inGame; $('setsTest').hidden = true; show('ovSet'); }
+/* ---- test mode: unlock everything, set every upgrade by hand, jump between planets ---- */
+function testHTML() { const pl = SV.planet || 0, dt = SV.dt || 'std';
+  return `<div class="nh">Unlock</div><div class="tgrid"><button class="nbs" data-tx="all">Unlock all</button><button class="nbs" data-tx="gems">◆ +100k</button><button class="nbs" data-tx="drills">Drills +10</button><button class="nbs" data-tx="max">All upgrades max</button><button class="nbs" data-tx="zero">All upgrades 0</button><button class="nbs" data-tx="broke">◆ to 0</button></div>`
+  + `<div class="nh">Planet</div><div class="tseg">${PLANETS.map((q, i) => `<button data-tpl="${i}" class="${i === pl ? 'on' : ''}">${q.n}</button>`).join('')}</div>`
+  + `<div class="nh">Drill type</div><div class="tseg">${DTYPES.map(q => `<button data-tdt="${q.k}" class="${q.k === dt ? 'on' : ''}">${q.n}</button>`).join('')}</div>`
+  + `<div class="nh">Upgrades</div>` + UPS.map(u => { const l = SV.up[u.k] || 0; return `<div class="trow"><span>${u.n}</span><button data-tu="${u.k}" data-d="-1" ${l <= 0 ? 'disabled' : ''}>−</button><b>${l}</b><button data-tu="${u.k}" data-d="1" ${l >= UMAX ? 'disabled' : ''}>+</button></div>`; }).join(''); }
+function testRender() { $('setsTest').innerHTML = testHTML(); $('setBank').textContent = fmtG(SV.bank); }
+function testPlanet(i) { try { worldSave(); } catch (e) {} SV.pmax = Math.max(SV.pmax || 0, i); SV.planet = i; saveSV(); applyPlanet(); worldLoad(); }
+$('tTest').onclick = () => { const t = $('setsTest'); t.hidden = !t.hidden; if (!t.hidden) { testRender(); t.scrollIntoView({ block: 'start', behavior: 'smooth' }); } };
+$('setsTest').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const d = b.dataset;
+  if (d.tx === 'all') { SV.skins = {}; for (const k of SKINS) SV.skins[k.k] = 1; SV.engs = {}; for (const v of ENGV) SV.engs[v.k] = 1; SV.dts = {}; for (const q of DTYPES) SV.dts[q.k] = 1; SV.bank = Math.max(SV.bank, 1e6); for (const u of UPS) SV.up[u.k] = UMAX; const cur = SV.planet || 0; SV.pmax = PLANETS.length - 1; for (let i = 0; i < PLANETS.length; i++) { SV.planet = i; WLD().drills = Math.max(WLD().drills || 0, 99); } SV.planet = cur; say('EVERYTHING UNLOCKED', '#7dff9a', true); }
+  else if (d.tx === 'gems') SV.bank += 100000; else if (d.tx === 'broke') SV.bank = 0;
+  else if (d.tx === 'drills') WLD().drills = (WLD().drills || 0) + 10;
+  else if (d.tx === 'max') for (const u of UPS) SV.up[u.k] = UMAX; else if (d.tx === 'zero') for (const u of UPS) SV.up[u.k] = 0;
+  else if (d.tpl !== undefined) testPlanet(+d.tpl);
+  else if (d.tdt) { SV.dts = SV.dts || {}; SV.dts[d.tdt] = 1; SV.dt = d.tdt; }
+  else if (d.tu) SV.up[d.tu] = clamp((SV.up[d.tu] || 0) + +d.d, 0, UMAX);
+  saveSV(); buzz(10); testRender(); };
 $('bSetBack').onclick = () => showMenu(); $('bRestart').onclick = () => { paused = false; run = false; endRun(); if (MODE === 'daily') { audio(); hold = false; reset(true); } else startFree(); };
 $('secAdv').onclick = () => { $('setsAdv').hidden = !$('setsAdv').hidden; };
 function pause() { if (!run || paused || !D || D.dead) return; paused = true; touches.clear(); $('pz').hidden = true; openSet(true); }
