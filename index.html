@@ -1946,7 +1946,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v190';
+const VER = 'v191';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2038,9 +2038,9 @@ function drawLODf(x, left, right, vtop, vbot) { const Rb = GV.Rb, n = 240, st = 
 /* every tunnel ever dug, for the far view: one tiny picture per dug band (32×32 cells), from the live chunk or from the saved world */
 const LODC = new Map(); let WSBI = null, WSBN = -1;
 function wsbIndex() { if (WSBN === WSB.size && WSBI) return WSBI; WSBI = new Map(); for (const key of WSB.keys()) { const [ci, k] = key.split(':').map(Number); (WSBI.get(ci) || WSBI.set(ci, []).get(ci)).push(k); } WSBN = WSB.size; return WSBI; }
-function dugImg(ci, k, m, ver, al = 240) { const key = ci + ':' + k, c0 = LODC.get(key); if (c0 && c0.v === ver) return c0.c; const c = (c0 && c0.c) || document.createElement('canvas'); c.width = MCOLS; c.height = RPT; const x = c.getContext('2d'), id = x.createImageData(MCOLS, RPT), d = id.data, y0 = Y0 + k * TH;
+function dugImg(ci, k, m, ver, al = 165) { const key = ci + ':' + k, c0 = LODC.get(key); if (c0 && c0.v === ver) return c0.c; const c = (c0 && c0.c) || document.createElement('canvas'); c.width = MCOLS; c.height = RPT; const x = c.getContext('2d'), id = x.createImageData(MCOLS, RPT), d = id.data, y0 = Y0 + k * TH;
   const sf = []; for (let i = 0; i < MCOLS; i++) sf.push(surf(ci * CW + i * CELL + 4)); let any = 0;
-  for (let r = 0; r < RPT; r++) for (let i = 0; i < MCOLS; i++) { const wy = y0 + r * CELL + 4; if (!m[r * MCOLS + i] || wy < sf[i] + 10) continue; const o = (r * MCOLS + i) * 4; d[o] = 30; d[o + 1] = 16; d[o + 2] = 10; d[o + 3] = al; any = 1; }
+  for (let r = 0; r < RPT; r++) for (let i = 0; i < MCOLS; i++) { const wy = y0 + r * CELL + 4; if (!m[r * MCOLS + i] || wy < sf[i] + 10) continue; const o = (r * MCOLS + i) * 4; d[o] = 22; d[o + 1] = 13; d[o + 2] = 9; d[o + 3] = al; any = 1; }
   x.putImageData(id, 0, 0); const e = { c: any ? c : null, v: ver }; LODC.set(key, e); if (LODC.size > 6000) LODC.delete(LODC.keys().next().value); return e.c; }
 /* holes saved before v189 were not marked as dug: work them out by comparing with the untouched band */
 function natMask(ci, k) { const keep = chunks.get(ci), wa = WAPPLY; WAPPLY = false; chunks.delete(ci); let m; try { const t = getChunk0(ci); ensureBand(t, k); m = t.mask.slice(k * RPT * MCOLS, Math.min(MROWS, (k + 1) * RPT) * MCOLS); } finally { chunks.delete(ci); if (keep) chunks.set(ci, keep); WAPPLY = wa; } return m; }
@@ -2049,9 +2049,9 @@ let PDB = 0;
 function drawDugLOD(x, left, right, vtop, vbot, fast) { const WI = wsbIndex(); PDB = 4; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci), ks = ch && ch.dug ? Object.keys(ch.dug).map(Number) : WI.get(ci); if (!ks) continue;
     for (const k of ks) { const ty = Y0 + k * TH; if (ty > vbot || ty + TH < vtop) continue; let img;
       const a0 = k * RPT * MCOLS, a1 = Math.min(MROWS, (k + 1) * RPT) * MCOLS;
-      if (ch && ch.dug && ch.dug[k]) { if (!(ch.pdk && ch.pdk[k])) { const sv = WSB.get(ci + ':' + k); if (sv && !sv.p) { if (PDB-- <= 0) continue; sv.p = legacyPd(ci, k, sv.m); } if (sv && sv.p) { const pd = ch.pd || (ch.pd = new Uint8Array(MCOLS * MROWS)); for (let i = 0; i < sv.p.length; i++) if (sv.p[i]) pd[a0 + i] = 1; ch.lodV = (ch.lodV || 0) + 1; } (ch.pdk || (ch.pdk = {}))[k] = 1; }
+      if (ch && ch.dug && ch.dug[k]) { if (!(ch.pdk && ch.pdk[k])) { const sv = Math.abs(ci * CW + CW / 2) < 1000 && k * RPT * CELL + Y0 < 3000 ? null : WSB.get(ci + ':' + k); if (sv && !sv.p) { if (PDB-- <= 0) continue; sv.p = legacyPd(ci, k, sv.m); } if (sv && sv.p) { const pd = ch.pd || (ch.pd = new Uint8Array(MCOLS * MROWS)); for (let i = 0; i < sv.p.length; i++) if (sv.p[i]) pd[a0 + i] = 1; ch.lodV = (ch.lodV || 0) + 1; } (ch.pdk || (ch.pdk = {}))[k] = 1; }
         if (!ch.pd) continue; img = dugImg(ci, k, ch.pd.subarray(a0, a1), 'c' + (ch.lodV || 0)); }
-      else { const sv = WSB.get(ci + ':' + k); if (!sv) continue; if (!sv.p) { if (PDB-- <= 0) continue; sv.p = legacyPd(ci, k, sv.m); } img = dugImg(ci, k, sv.p, 's'); }
+      else { if (Math.abs(ci * CW + CW / 2) < 1000 && k * RPT * CELL + Y0 < 3000) continue; /* the ground round the tower is fresh every run: old holes there are not loaded, so do not draw them either */ const sv = WSB.get(ci + ':' + k); if (!sv) continue; if (!sv.p) { if (PDB-- <= 0) continue; sv.p = legacyPd(ci, k, sv.m); } img = dugImg(ci, k, sv.p, 's'); }
       if (!img) continue; if (fast) setAff(x, ci * CW + CW / 2, ty + TH / 2); x.drawImage(img, ci * CW, ty, CW, TH); } }
   if (fast) x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); }
 function drawLOD(x, left, right, vtop, vbot) { const n = 240, st = (right - left) / n, us = []; for (let i = 0; i <= n; i++) us.push(Math.round(left + i * st)); const ss = us.map(surf), Bs = [B1, B2, B3, B4, B5, B6, B7].map(f => us.map(f));
