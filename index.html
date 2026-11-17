@@ -1946,7 +1946,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v200';
+const VER = 'v201';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2092,12 +2092,12 @@ function drawFarTiles(x, left, right, vtop, vbot, fast) { const wide = right - l
   for (const ci of order) { const ch = wide ? chunks.get(ci) : getChunk(ci); if (!ch) { all = false; continue; } const k0 = clamp(Math.floor((Math.max(vtop, Math.min(...[0, 8, 16, 24, 31].map(c => ch.cols[c][0]))) - Y0) / TH), 0, NT - 1), k1 = clamp(Math.floor((Math.min(vbot, bodyR(ci * CW)) - Y0) / TH), 0, NT - 1);
     const list = []; for (let k = k0; k <= k1; k++) { const img = farImg(ch, k); if (img === 0) continue; if (!img) { all = false; continue; } list.push([k, img]); } if (list.length) drawGrouped(x, 'f', ci, list, fast, 1.2 / Math.max(1e-4, cam.s)); }
   if (fast) x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); x.imageSmoothingEnabled = sm; return all; }
-function drawDugLOD(x, left, right, vtop, vbot, fast, skipLoaded) { const WI = wsbIndex(); PDB = 4; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { if (skipLoaded && chunks.has(ci) && chunks.get(ci).far) continue; const ch = chunks.get(ci), ks = ch && ch.dug ? Object.keys(ch.dug).map(Number) : WI.get(ci); if (!ks) continue; const list = [];
+function drawDugLOD(x, left, right, vtop, vbot, fast, skipLoaded) { const WI = wsbIndex(); PDB = 4; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { if (skipLoaded && chunks.has(ci) && chunks.get(ci).far) continue; const ch = chunks.get(ci), k1 = ch && ch.dug ? Object.keys(ch.dug).map(Number) : [], k2 = WI.get(ci) || [], ks = k2.length ? [...new Set([...k1, ...k2])] : k1; if (!ks.length) continue; /* a loaded chunk only has the bands near you built: the deeper saved ones still come from the save */ const list = [];
     for (const k of ks) { const ty = Y0 + k * TH; if (ty > vbot || ty + TH < vtop) continue; let img;
       const a0 = k * RPT * MCOLS, a1 = Math.min(MROWS, (k + 1) * RPT) * MCOLS;
-      if (ch && ch.dug && ch.dug[k]) { if (!(ch.pdk && ch.pdk[k])) { const sv = Math.abs(ci * CW + CW / 2) < 1000 && k * RPT * CELL + Y0 < 3000 ? null : WSB.get(ci + ':' + k); if (sv && !svFull(sv, ci, k)) continue; if (sv && sv.p) { const pd = ch.pd || (ch.pd = new Uint8Array(MCOLS * MROWS)), sp = sv.p; for (let i = 0; i < sp.length; i++) if (sp[i]) pd[a0 + i] = 1; ch.lodV = (ch.lodV || 0) + 1; } (ch.pdk || (ch.pdk = {}))[k] = 1; }
-        if (!ch.pd) continue; img = dugImg(ci, k, ch.pd.subarray(a0, a1), 'c' + (ch.lodV || 0)); }
-      else { if (Math.abs(ci * CW + CW / 2) < 1000 && k * RPT * CELL + Y0 < 3000) continue; /* the ground round the tower is fresh every run: old holes there are not loaded, so do not draw them either */ const sv = WSB.get(ci + ':' + k); if (!sv) continue; if (!svFull(sv, ci, k)) continue; img = dugImg(ci, k, sv.p, 's' + (sv.q || 0)); }
+      /* the very same open cells the close-up view shows: live ground from memory, the rest from the save. Nothing is guessed or filtered, so what you see zoomed in is what you see zoomed out */
+      if (ch && ch.dug && ch.dug[k]) img = dugImg(ci, k, ch.mask.subarray(a0, a1), 'm' + (ch.uid || (ch.uid = ++IMGV)) + ':' + (ch.lodV || 0));
+      else { if (Math.abs(ci * CW + CW / 2) < 1000 && k * RPT * CELL + Y0 < 3000) continue; /* old holes right at the tower are not loaded close up either */ const sv = WSB.get(ci + ':' + k); if (!sv) continue; img = dugImg(ci, k, sv.m, 'sm'); }
       if (img) list.push([k, img]); } if (list.length) drawGrouped(x, 'd', ci, list, fast, 0); }
   if (fast) x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); }
 function drawLOD(x, left, right, vtop, vbot) { const n = 240, st = (right - left) / n, us = []; for (let i = 0; i <= n; i++) us.push(Math.round(left + i * st)); const ss = us.map(surf), Bs = [B1, B2, B3, B4, B5, B6, B7].map(f => us.map(f));
