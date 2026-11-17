@@ -323,7 +323,7 @@ span.nchip { cursor: default; } .nchip .g { color: #ffd84a; } .nchip.nrk { font:
     <div class="ncard nsets" id="setsMain"><button class="tog" id="tCtl">Controls <span></span></button><button class="tog" id="tSnd">Sound <span></span></button><button class="tog" id="tVib">Vibration <span></span></button><button class="tog nmore" id="secAdv">More settings <span>Graphics, shake, cave-ins ›</span></button></div>
     <div class="ncard nsets" id="setsAdv" hidden>
       <button class="tog" id="tShk">Screen shake <span></span></button><button class="tog" id="tQ">Graphics <span></span></button><button class="tog" id="tCave">Cave-ins <span></span></button><button class="tog" id="tPock">Gas &amp; water pockets <span></span></button>
-      <button class="tog" id="tFps">Show FPS <span></span></button><button class="tog" id="tFlat">Round world <span></span></button><button class="tog" id="tRend">Graphics engine <span></span></button><button class="tog" id="tTcpu">Tile painting <span></span></button><button class="tog" id="tPf">Performance meter <span></span></button><button class="tog" id="tRep">Copy performance report <span></span></button><button class="tog" id="tBench">Run benchmark (55 s) <span></span></button><button class="tog" id="tReset" style="color:#c8322a">Reset all progress <span></span></button>
+      <button class="tog" id="tFps">Show FPS <span></span></button><button class="tog" id="tFlat">Round world <span></span></button><button class="tog" id="tRend">Graphics engine <span></span></button><button class="tog" id="tTcpu">Tile painting <span></span></button><button class="tog" id="tPf">Performance meter <span></span></button><button class="tog" id="tRep">Copy performance report <span></span></button><button class="tog" id="tBench">Run benchmark (55 s) <span></span></button><button class="tog" id="tWReset" style="color:#c8322a">Reset this planet's ground <span></span></button><button class="tog" id="tReset" style="color:#c8322a">Reset all progress <span></span></button>
     </div>
     <button class="nbs nwide" id="tTest">Test mode <small>unlock everything ›</small></button>
     <div class="ncard ntest" id="setsTest" hidden></div>
@@ -1946,7 +1946,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v196';
+const VER = 'v197';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2754,6 +2754,9 @@ $('tPf').onclick = () => { SV.set.pf = SV.set.pf ? 0 : 1; saveSV(); setLbl(); };
 $('bReplay').onclick = () => { audio(); startReplay(); }; $('bClip').onclick = () => shareClip();
 $('tRep').onclick = () => showReport(perfReport(), 'Performance report');
 $('tBench').onclick = () => runBench();
+/* wipe every saved hole, crater, wreck and smashed building on the current planet and its moons; gems, upgrades and rockets are kept */
+async function worldWipe() { WLIVE = false; const id = WID || widOf(); try { const db = WDB || await idbOpen(); if (db) await new Promise(res => { const tx = db.transaction('w', 'readwrite'), st = tx.objectStore('w'); st.delete(IDBKeyRange.bound(id + '|', id + '|\uffff')); st.delete(IDBKeyRange.bound(id + '/', id + '/\uffff')); tx.oncomplete = res; tx.onerror = res; tx.onabort = res; }); } catch (e) {} }
+{ let armW = 0; $('tWReset').onclick = async () => { const now = Date.now(); if (now - armW > 3000) { armW = now; $('tWReset').lastChild.textContent = 'Tap again'; setTimeout(() => { if ($('tWReset')) $('tWReset').lastChild.textContent = ''; }, 3000); return; } $('tWReset').lastChild.textContent = '…'; await worldWipe(); location.reload(); }; }
 { let armT = 0; $('tReset').onclick = () => { const now = Date.now(); if (now - armT > 3000) { armT = now; $('tReset').lastChild.textContent = 'Tap again to erase'; setTimeout(() => { if ($('tReset')) $('tReset').lastChild.textContent = ''; }, 3000); return; } try { for (const k of ['dirtshot.v2', 'dirtshot.best', 'dirtshot.snd']) localStorage.removeItem(k); } catch (e) {} location.reload(); }; }
 $('tFlat').onclick = () => { SV.set.flat = SV.set.flat ? 0 : 1; saveSV(); setLbl(); }; $('tPock').onclick = () => { SV.set.nopock = SV.set.nopock ? 0 : 1; saveSV(); setLbl(); };
 $('tFps').onclick = () => { SV.set.fps = SV.set.fps ? 0 : 1; saveSV(); setLbl(); };
