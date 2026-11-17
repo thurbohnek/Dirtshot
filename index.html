@@ -1946,7 +1946,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v197';
+const VER = 'v198';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2031,7 +2031,7 @@ function drawLODf(x, left, right, vtop, vbot) { const Rb = GV.Rb, n = 240, st = 
       x.beginPath(); let q = P(us[j0], top(j0)); x.moveTo(q[0], q[1]); for (let j = j0 + 1; j <= j1; j++) { q = P(us[j], top(j)); x.lineTo(q[0], q[1]); } for (let j = j1; j >= j0; j--) { q = P(us[j], bot(j)); x.lineTo(q[0], q[1]); } x.closePath(); x.fillStyle = MCOL[m][0]; x.fill(); j0 = j1; } }
   x.strokeStyle = 'rgba(255,255,255,0.18)'; x.lineWidth = 2; x.beginPath(); for (let j = 0; j <= n; j++) { const q = P(us[j], ss[j]); j ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); } x.stroke();
   if (right - left < 30000) { x.fillStyle = 'rgba(28,14,8,0.6)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) for (const cv of cavesOf(ci)) { if (cv.y + cv.ry < vtop || cv.y - cv.ry > vbot) continue; setAff(x, cv.x, cv.y); x.beginPath(); x.ellipse(cv.x, cv.y, cv.rx, cv.ry, 0, 0, TAU); x.fill(); } x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); }
-  let farOk = false; try { farOk = drawFarTiles(x, left, right, vtop, vbot, true); } catch (e) {} if (right - left > 30000) try { drawDugLOD(x, left, right, vtop, vbot, true, true); } catch (e) {}
+  let farOk = false; try { farOk = drawFarTiles(x, left, right, vtop, vbot, true); } catch (e) {} if (right - left > 30000) try { drawDugLOD(x, left, right, vtop, vbot, true, FARON); } catch (e) {}
   { x.fillStyle = 'rgba(30,16,10,0.92)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci); if (!ch || !ch.polys) continue; for (const Pp of ch.polys) { if (Pp.drawnF === frameNo) continue; Pp.drawnF = frameNo; x.beginPath(); Pp.pts.forEach(([a, b], i) => { const q = P(a, b); i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); }); x.closePath(); x.fill(); } } } /* craters stay visible in the far view */
   drawTrailLOD(x, true); }
 // far-away view: the layers as smooth bands (no tiles), plus caves and the drill's own trail
@@ -2041,7 +2041,7 @@ function wsbIndex() { if (WSBN === WSB.size && WSBI) return WSBI; WSBI = new Map
 function dugImg(ci, k, m, ver, al = 165) { const key = ci + ':' + k, c0 = LODC.get(key); if (c0 && c0.v === ver) return c0.c; const c = (c0 && c0.c) || document.createElement('canvas'); c.width = MCOLS; c.height = RPT; const x = c.getContext('2d'), id = x.createImageData(MCOLS, RPT), d = id.data, y0 = Y0 + k * TH;
   const sf = []; for (let i = 0; i < MCOLS; i++) sf.push(surf(ci * CW + i * CELL + 4)); let any = 0;
   for (let r = 0; r < RPT; r++) for (let i = 0; i < MCOLS; i++) { const wy = y0 + r * CELL + 4; if (!m[r * MCOLS + i] || wy < sf[i] + 10) continue; const o = (r * MCOLS + i) * 4; d[o] = 22; d[o + 1] = 13; d[o + 2] = 9; d[o + 3] = al; any = 1; }
-  x.putImageData(id, 0, 0); const e = { c: any ? c : null, v: ver }; LODC.set(key, e); if (LODC.size > 6000) LODC.delete(LODC.keys().next().value); return e.c; }
+  x.putImageData(id, 0, 0); c.__v = ++IMGV; const e = { c: any ? c : null, v: ver }; LODC.set(key, e); if (LODC.size > 6000) LODC.delete(LODC.keys().next().value); return e.c; }
 /* holes saved before v189 were not marked as dug: work them out by comparing with the untouched band */
 function natMask(ci, k) { const keep = chunks.get(ci), wa = WAPPLY; WAPPLY = false; chunks.delete(ci); let m; try { const t = getChunk0(ci); ensureBand(t, k); m = t.mask.slice(k * RPT * MCOLS, Math.min(MROWS, (k + 1) * RPT) * MCOLS); } finally { chunks.delete(ci); if (keep) chunks.set(ci, keep); WAPPLY = wa; } return m; }
 function legacyPd(ci, k, m) { const n = natMask(ci, k), o = new Uint8Array(m.length); for (let i = 0; i < m.length; i++) if (m[i] && !n[i]) o[i] = 1; return o; } /* big holes are real (craters, blasted caverns): keep them */
@@ -2067,27 +2067,34 @@ function drawTrailLOD(x, fast) { const tr = D && D.trail; if (!tr || tr.length <
    so zooming out keeps the same picture, only softer. Built a few per frame; the smooth bands fill in until they are ready */
 const RGBC = {}; const rgbOf = h => RGBC[h] || (RGBC[h] = [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
 let FARB = 0;
-function farImg(ch, k) { const ver = (ch.lodV || 0) + ':' + (ch.mv || 0); const f = ch.far && ch.far[k]; if (f && f.v === ver) return f.c; if (FARB <= 0 || performance.now() > FARD) return f ? f.c : null; FARB--;
+function farImg(ch, k) { const ver = (ch.lodV || 0) + ':' + (ch.mv || 0); const f = ch.far && ch.far[k]; if (f && f.v === ver) return f.open ? f.c : 0; if (FARB <= 0 || performance.now() > FARD) return f ? (f.open ? f.c : 0) : null; let open = 0; FARB--;
   ensureBand(ch, k); const r0 = k * RPT, rn = Math.min(MROWS, r0 + RPT) - r0; if (rn <= 0) return null; const c = (f && f.c) || document.createElement('canvas'); c.width = MCOLS; c.height = rn; const x = c.getContext('2d'), id = x.createImageData(MCOLS, rn), d = id.data;
   const LM = ch.LM, top0 = ch.mtn ? ROCK : TOPM[ch.bio];
   for (let cc = 0; cc < MCOLS; cc++) { const col = ch.cols[cc], sf = col[0];
     for (let r = 0; r < rn; r++) { const wy = Y0 + (r0 + r) * CELL + 4; if (wy < sf) continue; const dd = wy - sf; const m = dd < col[1] ? top0 : dd < col[2] ? LM[0] : dd < col[3] ? LM[1] : dd < col[4] ? LM[2] : dd < col[6] ? LM[3] : dd < col[7] ? LM[4] : dd < col[8] ? LM[5] : LM[6];
-      const rgb = rgbOf((MCOL[m] || MCOL[1])[0]), o = (r * MCOLS + cc) * 4, hole = ch.mask[(r0 + r) * MCOLS + cc];
+      const rgb = rgbOf((MCOL[m] || MCOL[1])[0]), o = (r * MCOLS + cc) * 4, hole = ch.mask[(r0 + r) * MCOLS + cc]; if (hole) open = 1;
       if (hole) { d[o] = rgb[0] * 0.38 + 28 * 0.62; d[o + 1] = rgb[1] * 0.38 + 14 * 0.62; d[o + 2] = rgb[2] * 0.38 + 8 * 0.62; } else { d[o] = rgb[0]; d[o + 1] = rgb[1]; d[o + 2] = rgb[2]; } d[o + 3] = 255; } }
-  x.putImageData(id, 0, 0); (ch.far || (ch.far = []))[k] = { c, v: ver }; return c; }
-let FARD = 0;
-function drawFarTiles(x, left, right, vtop, vbot, fast) { const wide = right - left > 30000; FARB = 40; FARD = performance.now() + 5; const sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = true; let all = true;
+  x.putImageData(id, 0, 0); c.__v = ++IMGV; (ch.far || (ch.far = []))[k] = { c, v: ver, open }; return open ? c : 0; }
+let FARD = 0, FARON = false, IMGV = 0, HOLN = 0;
+/* band pictures are tiny (32 px); drawing hundreds of them one by one with a curved transform each is what made the planet view crawl on phones.
+   Glue 8 bands of a chunk into one picture and draw that instead: ~8× fewer draws */
+const GRPC = new Map(), GB = 8;
+function drawGrouped(x, tag, ci, list, fast, pad) { const by = new Map(); for (const e of list) { const g = Math.floor(e[0] / GB); (by.get(g) || by.set(g, []).get(g)).push(e); }
+  for (const [g, L] of by) { const key = tag + ci + ':' + g, ver = L.map(e => e[0] + '.' + e[1].__v).join(','); let G = GRPC.get(key);
+    if (!G || G.v !== ver) { const c = (G && G.c) || document.createElement('canvas'); c.width = MCOLS; c.height = RPT * GB; const gx = c.getContext('2d'); gx.clearRect(0, 0, c.width, c.height); for (const [k, img] of L) gx.drawImage(img, 0, (k - g * GB) * RPT); G = { c, v: ver }; GRPC.set(key, G); if (GRPC.size > 3000) GRPC.delete(GRPC.keys().next().value); }
+    const ty = Y0 + g * GB * TH, h = GB * TH; if (fast) setAff(x, ci * CW + CW / 2, ty + h / 2); x.drawImage(G.c, ci * CW - pad, ty - pad, CW + 2 * pad, h + 2 * pad); } }
+function drawFarTiles(x, left, right, vtop, vbot, fast) { const wide = right - left > 30000; FARON = CW * cam.s >= 7; if (!FARON) return false; FARB = 40; FARD = performance.now() + 5; const sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = true; let all = true;
   const ci0 = Math.floor(left / CW), ci1 = Math.floor(right / CW), mid = (ci0 + ci1) / 2, order = []; for (let ci = ci0; ci <= ci1; ci++) order.push(ci); order.sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid));
   for (const ci of order) { const ch = wide ? chunks.get(ci) : getChunk(ci); if (!ch) { all = false; continue; } const k0 = clamp(Math.floor((Math.max(vtop, Math.min(...[0, 8, 16, 24, 31].map(c => ch.cols[c][0]))) - Y0) / TH), 0, NT - 1), k1 = clamp(Math.floor((Math.min(vbot, bodyR(ci * CW)) - Y0) / TH), 0, NT - 1);
-    for (let k = k0; k <= k1; k++) { const img = farImg(ch, k); if (!img) { all = false; continue; } const ty = Y0 + k * TH; if (fast) setAff(x, ci * CW + CW / 2, ty + TH / 2); x.drawImage(img, ci * CW - 0.5, ty - 0.5, CW + 1, img.height * CELL + 1); } }
+    const list = []; for (let k = k0; k <= k1; k++) { const img = farImg(ch, k); if (img === 0) continue; if (!img) { all = false; continue; } list.push([k, img]); } if (list.length) drawGrouped(x, 'f', ci, list, fast, 0.5); }
   if (fast) x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); x.imageSmoothingEnabled = sm; return all; }
-function drawDugLOD(x, left, right, vtop, vbot, fast, skipLoaded) { const WI = wsbIndex(); PDB = 4; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { if (skipLoaded && chunks.has(ci) && chunks.get(ci).far) continue; const ch = chunks.get(ci), ks = ch && ch.dug ? Object.keys(ch.dug).map(Number) : WI.get(ci); if (!ks) continue;
+function drawDugLOD(x, left, right, vtop, vbot, fast, skipLoaded) { const WI = wsbIndex(); PDB = 4; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { if (skipLoaded && chunks.has(ci) && chunks.get(ci).far) continue; const ch = chunks.get(ci), ks = ch && ch.dug ? Object.keys(ch.dug).map(Number) : WI.get(ci); if (!ks) continue; const list = [];
     for (const k of ks) { const ty = Y0 + k * TH; if (ty > vbot || ty + TH < vtop) continue; let img;
       const a0 = k * RPT * MCOLS, a1 = Math.min(MROWS, (k + 1) * RPT) * MCOLS;
       if (ch && ch.dug && ch.dug[k]) { if (!(ch.pdk && ch.pdk[k])) { const sv = Math.abs(ci * CW + CW / 2) < 1000 && k * RPT * CELL + Y0 < 3000 ? null : WSB.get(ci + ':' + k); if (sv && !sv.p) { if (PDB-- <= 0) continue; sv.p = legacyPd(ci, k, sv.m); } if (sv && sv.p) { const pd = ch.pd || (ch.pd = new Uint8Array(MCOLS * MROWS)), sp = sv.p; for (let i = 0; i < sp.length; i++) if (sp[i]) pd[a0 + i] = 1; ch.lodV = (ch.lodV || 0) + 1; } (ch.pdk || (ch.pdk = {}))[k] = 1; }
         if (!ch.pd) continue; img = dugImg(ci, k, ch.pd.subarray(a0, a1), 'c' + (ch.lodV || 0)); }
       else { if (Math.abs(ci * CW + CW / 2) < 1000 && k * RPT * CELL + Y0 < 3000) continue; /* the ground round the tower is fresh every run: old holes there are not loaded, so do not draw them either */ const sv = WSB.get(ci + ':' + k); if (!sv) continue; if (!sv.p) { if (PDB-- <= 0) continue; sv.p = legacyPd(ci, k, sv.m); } img = dugImg(ci, k, sv.p, 's'); }
-      if (!img) continue; if (fast) setAff(x, ci * CW + CW / 2, ty + TH / 2); x.drawImage(img, ci * CW, ty, CW, TH); } }
+      if (img) list.push([k, img]); } if (list.length) drawGrouped(x, 'd', ci, list, fast, 0); }
   if (fast) x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); }
 function drawLOD(x, left, right, vtop, vbot) { const n = 240, st = (right - left) / n, us = []; for (let i = 0; i <= n; i++) us.push(Math.round(left + i * st)); const ss = us.map(surf), Bs = [B1, B2, B3, B4, B5, B6, B7].map(f => us.map(f));
   const bioOf = u => biome(u), mats = u => { const b = bioOf(u); return [TOPM[b], ...LAYM[isMoon(u) ? 2 : 1]]; };
@@ -2099,7 +2106,7 @@ function drawLOD(x, left, right, vtop, vbot) { const n = 240, st = (right - left
   // grass/snow rim
   x.strokeStyle = 'rgba(255,255,255,0.18)'; x.lineWidth = 6 / GV.sy; x.beginPath(); for (let j = 0; j <= n; j++) j ? x.lineTo(us[j], ss[j]) : x.moveTo(us[j], ss[j]); x.stroke();
   if (right - left < 30000) { x.fillStyle = 'rgba(28,14,8,0.6)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) for (const cv of cavesOf(ci)) { if (cv.y + cv.ry < vtop || cv.y - cv.ry > vbot) continue; x.beginPath(); x.ellipse(cv.x, cv.y, cv.rx, cv.ry, 0, 0, TAU); x.fill(); } }
-  try { drawFarTiles(x, left, right, vtop, vbot, false); } catch (e) {} if (right - left > 30000) try { drawDugLOD(x, left, right, vtop, vbot, false, true); } catch (e) {}
+  try { drawFarTiles(x, left, right, vtop, vbot, false); } catch (e) {} if (right - left > 30000) try { drawDugLOD(x, left, right, vtop, vbot, false, FARON); } catch (e) {}
   drawTrailLOD(x, false); }
 // the moon hangs fixed in space; the planet's centre is the origin
 let MDIST = RPL * 4.2, MANG = 0.42, MCX = Math.sin(MANG) * MDIST, MCY = -Math.cos(MANG) * MDIST;
@@ -2130,7 +2137,7 @@ function drawDarkF(x, s, left, right) { const zf = clamp((s - 0.05) / 0.1, 0, 1)
   const d = dkx, [pcX, pcY] = W2S(cam.x, Rb), rA = Math.max(1, (Rb - sfc - 160) * s), rB = Math.max(0, (Rb - sfc - 1500) * s); d.setTransform(q, 0, 0, q, 0, 0); d.globalCompositeOperation = 'copy'; d.globalAlpha = 1;
   const gg = d.createRadialGradient(pcX + SHX, pcY + SHY, rB, pcX + SHX, pcY + SHY, Math.max(rB + 1, rA)); gg.addColorStop(0, `rgba(6,5,14,${Math.max(nA, 0.8 * zf * cf * DKF)})`); gg.addColorStop(1, `rgba(6,5,14,${nA})`); d.fillStyle = gg; d.fillRect(0, 0, VW, VH);
   d.globalCompositeOperation = 'destination-out'; d.fillStyle = '#000'; const m = affM(cam.x, cam.y), cam0 = () => d.setTransform(q * m[0], q * m[1], q * m[2], q * m[3], q * (m[4] - m[0] * cam.x - m[2] * cam.y), q * (m[5] - m[1] * cam.x - m[3] * cam.y)); cam0();
-  const reach = (VW + VH) / s, hole = (wx, wy, r, a) => { if (a <= 0 || Math.abs(wx - cam.x) > reach + r * 3 || Math.abs(wy - cam.y) > reach + r) return; const k = kAt(wx, wy); d.globalAlpha = Math.min(1, a); d.drawImage(HOLE, wx - r / k, wy - r, 2 * r / k, 2 * r); d.globalAlpha = 1; };
+  HOLN = 0; const reach = (VW + VH) / s, hole = (wx, wy, r, a) => { if (a <= 0 || r * s < (LODON ? 7 : 1.6) || ++HOLN > 260 || Math.abs(wx - cam.x) > reach + r * 3 || Math.abs(wy - cam.y) > reach + r) return; /* glows smaller than a couple of pixels are invisible but cost a draw each: hundreds of them in the planet view */ const k = kAt(wx, wy); d.globalAlpha = Math.min(1, a); d.drawImage(HOLE, wx - r / k, wy - r, 2 * r / k, 2 * r); d.globalAlpha = 1; };
   if (D && !(D.dead && D.why === 'Hull destroyed')) { const L = U('lamp'), c = Math.cos(D.ang), sn = Math.sin(D.ang), lx = D.x + c * 12, ly = D.y + sn * 12, fl = 0.97 + 0.03 * Math.sin(T * 37) * Math.sin(T * 11);
     hole(D.x, D.y, 70 + 10 * L, 0.55 * fl); lampPoly(lx, ly, D.ang, (380 + 90 * L) * 1.02); d.save(); lampClip(d, v => v); hole(lx + c * 60, ly + sn * 60, 110 + 15 * L, 0.35 * fl);
     const cl = (380 + 90 * L) * fl, kd = kAt(lx, ly); d.translate(lx, ly); d.scale(1 / kd, 1); for (const [spr, a] of [[0.2 + 0.02 * L, 0.6], [0.34 + 0.03 * L, 0.35], [0.5 + 0.03 * L, 0.18]].slice(0, LOWQ() ? 1 : 3)) { const rg = d.createRadialGradient(0, 0, 4, 0, 0, cl); rg.addColorStop(0, `rgba(0,0,0,${a})`); rg.addColorStop(0.25, `rgba(0,0,0,${a * 0.85})`); rg.addColorStop(0.6, `rgba(0,0,0,${a * 0.4})`); rg.addColorStop(1, 'rgba(0,0,0,0)'); d.fillStyle = rg; d.beginPath(); d.moveTo(0, 0); d.arc(0, 0, cl, D.ang - spr, D.ang + spr); d.closePath(); d.fill(); } d.restore(); cam0(); } else if (D) hole(D.x, D.y, 260, 0.75);
