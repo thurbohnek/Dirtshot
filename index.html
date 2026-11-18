@@ -1946,7 +1946,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v202';
+const VER = 'v203';
 // ===== performance probe: time per part of each frame (always on, very cheap) =====
 const PF = { s: {}, a: {}, mx: {}, last: 0, f0: 0, long: [], build: 0, ft: [], nb: 0,
   begin() { this.f0 = this.last = performance.now(); this.s = {}; this.build = 0; this.nb = 0; this.cg = 0; this.ncg = 0; },
@@ -2038,9 +2038,9 @@ function drawLODf(x, left, right, vtop, vbot) { const Rb = GV.Rb, n = 240, st = 
 /* every tunnel ever dug, for the far view: one tiny picture per dug band (32×32 cells), from the live chunk or from the saved world */
 const LODC = new Map(); let WSBI = null, WSBN = -1;
 function wsbIndex() { if (WSBN === WSB.size && WSBI) return WSBI; WSBI = new Map(); for (const key of WSB.keys()) { const [ci, k] = key.split(':').map(Number); (WSBI.get(ci) || WSBI.set(ci, []).get(ci)).push(k); } WSBN = WSB.size; return WSBI; }
-function dugImg(ci, k, m, ver, al = 225) { const key = ci + ':' + k, c0 = LODC.get(key); if (c0 && c0.v === ver) return c0.c; const c = (c0 && c0.c) || document.createElement('canvas'); c.width = MCOLS; c.height = RPT; const x = c.getContext('2d'), id = x.createImageData(MCOLS, RPT), d = id.data, y0 = Y0 + k * TH;
+function dugImg(ci, k, m, ver, al = 158) { const key = ci + ':' + k, c0 = LODC.get(key); if (c0 && c0.v === ver) return c0.c; const c = (c0 && c0.c) || document.createElement('canvas'); c.width = MCOLS; c.height = RPT; const x = c.getContext('2d'), id = x.createImageData(MCOLS, RPT), d = id.data, y0 = Y0 + k * TH;
   const sf = []; for (let i = 0; i < MCOLS; i++) sf.push(surf(ci * CW + i * CELL + 4)); let any = 0;
-  for (let r = 0; r < RPT; r++) for (let i = 0; i < MCOLS; i++) { const wy = y0 + r * CELL + 4; if (!m[r * MCOLS + i] || wy < sf[i] + 10) continue; const o = (r * MCOLS + i) * 4; d[o] = 22; d[o + 1] = 13; d[o + 2] = 9; d[o + 3] = al; any = 1; }
+  for (let r = 0; r < RPT; r++) for (let i = 0; i < MCOLS; i++) { const wy = y0 + r * CELL + 4; if (!m[r * MCOLS + i] || wy < sf[i] + 10) continue; const o = (r * MCOLS + i) * 4; d[o] = 28; d[o + 1] = 14; d[o + 2] = 8; d[o + 3] = al; any = 1; }
   x.putImageData(id, 0, 0); c.__v = ++IMGV; const e = { c: any ? c : null, v: ver }; LODC.set(key, e); if (LODC.size > 6000) LODC.delete(LODC.keys().next().value); return e.c; }
 /* holes saved before v189 were not marked as dug: work them out by comparing with the untouched band */
 function natMask(ci, k) { const keep = chunks.get(ci), wa = WAPPLY; WAPPLY = false; chunks.delete(ci); let m; try { const t = getChunk0(ci); ensureBand(t, k); m = t.mask.slice(k * RPT * MCOLS, Math.min(MROWS, (k + 1) * RPT) * MCOLS); } finally { chunks.delete(ci); if (keep) chunks.set(ci, keep); WAPPLY = wa; } return m; }
@@ -2061,7 +2061,7 @@ function cleanSaved(sv, ch, r0) { sv.ok = 1; const n = sv.m.length, nat = ch.mas
 /* this run's tunnel, drawn at least a few screen pixels wide so it stays visible however far out you zoom. Points are only stored underground,
    so a gap between two points means the drill flew through the air there: the line breaks instead of crossing the sky */
 function drawTrailLOD(x, fast) { const tr = D && D.trail; if (!tr || tr.length < 4) return; const sw = Math.max(TR * 2, 3.2 / Math.max(1e-4, GV.sy || GV.s || 1));
-  x.save(); if (fast) x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); if (FARON) { x.restore(); return; } x.strokeStyle = 'rgba(22,13,9,0.88)'; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); let pen = false, px0 = 0, py0 = 0;
+  x.save(); if (fast) x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); if (FARON) { x.restore(); return; } x.strokeStyle = 'rgba(28,14,8,0.62)'; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); let pen = false, px0 = 0, py0 = 0;
   for (let i = 0; i < tr.length; i += 2) { const wx = tr[i], wy = tr[i + 1]; const gap = i > 0 && (Math.abs(wx - px0) * kAt(wx, wy) + Math.abs(wy - py0) > 260 || isMoon(wx) !== isMoon(px0)); px0 = wx; py0 = wy;
     const q = fast ? W2S(wx, wy) : [wx, wy]; if (!pen || gap) { x.moveTo(q[0], q[1]); pen = true; } else x.lineTo(q[0], q[1]); }
   x.lineWidth = fast ? Math.max(2, TR * 2 * GV.s) : Math.max(TR * 2, 2 / Math.max(1e-4, GV.sy || GV.s || 1)); x.stroke(); x.restore(); }
@@ -2075,7 +2075,7 @@ function farImg(ch, k) { const ver = (ch.lodV || 0) + ':' + (ch.mv || 0); const 
   for (let cc = 0; cc < MCOLS; cc++) { const col = ch.cols[cc], sf = col[0];
     for (let r = 0; r < rn; r++) { const wy = Y0 + (r0 + r) * CELL + 4; if (wy < sf) continue; const dd = wy - sf; const m = dd < col[1] ? top0 : dd < col[2] ? LM[0] : dd < col[3] ? LM[1] : dd < col[4] ? LM[2] : dd < col[6] ? LM[3] : dd < col[7] ? LM[4] : dd < col[8] ? LM[5] : LM[6];
       const rgb = rgbOf((MCOL[m] || MCOL[1])[0]), o = (r * MCOLS + cc) * 4, hole = ch.mask[(r0 + r) * MCOLS + cc]; if (hole) open = 1;
-      if (hole) { d[o] = rgb[0] * 0.14 + 24 * 0.86; d[o + 1] = rgb[1] * 0.14 + 14 * 0.86; d[o + 2] = rgb[2] * 0.14 + 10 * 0.86; } /* as dark as holes look close up under the dark layer, so craters stay as visible when zoomed out */ else { d[o] = rgb[0]; d[o + 1] = rgb[1]; d[o + 2] = rgb[2]; } d[o + 3] = 255; } }
+      if (hole) { const mi = (r0 + r) * MCOLS + cc, M = ch.mask, rim = (cc > 0 && !M[mi - 1]) || (cc < MCOLS - 1 && !M[mi + 1]) || (r0 + r > 0 && !M[mi - MCOLS]) || (r0 + r < MROWS - 1 && !M[mi + MCOLS]), a = rim ? 0.82 : 0.62; d[o] = rgb[0] * (1 - a) + 28 * a; d[o + 1] = rgb[1] * (1 - a) + 14 * a; d[o + 2] = rgb[2] * (1 - a) + 8 * a; } /* exactly the shade of the hole wall close up (ground darkened 62% toward dark brown), with a darker rim like the close-up hole edges */ /* as dark as holes look close up under the dark layer, so craters stay as visible when zoomed out */ else { d[o] = rgb[0]; d[o + 1] = rgb[1]; d[o + 2] = rgb[2]; } d[o + 3] = 255; } }
   x.putImageData(id, 0, 0); c.__v = ++IMGV; (ch.far || (ch.far = []))[k] = { c, v: ver, open }; return open ? c : 0; }
 /* every cell the player opens (drilling, blasts, craters) counts as dug for the far view */
 function pdMark(c) { (c.ch.pd || (c.ch.pd = new Uint8Array(MCOLS * MROWS)))[c.i] = 1; c.ch.lodV = (c.ch.lodV || 0) + 1; }
