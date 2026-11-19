@@ -1589,7 +1589,7 @@ function nuke(x, y) { const sy = surf(x), dep = y - sy, nearSurf = dep < 700, pi
   
   at(0.45, () => SFX.boom(1)); at(0.9, () => SFX.boom(0.8));
   say('KABOOM!', '#fff2a0', true); }
-function showEnd() { if (!endPending || deadT < 0.8) return; const f = endPending; endPending = null; f(); }
+function showEnd() { if (!endPending || deadT < 0.8) return; const f = endPending; endPending = null; guardTaps(); f(); }
 function endRun() { checkMissions(); const m = Math.round(D.maxX / 10), dm = Math.round(S.depth || 0); let nb = false, nd = false;
   if (m > SV.best) { SV.best = best = m; if (MODE === 'free') nb = true; } if (dm > SV.deep) { SV.deep = dm; nd = true; }
   if (MODE === 'daily') { const dn = dayNo(); if (!SV.daily || SV.daily.day !== dn) SV.daily = { day: dn, best: 0, ghost: null }; if (m > SV.daily.best) { SV.daily.best = m; SV.daily.ghost = ghostRec; nb = true; } }
@@ -2650,7 +2650,10 @@ function launchRocket() { const to = (SV.pmax || 0) + 1, svg = rocketSVG(); SV.p
   $('lTxt').innerHTML = `Next stop:<br>${PLANETS[to].n}${to === 3 ? '<small style="display:block;font-size:.45em;margin-top:8px">Upgrade levels 11–15 unlocked!</small>' : ''}`; L.hidden = false; for (const e of L.querySelectorAll('.lstars,.lrk,.ltxt')) { e.style.animation = 'none'; void e.offsetWidth; e.style.animation = ''; }
   try { SFX.mach(3, true); } catch (e) {} buzz([60, 40, 120]); setTimeout(() => { L.hidden = true; renderGoal(); show('ovGoal'); }, 3400); }
 const OVS = ['ovProg', 'ovStart', 'ovEnd', 'ovHow', 'ovShop', 'ovSet', 'ovGoal', 'ovDrills', 'ovWin']; let backTo = 'ovStart';
-function show(id) { for (const o of OVS) $(o).hidden = o !== id; if (id !== 'ovStart') navGuard(); }
+/* the tap that changes a screen must not also press a button on the new screen (the click lands after the screen has changed under the finger) */
+var tapGuard = 0; function guardTaps(ms = 450) { tapGuard = performance.now() + ms; }
+document.addEventListener('click', e => { if (performance.now() < tapGuard) { e.stopPropagation(); e.preventDefault(); } }, true);
+function show(id) { guardTaps(); for (const o of OVS) $(o).hidden = o !== id; if (id !== 'ovStart') navGuard(); }
 /* Android back button / back swipe: keep one history entry while away from the start menu, and step back through the menus when it is popped */
 function navGuard() { try { if (!(history.state && history.state.ds)) history.pushState({ ds: 1 }, ''); } catch (e) {} }
 function navBack() { if (!$('ovLaunch').hidden) { navGuard(); return; } const v = OVS.find(o => !$(o).hidden);
@@ -2865,7 +2868,7 @@ $('bProg').onclick = () => openProg('rank'); $('nRank').onclick = () => openProg
 $('bDType').onclick = () => { SHOPTAB = 'drill'; bpPull = null; openShop('ovStart'); }; $('nNext').onclick = () => { const g = nextGoal(); bpPull = g ? g.u.k : null; if (g) bpSel = g.u.k; openShop('ovStart'); }; $('endNext').onclick = () => { const g = nextGoal(); bpPull = g ? g.u.k : null; if (g) bpSel = g.u.k; openShop('ovEnd'); }; $('endDrills').onclick = () => showDrills();
 /* phones only unlock audio on the END of a tap (pointerup / touchend / click), not on pointerdown – so unlock on all of them */
 ['pointerup', 'touchend', 'click', 'keydown'].forEach(ev => window.addEventListener(ev, () => { const a = audio(); if (a && a.state !== 'running') a.resume(); }, { capture: true, passive: true }));
-{ const it = $('intro'); let done = false; const end = () => { if (done) return; done = true; audio(); it.classList.add('out'); setTimeout(() => it.remove(), 600); }; it.addEventListener('pointerup', end); it.onclick = end; /* the first tap also switches the sound on (phones only allow audio after a real tap), so the menu music starts right away */ setTimeout(() => { if (!done) { const t = document.createElement('div'); t.className = 'tapgo'; t.textContent = SOUND ? 'TAP TO START  ♪' : 'TAP TO START'; it.appendChild(t); } }, REDUCED ? 600 : 2300); }
+{ const it = $('intro'); let done = false; const end = () => { if (done) return; done = true; guardTaps(600); audio(); it.classList.add('out'); setTimeout(() => it.remove(), 600); }; it.addEventListener('pointerup', end); it.onclick = end; /* the first tap also switches the sound on (phones only allow audio after a real tap), so the menu music starts right away */ setTimeout(() => { if (!done) { const t = document.createElement('div'); t.className = 'tapgo'; t.textContent = SOUND ? 'TAP TO START  ♪' : 'TAP TO START'; it.appendChild(t); } }, REDUCED ? 600 : 2300); }
 showMenu();
 try { for (const m of [1, 2, 3, 4, 5, 10, 11, 12, 13, 15, 16, 17]) matTex(m); } catch (e) {}
 window.addEventListener('resize', resize); resize();
