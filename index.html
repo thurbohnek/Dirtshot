@@ -299,6 +299,7 @@ span.nchip { cursor: default; } .nchip .g { color: #ffd84a; } .nchip.nrk { font:
 <div class="ov nv" id="ovDrills" hidden><div class="nscr">
   <div class="ntop"><button class="nback" id="bDrOk" aria-label="Back">‹</button><div class="nttl">Drills</div></div>
   <div class="nsheet"><div class="ncs" id="drTxt" style="font-size:14px"></div>
+  <button class="btn" id="bPlayDr" hidden style="background:linear-gradient(#7dff9a,#2fbf5a);color:#0d3a1a">&#9654; CONTINUE</button>
   <button class="btn" id="bBuyDr">BUY A DRILL</button>
   <button class="nbs nad" id="bAdDr">&#9654; Watch ad · +3 drills</button>
   <button class="nbs" id="bNewW">New world</button></div>
@@ -2844,7 +2845,7 @@ $('bQuit').onclick = () => { paused = false; run = false; endRun(); showMenu(); 
 $('pz').onclick = () => pause();
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
 function drChip() { const n = WLD().drills || 0, c = $('bDrills'); if (!c) return; c.className = 'nchip' + (n ? '' : ' out'); $('sDr').textContent = n; menuSubs(); }
-function showDrills(why) { const w = WLD(), n = w.drills || 0, pr = drillPrice(); $('drTxt').innerHTML = (why ? '<b>' + why + '</b><br>' : '') + `You have <b>${n}</b> drill${n === 1 ? '' : 's'} on ${PL().n}. Every crash costs one – and everything you blew up stays blown up.<br>Bank: ◆ ${fmtG(SV.bank)}`; $('bBuyDr').innerHTML = `BUY A DRILL &middot; ◆ ${fmtG(pr)}`; $('bBuyDr').disabled = SV.bank < pr; $('bNewW').textContent = 'NEW WORLD'; $('bNewW').dataset.arm = ''; show('ovDrills'); }
+function showDrills(why) { const w = WLD(), n = w.drills || 0, pr = drillPrice(); $('drTxt').innerHTML = (why ? '<b>' + why + '</b><br>' : '') + `You have <b>${n}</b> drill${n === 1 ? '' : 's'} on ${PL().n}. Every crash costs one – and everything you blew up stays blown up.<br>Bank: ◆ ${fmtG(SV.bank)}`; $('bBuyDr').innerHTML = `BUY A DRILL &middot; ◆ ${fmtG(pr)}`; $('bBuyDr').disabled = SV.bank < pr; $('bNewW').textContent = 'NEW WORLD'; $('bNewW').dataset.arm = ''; $('bPlayDr').hidden = n <= 0; /* as soon as there is a drill, play straight from here */ show('ovDrills'); }
 async function startFree() { audio(); hold = false; if (WREADY) await WREADY; if ((WLD().drills || 0) <= 0) { showDrills('Out of drills!'); return; } reset(false); }
 $('bGo').onclick = () => startFree();
 $('bDrills').onclick = () => showDrills();
@@ -2853,7 +2854,7 @@ $('bBuyDr').onclick = () => { const pr = drillPrice(), w = WLD(); if (SV.bank < 
 /* placeholder until real ads are added: the button simply grants the 3 drills */
 $('bAdDr').onclick = () => { const w = WLD(); w.drills = (w.drills || 0) + 3; saveSV(); try { SFX.bank(); } catch (e) {} showDrills(); };
 $('bNewW').onclick = async () => { const b = $('bNewW'); if (!b.dataset.arm) { b.dataset.arm = '1'; b.textContent = 'TAP AGAIN: WIPE THIS WORLD?'; return; } b.disabled = true; await worldWipe(); b.disabled = false; showDrills('A fresh world is ready'); };
-$('bDrOk').onclick = () => showMenu();
+$('bDrOk').onclick = () => showMenu(); $('bPlayDr').onclick = () => startFree();
 $('bDaily').onclick = () => { audio(); hold = false; reset(true); };
 $('bAgain').onclick = () => { if (MODE === 'daily') { audio(); hold = false; reset(true); } else startFree(); };
 $('bGoal').onclick = () => { renderGoal(); show('ovGoal'); }; $('bGoalOk').onclick = () => showMenu();
