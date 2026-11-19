@@ -731,7 +731,7 @@ function thrStep(dt) { cruiseK = 0; if (!SLIDE() || D.lying || D.tower) return; 
 function boostStep(dt) { if (!D.boostM) return; if (boostOn && D.boostF > 0) { const th = 1700 + 160 * U('boost'); if (D.air) { D.vx += Math.cos(D.ang) * th * dt; D.vy += Math.sin(D.ang) * th * dt; } else if (!D.lying) D.s += th * 0.55 * dt; else { D.lying = false; D.air = true; D.vx = Math.cos(D.ang) * 400; D.vy = Math.sin(D.ang) * 400 - 200; }
     D.boostF = Math.max(0, D.boostF - dt * (D.air && !(D.atm > 0.03) ? 0.6 : 1)); D.boosting = true; if (thr('bstS', 0.07)) noise({ type: 'bandpass', f0: 380, dur: 0.12, gain: 0.16 }); const c = Math.cos(D.ang), sn = Math.sin(D.ang), kk = kAt(D.x, D.y);
     for (let i = 0; i < 3; i++) parts.push({ k: 'spark', x: D.x - c * 60 / kk, y: D.y - sn * 60, vx: (-c * (700 + rnd() * 500) + (rnd() - 0.5) * 200), vy: -sn * (700 + rnd() * 500) + (rnd() - 0.5) * 200, t: 0, life: 0.35, s: 3, c: rnd() < 0.5 ? '#ffd45a' : '#ff7a2a' }); }
-  else { D.boosting = false; if (!D.air || D.lying) D.boostF = Math.min(D.boostM, D.boostF + dt * 0.12); } }
+  else { D.boosting = false; /* refills on its own, anywhere: a full tank takes ~30 s at level 1, ~6 s at max */ const bl = clamp(((SV.up.boost || 0) - 1) / 14, 0, 1); D.boostF = Math.min(D.boostM, D.boostF + dt * D.boostM * (1 / 30 + (1 / 6 - 1 / 30) * bl)); } }
 // ===== combo chain: tricks build a multiplier, music layers and screen glow; bank it or lose it on a crash
 const CB_LV = [0, 3, 8, 16, 28], CB_M = [1, 2, 3, 5, 8], CB_C = ['#ffffff', '#7df9ff', '#c6ff3d', '#ffb43a', '#ff5ad8'], CB_T = 4;
 let CB = { p: 0, lv: 0, t: 0, pulse: 0, red: 0, bank: 0 }, FLY = [], POP = [], plN = 0, plT = -9;
