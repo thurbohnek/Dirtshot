@@ -104,7 +104,7 @@ body { background: #8fd3ff; overflow: hidden; touch-action: none; -webkit-user-s
 .bpcap { padding: 6px 10px 8px; text-align: left; font: 700 12px/1.35 var(--f-b); color: #cfe6ff; border-top: 1px solid rgba(200,230,255,.35); } .bpcap b { font: 400 16px var(--f-d); color: #ffd25a; letter-spacing: .5px; } .bpcap span { font: 900 11px var(--f-b); color: #9fc4ee; } .bpcap .now { color: #fff; margin-top: 3px; } .bpcap .nx { color: #7dff9a; }
 .up[data-sel] { cursor: pointer; } .pvb { grid-column: 1; justify-self: start; margin-top: 3px; font: 900 11px var(--f-b); letter-spacing: .5px; padding: 4px 10px; border-radius: 9px; background: #2b3a6a; color: #cfe6ff; cursor: pointer; } .pvb.play { background: #ffb02e; color: #3a2414; } .up.upsel { outline: 3px solid #ffb02e; outline-offset: -1px; }
 #ovShop .shop { max-height: 21vh; }
-#cargo { font: 900 11px/1.25 var(--f-b); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.7); margin-top: 3px; } #cargo:empty { display: none; } #cargo i { font-style: normal; } #cargo .up { all: unset; color: #c6ff3d; animation: cgp .8s ease-in-out infinite alternate; } @keyframes cgp { to { opacity: .45; } }
+#cargo { position: fixed; right: 12px; top: calc(env(safe-area-inset-top, 0px) + 162px); max-width: 60vw; text-align: right; z-index: 29; pointer-events: none; font: 900 11px/1.35 var(--f-b); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.8); } /* right-hand side, under the combo meter */ #cargo:empty { display: none; } #cargo i { font-style: normal; } #cargo .up { all: unset; color: #c6ff3d; animation: cgp .8s ease-in-out infinite alternate; } @keyframes cgp { to { opacity: .45; } }
 .bpbg .card { gap: 8px; } .bpbg .logo { font-size: clamp(46px, 13vw, 64px); }
 .bpwrap.menu .bp { aspect-ratio: auto !important; height: clamp(120px, 21vh, 175px); }
 canvas.bp3 { display: block; width: 100%; cursor: grab; } canvas.menu3 { height: clamp(140px, 24vh, 210px); } canvas.ws3 { height: clamp(280px, 50vh, 560px); } #ovShop .card { max-width: min(560px, 100vw); padding-left: 10px; padding-right: 10px; } #ovShop .logo { font-size: 34px !important; margin: 0; } #ovShop .bpcap { padding: 5px 9px 6px; } canvas.menu3 { cursor: pointer; } .bptip { font: 900 10.5px var(--f-b); color: #ffd25a; letter-spacing: .4px; margin-bottom: 2px; } .bpbtns { float: right; display: flex; flex-direction: column; gap: 5px; margin-left: 8px; } .bpbtns button { font: 900 11.5px var(--f-b); padding: 6px 10px; border-radius: 9px; border: 0; } .bpup { background: #ffb02e; color: #3a2414; box-shadow: 0 3px 0 #b86a10; } .bpup:disabled { opacity: .45; box-shadow: none; } .bpback { background: #2b4a8a; color: #cfe6ff; }
@@ -1067,10 +1067,10 @@ const SFX = {
   gem(k) { if (k === 0 && !thr('gem0', 0.18)) return; [0, 7, 12].forEach((s, i) => tone({ type: 'triangle', f0: (1047 + k * 200) * Math.pow(2, s / 12), dur: 0.14, gain: 0.07, delay: i * 0.04 })); },
   gas() { noise({ type: 'bandpass', f0: 900, f1: 200, dur: 0.9, gain: 0.08 }); },
   splash() { noise({ type: 'lowpass', f0: 1500, f1: 300, dur: 0.4, gain: 0.25 }); },
-  clang() { /* a dull, soft bump instead of the old harsh square + hiss */ tone({ f0: 150, f1: 70, dur: 0.18, gain: 0.32 }); noise({ type: 'lowpass', f0: 700, f1: 200, dur: 0.14, gain: 0.16 }); },
+  clang() { /* a soft, clean bump: no noise at all (any noise burst read as a crunch) */ tone({ f0: 140, f1: 70, dur: 0.16, gain: 0.3 }); },
   flip(n) { noise({ type: 'bandpass', f0: 400, f1: 2400, dur: 0.25, gain: 0.18 }); tone({ type: 'triangle', f0: 660 * Math.pow(1.12, n), f1: 1320 * Math.pow(1.12, n), dur: 0.2, gain: 0.08 }); },
   thump(k) { tone({ f0: 90, f1: 30, dur: 0.35, gain: 0.35 + 0.3 * clamp(k, 0, 1) }); noise({ f0: 600, f1: 80, dur: 0.3, gain: 0.25 }); },
-  thunk() { tone({ f0: 110, f1: 48, dur: 0.28, gain: 0.42 }); noise({ type: 'lowpass', f0: 500, f1: 120, dur: 0.22, gain: 0.2 }); },
+  thunk() { tone({ f0: 105, f1: 46, dur: 0.26, gain: 0.42 }); },
   sonic(under) { if (under) { noise({ f0: 700, f1: 50, dur: 1.4, gain: 1 }); tone({ f0: 90, f1: 30, dur: 1.2, gain: 0.8 }); return; } noise({ type: 'bandpass', f0: 900, dur: 0.09, gain: 0.9 }); noise({ type: 'bandpass', f0: 800, dur: 0.09, gain: 0.8, delay: 0.12 }); tone({ f0: 70, f1: 30, dur: 0.8, gain: 0.7 }); noise({ f0: 2500, f1: 80, dur: 0.9, gain: 0.5 }); },
   nuke() { noise({ f0: 900, f1: 45, dur: 5.5, gain: 1.2 }); noise({ f0: 320, f1: 35, dur: 6, gain: 1, delay: 0.25 }); tone({ f0: 95, f1: 30, dur: 4, gain: 1 }); tone({ type: 'triangle', f0: 140, f1: 42, dur: 3, gain: 0.45 }); return; tone({ type: 'triangle', f0: 55, f1: 28, dur: 2.5, gain: 0.5, delay: 0.05 }); noise({ f0: 6000, f1: 60, dur: 3.5, gain: 0.9 }); noise({ type: 'bandpass', f0: 300, f1: 80, dur: 2.5, gain: 0.5, delay: 0.25 }); },
   warn(n) { for (let i = 0; i < (n || 3); i++) { tone({ type: 'square', f0: 1320, dur: 0.09, gain: 0.07, delay: i * 0.2 }); tone({ type: 'square', f0: 990, dur: 0.09, gain: 0.05, delay: i * 0.2 + 0.1 }); } },
@@ -1982,7 +1982,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v234';
+const VER = 'v235';
 /* ================= ANONYMOUS PLAY STATS (Supabase) =================
    A random player id (no name, no account) and short events: session start, a heartbeat each minute (play time, fps),
    one row per run, upgrades bought, progress snapshots, tutorial and errors. Sent in small batches; off in automated
