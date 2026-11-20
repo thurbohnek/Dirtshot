@@ -500,8 +500,8 @@ function getChunk(ci) { let ch = chunks.get(ci); if (ch) return ch; const cg0 = 
 function getChunk0(ci) { let ch; const x0 = ci * CW, F = genFeatures(ci); if (WAPPLY) { const wd = WSF.get(ci); if (wd) featApply(F, wd); } const NB = [genFeatures(ci - 1), F, genFeatures(ci + 1)];
   const cols = []; for (let cc = 0; cc < MCOLS; cc++) { const wx = x0 + cc * CELL + 4; cols.push([surf(wx), B1(wx), B2(wx), B3(wx), B4(wx), bed(wx), B5(wx), B6(wx), B7(wx)]); }
   ch = { ci, x0, F, NB, cols, bio: F.bio, mtn: !isMoon(x0) && surf(x0 + CW / 2) < -480, LM: LAYM[isMoon(x0) ? 2 : 1], mask: new Uint8Array(MCOLS * MROWS), cm: new Uint8Array(MCOLS * MROWS), band: new Uint8Array(NT), tiles: new Array(NT) }; chunks.set(ci, ch); return ch; }
-/* only the ground the tower stands on (its own column, the top ~25 m) starts clean each run; older holes below and around it stay. Before, everything within 1000 sideways and 300 m down was refilled */
-const towerPad = (ci, k) => Math.abs(ci * CW + CW / 2) < 300 && Y0 + (k + 1) * RPT * CELL <= 260 && !(ci * CW > MCI * CW / 2);
+/* old holes right around the tower (1000 sideways, down to ~300 m) are not loaded: every run starts from a clean launch site */
+const towerPad = (ci, k) => Math.abs(ci * CW + CW / 2) < 1000 && k * RPT * CELL + Y0 < 3000;
 function ensureBand(ch, k) { if (k < 0 || k >= NT || ch.band[k]) return; ch.band[k] = 1; const r0 = k * RPT, r1 = Math.min(MROWS, r0 + RPT), yA = Y0 + r0 * CELL, yB = Y0 + r1 * CELL, mid = ch.x0 + CW / 2;
   const lks = lakesNear(mid).filter(L => L.y + L.ry > yA && L.y - L.dh * 1.2 < yB && Math.abs(L.x - mid) < L.rx * 1.1 + CW), near = [], caves = [], shs = []; for (const FF of ch.NB) { for (const sh of FF.shafts) if (sh.xb > ch.x0 - 30 && sh.xa < ch.x0 + CW + 30) shs.push(sh); for (const e of FF.sand || []) if (Math.abs(e.x - mid) < CW / 2 + e.rx + 8 && e.y + e.rx > yA && e.y - e.rx < yB) near.push([e, SAND]); for (const e of FF.coal) if (Math.abs(e.x - mid) < CW / 2 + e.rx + 8 && e.y + e.rx > yA && e.y - e.rx < yB) near.push([e, COAL]);
   }
@@ -1982,7 +1982,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v233';
+const VER = 'v234';
 /* ================= ANONYMOUS PLAY STATS (Supabase) =================
    A random player id (no name, no account) and short events: session start, a heartbeat each minute (play time, fps),
    one row per run, upgrades bought, progress snapshots, tutorial and errors. Sent in small batches; off in automated
