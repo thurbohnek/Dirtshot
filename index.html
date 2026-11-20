@@ -1062,10 +1062,10 @@ const SFX = {
   gem(k) { if (k === 0 && !thr('gem0', 0.18)) return; [0, 7, 12].forEach((s, i) => tone({ type: 'triangle', f0: (1047 + k * 200) * Math.pow(2, s / 12), dur: 0.14, gain: 0.07, delay: i * 0.04 })); },
   gas() { noise({ type: 'bandpass', f0: 900, f1: 200, dur: 0.9, gain: 0.08 }); },
   splash() { noise({ type: 'lowpass', f0: 1500, f1: 300, dur: 0.4, gain: 0.25 }); },
-  clang() { tone({ type: 'square', f0: 260, f1: 120, dur: 0.2, gain: 0.12 }); noise({ type: 'highpass', f0: 3000, dur: 0.12, gain: 0.15 }); },
+  clang() { /* a dull, soft bump instead of the old harsh square + hiss */ tone({ f0: 150, f1: 70, dur: 0.18, gain: 0.32 }); noise({ type: 'lowpass', f0: 700, f1: 200, dur: 0.14, gain: 0.16 }); },
   flip(n) { noise({ type: 'bandpass', f0: 400, f1: 2400, dur: 0.25, gain: 0.18 }); tone({ type: 'triangle', f0: 660 * Math.pow(1.12, n), f1: 1320 * Math.pow(1.12, n), dur: 0.2, gain: 0.08 }); },
   thump(k) { tone({ f0: 90, f1: 30, dur: 0.35, gain: 0.35 + 0.3 * clamp(k, 0, 1) }); noise({ f0: 600, f1: 80, dur: 0.3, gain: 0.25 }); },
-  thunk() { tone({ f0: 120, f1: 50, dur: 0.3, gain: 0.45 }); tone({ type: 'square', f0: 180, f1: 90, dur: 0.12, gain: 0.12 }); noise({ f0: 900, f1: 120, dur: 0.25, gain: 0.3 }); },
+  thunk() { tone({ f0: 110, f1: 48, dur: 0.28, gain: 0.42 }); noise({ type: 'lowpass', f0: 500, f1: 120, dur: 0.22, gain: 0.2 }); },
   sonic(under) { if (under) { noise({ f0: 700, f1: 50, dur: 1.4, gain: 1 }); tone({ f0: 90, f1: 30, dur: 1.2, gain: 0.8 }); return; } noise({ type: 'bandpass', f0: 900, dur: 0.09, gain: 0.9 }); noise({ type: 'bandpass', f0: 800, dur: 0.09, gain: 0.8, delay: 0.12 }); tone({ f0: 70, f1: 30, dur: 0.8, gain: 0.7 }); noise({ f0: 2500, f1: 80, dur: 0.9, gain: 0.5 }); },
   nuke() { noise({ f0: 900, f1: 45, dur: 5.5, gain: 1.2 }); noise({ f0: 320, f1: 35, dur: 6, gain: 1, delay: 0.25 }); tone({ f0: 95, f1: 30, dur: 4, gain: 1 }); tone({ type: 'triangle', f0: 140, f1: 42, dur: 3, gain: 0.45 }); return; tone({ type: 'triangle', f0: 55, f1: 28, dur: 2.5, gain: 0.5, delay: 0.05 }); noise({ f0: 6000, f1: 60, dur: 3.5, gain: 0.9 }); noise({ type: 'bandpass', f0: 300, f1: 80, dur: 2.5, gain: 0.5, delay: 0.25 }); },
   warn(n) { for (let i = 0; i < (n || 3); i++) { tone({ type: 'square', f0: 1320, dur: 0.09, gain: 0.07, delay: i * 0.2 }); tone({ type: 'square', f0: 990, dur: 0.09, gain: 0.05, delay: i * 0.2 + 0.1 }); } },
@@ -1977,7 +1977,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v229';
+const VER = 'v230';
 /* ================= ANONYMOUS PLAY STATS (Supabase) =================
    A random player id (no name, no account) and short events: session start, a heartbeat each minute (play time, fps),
    one row per run, upgrades bought, progress snapshots, tutorial and errors. Sent in small batches; off in automated
