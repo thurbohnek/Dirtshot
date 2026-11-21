@@ -1763,9 +1763,58 @@ function coneBit(x, spin, o) { o = o || {}; const X0 = -7, X1 = 30, h = o.h || 1
   const sh = x.createLinearGradient(0, -h, 0, h); sh.addColorStop(0, 'rgba(255,255,255,0.25)'); sh.addColorStop(0.3, 'rgba(255,255,255,0)'); sh.addColorStop(0.75, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,0.35)'); x.fillStyle = sh; x.fillRect(X0, -h, X1 - X0, 2 * h); x.restore();
   teeth(false);
   x.fillStyle = '#f2f5f9'; x.beginPath(); x.moveTo(X1 - 6, -2.4); x.lineTo(X1 + 1.5, 0); x.lineTo(X1 - 6, 2.4); x.closePath(); x.fill(); }
+/* spiral step cone: ONE continuous step winds round the cone from the collar to the tip (like a thread), so the outline is a saw edge
+   that rides along as it turns. Wide flutes cut across it; the cutters are where a flute's leading edge meets the step - fixed spots that turn with the bit. */
+function threadBit(x, spin, o) { o = o || {}; const X0 = -7, X1 = 29, L = X1 - X0, h = o.h || 16, P = o.pitch || 3.2, k = TAU / P, fl = o.flutes === undefined ? 2 : o.flutes, kf = TAU * (o.turns || 0.7) / L, W = 0.8, d = o.depth || 1.6;
+  const R = px => Math.max(0.6, (h - d) * (1 - (px - X0) / L) + 0.6), sp = spin * TAU, ph = px => k * (px - X0) + sp;
+  const saw = t => { t = ((t % 1) + 1) % 1; return t < 0.97 ? t / 0.97 : (1 - t) / 0.03; }; // ramp up round the turn, sharp drop = the step face (at t = 0, where the riser line is) // slow ramp up, sharp drop = a step
+  const B = o.blade || 0, fin = t => { t = ((t % 1) + 1) % 1; return t > 0.8 ? Math.pow((t - 0.8) / 0.2, 2) : 0; /* the blade leans back along the step and drops sharp at its cutting face */ }; /* a thin blade standing on the step edge */
+  const prof = (px, side) => { const t = (ph(px) + (side < 0 ? Math.PI : 0)) / TAU; return R(px) + d * saw(t) + B * Math.min(1, 0.35 + 0.65 * R(px) / h) * fin(t); };
+  const N = 700; x.beginPath(); for (let i = 0; i <= N; i++) { const px = X0 + L * i / N; x.lineTo(px, -prof(px, -1)); } for (let i = N; i >= 0; i--) { const px = X0 + L * i / N; x.lineTo(px, prof(px, 1)); } x.closePath();
+  const g = x.createLinearGradient(0, -h, 0, h); g.addColorStop(0, '#fbfcfe'); g.addColorStop(0.2, '#dde2ea'); g.addColorStop(0.55, '#a3acbb'); g.addColorStop(0.85, '#626b7b'); g.addColorStop(1, '#3d434f'); x.fillStyle = g; x.fill(); x.save(); x.clip();
+  // the step (and the blade standing on it) on the front face: a ribbon from the step edge out to the blade tip, shadow below
+  const Bf = px => (o.blade || 0) * Math.min(1, 0.35 + 0.65 * R(px) / h);
+  for (let t = -1; t < L / P + 2; t++) { const pts = []; for (let i = 0; i <= 90; i++) { const p0 = t * TAU + (i / 90) * Math.PI; const px = X0 + (p0 - sp) / k; if (px < X0 - 1 || px > X1 + 1) continue; const a = ((p0 % TAU) + TAU) % TAU, c = Math.cos(a); pts.push([px, (R(px) + d) * c, (R(px) + d + Bf(px)) * c]); }
+    if (pts.length < 2) continue; x.lineWidth = 1.4; x.strokeStyle = 'rgba(40,44,56,0.55)'; x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(p[0] - 0.7, p[1]) : x.moveTo(p[0] - 0.7, p[1])); x.stroke();
+    if (o.blade) { x.fillStyle = 'rgba(246,248,252,1)'; x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); for (let i = pts.length - 1; i >= 0; i--) x.lineTo(pts[i][0] + 0.35, pts[i][2]); x.closePath(); x.fill(); x.strokeStyle = 'rgba(40,44,56,0.85)'; x.lineWidth = 0.45; x.stroke(); }
+    else { x.lineWidth = 0.6; x.strokeStyle = 'rgba(255,255,255,0.95)'; x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.stroke(); } }
+  // flutes
+  for (let f = 0; f < fl; f++) { const off = f * TAU / fl, A = [], B = []; for (let i = 0; i <= 60; i++) { const px = X0 + L * i / 60, r = R(px) + d * 0.5, cl = a => Math.max(0, Math.min(Math.PI, ((a % TAU) + TAU) % TAU)); const p = kf * (px - X0) + sp + off; A.push([px, r * Math.cos(cl(p))]); B.push([px, r * Math.cos(cl(p - W))]); }
+    x.beginPath(); A.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); for (let i = 60; i >= 0; i--) x.lineTo(B[i][0], B[i][1]); x.closePath(); const gg = x.createLinearGradient(0, -h, 0, h); gg.addColorStop(0, '#eef1f5'); gg.addColorStop(0.5, '#b9c0cb'); gg.addColorStop(1, '#6a7381'); x.fillStyle = gg; x.fill();
+    x.strokeStyle = 'rgba(30,34,44,0.55)'; x.lineWidth = 0.6; x.beginPath(); B.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.stroke(); x.strokeStyle = 'rgba(255,255,255,0.95)'; x.lineWidth = 0.7; x.beginPath(); A.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.stroke(); }
+  x.restore();
+  // cutters: where each flute's leading edge crosses the step (k x = kf x + off + 2πm, fixed on the bit)
+  if (fl) for (let f = 0; f < fl; f++) { const off = f * TAU / fl; for (let m = -2; m < 30; m++) { const px = X0 + (off + TAU * m) / (k - kf); if (px < X0 + 0.5 || px > X1 - 1.5) continue; const p = kf * (px - X0) + sp + off, s = Math.sin(p), c = Math.cos(p), vis = Math.max(0, Math.min(1, (s + 0.1) / 0.3)); if (vis <= 0) continue;
+      const r = R(px) + d, y = r * c, sz = 1.1 + 1.2 * (R(px) / h), dy = -s * sz * 1.3 + c * sz * 0.7; x.globalAlpha = vis; x.fillStyle = '#2b2f38'; x.beginPath(); x.moveTo(px - sz, y); x.lineTo(px + 0.3, y + dy); x.lineTo(px + 0.4, y); x.closePath(); x.fill(); x.strokeStyle = 'rgba(240,244,250,0.9)'; x.lineWidth = 0.35; x.stroke(); } } x.globalAlpha = 1;
+  /* teeth on the step's edge: fixed spots on the bit (every 1/7 turn), so they ride round with it; each points the way it is moving, and out where it is on the outline */
+  /* teeth: carbide inserts brazed onto the blade's tip. Each sits at a fixed spot on the spiral (turns with the bit); its seat follows the
+     blade's edge, it leans the way that bit of blade is moving and stands out of the outline at the sides. Seen face-on in front, side-on at the edges. */
+  if (o.teeth) { const dx = P * 0.381966 * (3 / o.teeth); /* golden-angle spacing: spread evenly round the bit, never in rows */ const list = [];
+    for (let xb = X0 + dx * 0.6; xb < X1 - 1.6; xb += dx) { const th = k * (xb - X0) + sp + 0.22, s = Math.sin(th), c = Math.cos(th); const vis = Math.max(0, Math.min(1, (s + 0.3) / 0.3)); if (vis <= 0) continue;
+      const rT = R(xb) + d + 0.75 * Bf(xb), y = Math.sign(c) * Math.min(Math.abs(rT * c), prof(xb, c < 0 ? -1 : 1) - 0.1); list.push({ xb, s, c, vis, rT, y }); }
+    list.sort((a, b) => a.s - b.s);
+    for (const t of list) { const { xb, s, c, vis, rT, y } = t, sz = (o.tsz || 1) * (0.9 + 1.5 * (rT / h));
+      let ex = 1 / k, ey = -rT * s; const el = Math.hypot(ex, ey) || 1; ex /= el; ey /= el; // along the edge
+      const mv = -s, out = c; // screen motion (up/down) and outward share
+      let nx = -ey, ny = ex; if (nx < 0) { nx = -nx; ny = -ny; } /* edge normal, toward the tip side */ const ac = Math.abs(c); let ux = nx * (1 - ac) * 0.9, uy = out * 0.9 + ny * (1 - ac) * 0.9 + mv * 0.35; const ulen = Math.hypot(ux, uy) || 1; ux /= ulen; uy /= ulen; // which way the tip stands
+      const face = Math.max(0, s) * (1 - Math.abs(c)); // how face-on we see it
+      const H = sz * 1.7, Wd = sz * 1.05, hook = mv * 0.45 * sz;
+      const b0x = xb - ex * Wd, b0y = y - ey * Wd, b1x = xb + ex * Wd, b1y = y + ey * Wd, tx = xb + ux * H + ex * hook * 0.4, ty = y + uy * H + hook * 0.15;
+      x.globalAlpha = vis;
+      // shadow on the blade
+      x.fillStyle = 'rgba(20,22,30,0.35)'; x.beginPath(); x.moveTo(b0x + 0.3, b0y + 0.4); x.lineTo(tx + 0.4, ty + 0.5); x.lineTo(b1x + 0.3, b1y + 0.4); x.closePath(); x.fill();
+      // insert body: dark carbide
+      x.fillStyle = '#262a33'; x.beginPath(); x.moveTo(b0x, b0y); x.lineTo(tx, ty); x.lineTo(b1x, b1y); x.closePath(); x.fill(); x.strokeStyle = '#15171c'; x.lineWidth = 0.3; x.stroke();
+      // ground cutting face: lighter steel-grey half
+      x.fillStyle = '#7c8494'; x.beginPath(); x.moveTo(xb, y); x.lineTo(tx, ty); x.lineTo(b1x, b1y); x.closePath(); x.fill();
+      // bright edge glint + braze seat
+      x.strokeStyle = 'rgba(255,255,255,0.9)'; x.lineWidth = 0.4; x.beginPath(); x.moveTo(b1x, b1y); x.lineTo(tx, ty); x.stroke();
+      }
+    x.globalAlpha = 1; }
+  x.fillStyle = '#eef1f6'; x.beginPath(); x.moveTo(X1 - 0.5, -2.2); x.lineTo(X1 + 4, 0); x.lineTo(X1 - 0.5, 2.2); x.closePath(); x.fill(); }
 const LOOKBIT = {
-  borer(x, spin) { coneBit(x, spin, { starts: 4, pitch: 20 }); }, /* cone with 4 spiral cutting edges, teeth on the edges */
-  metal(x, spin) { coneBit(x, spin, { starts: 4, pitch: 20, h: 15.5 }); },
+  borer(x, spin) { threadBit(x, spin, { flutes: 0, teeth: 3, pitch: 4.4, blade: 3.6, tsz: 1.05 }); }, /* spiral step cone with a toothed blade on its edge */
+  metal(x, spin) { threadBit(x, spin, { flutes: 0, teeth: 3, pitch: 4.4, blade: 3.6, tsz: 1.05, h: 15.5 }); },
   rig(x, spin) { for (let r = 0; r < 3; r++) { const x0 = -5 + r * 10, h = 15.5 - r * 5, x1 = x0 + 9; x.fillStyle = lkMetal(x, -h, h, ['#f6f8fb', '#cfd6e0', '#95a0b1', '#5d6676', '#373d49']); x.beginPath(); x.moveTo(x0, -h); x.lineTo(x1, -h + 2.2); x.lineTo(x1, h - 2.2); x.lineTo(x0, h); x.closePath(); x.fill();
       /* teeth on the ring's front face, between the ring and the next smaller one */ x.fillStyle = '#2b2f38'; const hn = r < 2 ? 15.5 - (r + 1) * 5 : 0, n = 3 - r; for (let i = 0; i < n * 2; i++) { const s = i < n ? -1 : 1, j = i % n, yy = s * (hn + 1.2 + ((j + spin * 0.9) % n) / n * Math.max(1, h - 2.2 - hn - 2.4)); x.beginPath(); x.moveTo(x1, yy - 1.5); x.lineTo(x1 + 2.6, yy); x.lineTo(x1, yy + 1.5); x.closePath(); x.fill(); } }
     x.fillStyle = lkMetal(x, -5, 5, ['#ffffff', '#e1e6ee', '#a8b1bf', '#6c7586', '#3f4652']); x.beginPath(); x.moveTo(25, -5.5); x.lineTo(32, 0); x.lineTo(25, 5.5); x.closePath(); x.fill(); } };
@@ -2060,7 +2109,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v240';
+const VER = 'v241';
 /* ================= ANONYMOUS PLAY STATS (Supabase) =================
    A random player id (no name, no account) and short events: session start, a heartbeat each minute (play time, fps),
    one row per run, upgrades bought, progress snapshots, tutorial and errors. Sent in small batches; off in automated
