@@ -1062,7 +1062,7 @@ const SFX = {
   pling(i) { const P = [0, 2, 4, 7, 9], st = P[i % 5] + 12 * Math.min(2, Math.floor(i / 5)), f = 784 * Math.pow(2, st / 12); tone({ type: 'triangle', f0: f, dur: 0.16, gain: 0.075 }); tone({ type: 'sine', f0: f * 2, dur: 0.1, gain: 0.025 }); },
   lvlUp(l) { [0, 4, 7, 12].forEach((s2, i) => tone({ type: 'triangle', f0: 440 * Math.pow(2, (s2 + l * 2) / 12), dur: 0.12, gain: 0.08, delay: i * 0.05 })); noise({ type: 'highpass', f0: 5000, dur: 0.25, gain: 0.08 }); },
   bank() { for (let i = 0; i < 6; i++) tone({ type: 'triangle', f0: 1046 * Math.pow(2, [0, 4, 7, 12, 16, 19][i] / 12), dur: 0.14, gain: 0.07, delay: i * 0.055 }); },
-  shatter() { noise({ type: 'highpass', f0: 2500, f1: 7000, dur: 0.4, gain: 0.35 }); for (let i = 0; i < 7; i++) tone({ type: 'sine', f0: 2200 + Math.random() * 3800, dur: 0.08 + Math.random() * 0.2, gain: 0.04, delay: Math.random() * 0.25 }); tone({ type: 'triangle', f0: 330, f1: 110, dur: 0.5, gain: 0.08 }); },
+  shatter() { /* combo lost: a soft falling 'womp' (was breaking glass) */ tone({ type: 'triangle', f0: 392, f1: 262, dur: 0.16, gain: 0.12 }); tone({ type: 'triangle', f0: 262, f1: 150, dur: 0.3, gain: 0.12, delay: 0.14 }); },
   mach(n, under) { SFX.sonic(under); tone({ f0: 60, f1: 22, dur: 1.6, gain: 0.9, delay: 0.05 }); noise({ f0: 1800, f1: 60, dur: 1.4, gain: 0.6, delay: 0.1 }); if (n >= 3) { noise({ type: 'bandpass', f0: 900, dur: 0.1, gain: 0.9, delay: 0.24 }); tone({ f0: 45, f1: 18, dur: 2.2, gain: 0.9, delay: 0.25 }); } },
   gem(k) { if (k === 0 && !thr('gem0', 0.18)) return; [0, 7, 12].forEach((s, i) => tone({ type: 'triangle', f0: (1047 + k * 200) * Math.pow(2, s / 12), dur: 0.14, gain: 0.07, delay: i * 0.04 })); },
   gas() { noise({ type: 'bandpass', f0: 900, f1: 200, dur: 0.9, gain: 0.08 }); },
@@ -1982,7 +1982,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v235';
+const VER = 'v236';
 /* ================= ANONYMOUS PLAY STATS (Supabase) =================
    A random player id (no name, no account) and short events: session start, a heartbeat each minute (play time, fps),
    one row per run, upgrades bought, progress snapshots, tutorial and errors. Sent in small batches; off in automated
