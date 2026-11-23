@@ -2146,7 +2146,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v254';
+const VER = 'v255';
 /* ================= ANONYMOUS PLAY STATS (Supabase) =================
    A random player id (no name, no account) and short events: session start, a heartbeat each minute (play time, fps),
    one row per run, upgrades bought, progress snapshots, tutorial and errors. Sent in small batches; off in automated
@@ -2380,8 +2380,7 @@ function dugColImg(ci, ch, ks) { const sv = WSCV.get(ci) || 0, lv = ch && ch.dug
 let SKYC = null, SKYX = null, SKYOK = false, OPENF = 0, MKC = null, MKX = null;
 function skySnap(cvs) { if (!OPENF) { SKYOK = false; return; } if (!SKYC) { SKYC = document.createElement('canvas'); SKYX = SKYC.getContext('2d'); } if (SKYC.width !== cvs.width || SKYC.height !== cvs.height) { SKYC.width = cvs.width; SKYC.height = cvs.height; } SKYX.setTransform(1, 0, 0, 1, 0, 0); SKYX.globalCompositeOperation = 'copy'; SKYX.drawImage(cvs, 0, 0); SKYX.globalCompositeOperation = 'source-over'; SKYOK = true; }
 function drawOpenSky(x, left, right, vtop, vbot) { if (OPENF > 0) OPENF--; const WI = wsbIndex(); let n = 0; const cvs = x.canvas;
-  for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci), k2 = WI.get(ci); if (!k2 && !(ch && ch.dug)) continue; let E = DCOL.get(ci);
-    if (!E) { let ks = k2 || []; if (ch && ch.dug) { const kd = Object.keys(ch.dug); if (kd.length) ks = [...new Set([...ks, ...kd.map(Number)])]; } if (!ks.length) continue; DCOLB = Math.max(DCOLB, 2); E = dugColImg(ci, ch, ks); }
+  for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci), k2 = WI.get(ci); if (!k2 && !(ch && ch.dug)) continue; let ks = k2 || []; if (ch && ch.dug) { const kd = Object.keys(ch.dug); if (kd.length) ks = [...new Set([...ks, ...kd.map(Number)])]; } if (!ks.length) continue; DCOLB = Math.max(DCOLB, 2); const E = dugColImg(ci, ch, ks); /* always ask: it redoes the picture when the column changed (a crater turning see-through) */
     if (!E || !E.oc) continue; OPENF = 30; if (!SKYOK) continue;
     if (!MKC) { MKC = document.createElement('canvas'); MKX = MKC.getContext('2d'); } if (!n) { if (MKC.width !== cvs.width || MKC.height !== cvs.height) { MKC.width = cvs.width; MKC.height = cvs.height; } MKX.setTransform(1, 0, 0, 1, 0, 0); MKX.globalCompositeOperation = 'source-over'; MKX.clearRect(0, 0, MKC.width, MKC.height); MKX.imageSmoothingEnabled = true; }
     for (const pi of E.opcs) { const k0 = E.okmin + pi * 16, k1 = Math.min(E.okmax + 1, k0 + 16), t = Y0 + k0 * TH, b = Y0 + k1 * TH; if (t > vbot || b < vtop) continue; tileImg(MKX, E.oc, ci * CW + CW / 2, t, b - t, (k0 - E.okmin) * RPT, (k1 - k0) * RPT, true); n++; } }
