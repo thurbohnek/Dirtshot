@@ -486,7 +486,7 @@ const isPrim = v => v === null || typeof v === 'number' || typeof v === 'boolean
 function featDiff(F0, F) { let out = null; for (const key in F) { const A = F[key], A0 = F0[key]; if (!Array.isArray(A) || !Array.isArray(A0)) continue; for (let i = 0; i < A.length && i < A0.length; i++) { const o = A[i], o0 = A0[i]; if (!o || typeof o !== 'object' || !o0) continue; let d = null; for (const q in o) { const v = o[q]; if (!isPrim(v) || v === o0[q] || q === 'sp' || q === 't') continue; (d || (d = {}))[q] = v; } if (d) ((out || (out = {}))[key] || (out[key] = {}))[i] = d; } } return out; }
 function featApply(F, d) { for (const key in d) { const A = F[key]; if (!Array.isArray(A)) continue; for (const i in d[key]) if (A[i]) Object.assign(A[i], d[key][i]); } }
 /* one chunk's dug ground and changed features into the save (used by worldSave, and before a chunk is dropped from memory) */
-function chunkSaveTo(ch, puts) { if (ch.dug) for (const k in ch.dug) { const a = k * RPT * MCOLS, b = Math.min(MROWS, (+k + 1) * RPT) * MCOLS; if (a >= b) continue; const v = { m: ch.mask.slice(a, b), c: ch.cm.slice(a, b) }; if (ch.pd) v.p = ch.pd.slice(a, b); WSB.set(ch.ci + ':' + k, v); if (!(ch.ci > MCI / 2 && AMID === 'comet')) puts.push(['#' + (ch.ci > MCI / 2 ? MWID() : WID) + '|b|' + ch.ci + ':' + k, v]); }
+function chunkSaveTo(ch, puts) { if (ch.dug) for (const k in ch.dug) { const a = k * RPT * MCOLS, b = Math.min(MROWS, (+k + 1) * RPT) * MCOLS; if (a >= b) continue; const v = { m: ch.mask.slice(a, b), c: ch.cm.slice(a, b), x: 1 }; if (ch.pd) v.p = ch.pd.slice(a, b); WSB.set(ch.ci + ':' + k, v); if (!(ch.ci > MCI / 2 && AMID === 'comet')) puts.push(['#' + (ch.ci > MCI / 2 ? MWID() : WID) + '|b|' + ch.ci + ':' + k, v]); }
   const d = featDiff(genFeatures(ch.ci), ch.F); if (d && !(ch.ci > MCI / 2 && AMID === 'comet')) { WSF.set(ch.ci, d); puts.push(['#' + (ch.ci > MCI / 2 ? MWID() : WID) + '|f|' + ch.ci, d]); } }
 function chunkDrop(ch) { if (WLIVE && MODE === 'free' && !BENCH && !window.__film && !window.__nuked) { const puts = []; try { chunkSaveTo(ch, puts); if (WDB && puts.length) { const st = WDB.transaction('w', 'readwrite').objectStore('w'); for (const [k, v] of puts) st.put(v, k[0] === '#' ? k.slice(1) : WID + '|' + k); } } catch (e) {} } for (let q = 0; q < NT; q++) freeTile(ch, q); chunks.delete(ch.ci); }
 function worldSave() { if (window.__nuked || !WLIVE || MODE !== 'free' || BENCH || window.__film) return; const puts = [];
@@ -517,7 +517,7 @@ function ensureBand(ch, k) { if (k < 0 || k >= NT || ch.band[k]) return; ch.band
       for (const L of lks) if (inPool(L, wx, wy) || inDome(L, wx, wy)) ch.mask[i] = 1;
       for (const cv of caves) { const dx = wx - cv.x, dy = wy - cv.y, f = caveSh(cv, Math.atan2(dy / cv.ry, dx / cv.rx)); if ((dx * dx) / ((cv.rx * f - 3) ** 2) + (dy * dy) / ((cv.ry * f - 3) ** 2) < 1) ch.mask[i] = 1; } } }
   /* the launch site stays untouched, so the tower always has solid ground (old holes start 300 m down) */
-  if (WAPPLY && !towerPad(ch.ci, k)) { const sv = WSB.get(ch.ci + ':' + k); if (sv) { ch.mask.set(sv.m, r0 * MCOLS); ch.cm.set(sv.c, r0 * MCOLS); if (sv.p) (ch.pd || (ch.pd = new Uint8Array(MCOLS * MROWS))).set(sv.p, r0 * MCOLS); (ch.dug || (ch.dug = {}))[k] = 1; } } }
+  if (WAPPLY && !towerPad(ch.ci, k)) { const sv = WSB.get(ch.ci + ':' + k); if (sv) { if (!sv.x) openMigrate(sv, ch.ci, k); ch.mask.set(sv.m, r0 * MCOLS); ch.cm.set(sv.c, r0 * MCOLS); if (sv.p) (ch.pd || (ch.pd = new Uint8Array(MCOLS * MROWS))).set(sv.p, r0 * MCOLS); (ch.dug || (ch.dug = {}))[k] = 1; } } }
 let tileCount = 0, tilesBuilt = 0, phMiss = 0; const MAXT = 200;
 // ===== launch tower: hold to charge, release to fire straight down the tube
 const TOWER_H = 900;
@@ -2112,7 +2112,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v250';
+const VER = 'v251';
 /* ================= ANONYMOUS PLAY STATS (Supabase) =================
    A random player id (no name, no account) and short events: session start, a heartbeat each minute (play time, fps),
    one row per run, upgrades bought, progress snapshots, tutorial and errors. Sent in small batches; off in automated
@@ -2256,7 +2256,7 @@ function drawLODf(x, left, right, vtop, vbot) { let q0 = performance.now(); cons
   x.strokeStyle = 'rgba(255,255,255,0.18)'; x.lineWidth = 2; x.beginPath(); for (let j = 0; j <= n; j++) { const q = P(us[j], ss[j]); j ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); } x.stroke();
   if (cam.s >= 0.013) { x.fillStyle = 'rgba(28,14,8,0.6)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) for (const cv of cavesOf(ci)) { if (cv.y + cv.ry < vtop || cv.y - cv.ry > vbot || cv.y > bodyR(cv.x) * 0.8) continue; setAff(x, cv.x, cv.y); x.beginPath(); x.ellipse(cv.x, cv.y, cv.rx, cv.ry, 0, 0, TAU); x.fill(); } x.setTransform(dpr, 0, 0, dpr, SHX * dpr, SHY * dpr); } PF.q('lCaves', q0); q0 = performance.now();
   let farOk = false; try { farOk = drawFarTiles(x, left, right, vtop, vbot, true); } catch (e) {} PF.q('lFar', q0); q0 = performance.now(); if (FARWIDE) try { drawDugLOD(x, left, right, vtop, vbot, true, FARON); } catch (e) {} PF.q('lDug', q0); q0 = performance.now();
-  { x.fillStyle = 'rgba(30,16,10,0.92)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci); if (!ch || !ch.polys || (FARON && ch.far)) continue; for (const Pp of ch.polys) { if (Pp.drawnF === frameNo) continue; Pp.drawnF = frameNo; x.beginPath(); Pp.pts.forEach(([a, b], i) => { const q = P(a, b); i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); }); x.closePath(); x.fill(); } } } /* craters stay visible in the far view */ PF.q('lPoly', q0); q0 = performance.now();
+  { x.fillStyle = 'rgba(30,16,10,0.92)'; for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci); if (!ch || !ch.polys || (FARON && ch.far)) continue; for (const Pp of ch.polys) { if (Pp.drawnF === frameNo) continue; Pp.drawnF = frameNo; x.beginPath(); Pp.pts.forEach(([a, b], i) => { const q = P(a, b); i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); }); x.closePath(); x.fill(); } } } /* craters stay visible in the far view */ try { drawOpenSky(x, left, right, vtop, vbot); } catch (e) {} PF.q('lPoly', q0); q0 = performance.now();
   drawTrailLOD(x, true); PF.q('lTrail', q0); }
 // far-away view: the layers as smooth bands (no tiles), plus caves and the drill's own trail
 /* every tunnel ever dug, for the far view: one tiny picture per dug band (32×32 cells), from the live chunk or from the saved world */
@@ -2276,7 +2276,16 @@ function noBlocks(src) { const o = Uint8Array.from(src), m = o;
   for (let i = 0; i < o.length; i++) if (blk[i]) o[i] = 0; return o; }
 let PDB = 0;
 /* saved bands from before blasts and craters were marked: add whatever differs from fresh ground once (a few bands per frame) */
-function svFull(sv, ci, k) { if (sv.q === 2) return true; if (PDB-- <= 0) return !!sv.p; const L = legacyPd(ci, k, sv.m); if (sv.p) for (let i = 0; i < L.length; i++) { if (L[i]) sv.p[i] = 1; } else sv.p = L; sv.q = 2; return true; }
+/* worlds saved before blasted ground was marked (pd = 2): find it once per saved band. Ground the player opened that is far wider than a drill tunnel
+   (a full 9×9 cell square, 72 units; a tunnel is 40) and lies within 400 m of the surface counts as blasted open */
+function openMigrate(v, ci, k) { const m = v.m, p = v.p; if (!m || !p) return; v.x = 1; const W = MCOLS, rn = (m.length / W) | 0, Rr = 4; if (rn < 2 * Rr + 1) return; const W1 = W + 1, S = new Int32Array(W1 * (rn + 1));
+  const sum = (A, r0, c0, r1, c1) => A[(r1 + 1) * W1 + c1 + 1] - A[r0 * W1 + c1 + 1] - A[(r1 + 1) * W1 + c0] + A[r0 * W1 + c0];
+  for (let r = 0; r < rn; r++) for (let c = 0; c < W; c++) { const i = r * W + c; S[(r + 1) * W1 + c + 1] = (m[i] === 1 && p[i] ? 1 : 0) + S[r * W1 + c + 1] + S[(r + 1) * W1 + c] - S[r * W1 + c]; }
+  const E = new Int32Array(W1 * (rn + 1)); let any = 0; const A = (2 * Rr + 1) * (2 * Rr + 1);
+  for (let r = 0; r < rn; r++) for (let c = 0; c < W; c++) { const e = r >= Rr && r < rn - Rr && c >= Rr && c < W - Rr && sum(S, r - Rr, c - Rr, r + Rr, c + Rr) === A ? 1 : 0; if (e) any = 1; E[(r + 1) * W1 + c + 1] = e + E[r * W1 + c + 1] + E[(r + 1) * W1 + c] - E[r * W1 + c]; }
+  if (!any) return; const sf = []; for (let c = 0; c < W; c++) sf.push(surf(ci * CW + c * CELL + 4));
+  for (let r = 0; r < rn; r++) { const wy = Y0 + (k * RPT + r) * CELL + 4; for (let c = 0; c < W; c++) { const i = r * W + c; if (m[i] !== 1 || !p[i] || wy > sf[c] + 4000) continue; if (sum(E, Math.max(0, r - Rr), Math.max(0, c - Rr), Math.min(rn - 1, r + Rr), Math.min(W - 1, c + Rr)) > 0) p[i] = 2; } } }
+function svFull(sv, ci, k) { if (sv.q === 2) return true; if (PDB-- <= 0) return !!sv.p; const L = legacyPd(ci, k, sv.m); if (sv.p) for (let i = 0; i < L.length; i++) { if (L[i] && !sv.p[i]) sv.p[i] = 1; } else sv.p = L; sv.q = 2; return true; }
 /* some worlds were saved while the ground was generated differently: the saved band then holds big solid-edged open areas that are not tunnels.
    Compare with the freshly generated band once, put the ground back where the difference is far wider than any tunnel, and keep the rest */
 function cleanSaved(sv, ch, r0) { sv.ok = 1; const n = sv.m.length, nat = ch.mask.subarray(r0 * MCOLS, r0 * MCOLS + n), ncm = ch.cm.subarray(r0 * MCOLS, r0 * MCOLS + n), d = new Uint8Array(n); let any = 0;
@@ -2323,11 +2332,23 @@ const DCOL = new Map(); let DCOLB = 0;
 function dugColImg(ci, ch, ks) { const sv = WSCV.get(ci) || 0, lv = ch && ch.dug ? (ch.uid || (ch.uid = ++IMGV)) + ':' + (ch.lodV || 0) : '-'; let E = DCOL.get(ci); const now = performance.now();
   if (E && E.sv === sv && (E.lv === lv || now - E.t < 400)) return E; /* live digging redraws this column at most ~2× a second */ if (DCOLB <= 0 && E) return E; if (performance.now() > FARD + 4 && E) return E; DCOLB--;
   let kmin = 1e9, kmax = -1; for (const k of ks) { if (k < kmin) kmin = k; if (k > kmax) kmax = k; } if (kmax < 0) { DCOL.set(ci, E = { c: null, sv, lv, t: now }); return E; }
-  const PB = 4, PW = 8, H = (kmax - kmin + 1) * PB; let c = E && E.c; if (!c) c = document.createElement('canvas'); c.width = PW; c.height = H; const x = c.getContext('2d'); if (!x) return E || null; const id = x.createImageData(PW, H), d = id.data; let any = 0;
+  const PB = 4, PW = 8, H = (kmax - kmin + 1) * PB; let c = E && (E.c || E.c0); if (!c) c = document.createElement('canvas'); c.width = PW; c.height = H; const x = c.getContext('2d'); if (!x) return E || null; const id = x.createImageData(PW, H), d = id.data; let any = 0;
+  let oc = E && E.oc0; if (!oc) oc = document.createElement('canvas'); oc.width = PW; oc.height = H; const ox = oc.getContext('2d'), oid = ox.createImageData(PW, H), od = oid.data; let anyO = 0; const opcs = new Set();
   const sf = []; for (let i = 0; i < PW; i++) sf.push(surf(ci * CW + (i + 0.5) * CW / PW));
-  for (const k of ks) { let m = null; if (ch && ch.dug && ch.dug[k]) m = ch.mask.subarray(k * RPT * MCOLS, Math.min(MROWS, (k + 1) * RPT) * MCOLS); else { if (towerPad(ci, k)) continue; const v = WSB.get(ci + ':' + k); if (v) m = v.m; } if (!m) continue;
-    const y0 = Y0 + k * TH, cx = MCOLS / PW, cy = RPT / PB; for (let py = 0; py < PB; py++) { const wy = y0 + (py + 0.5) * TH / PB; for (let px = 0; px < PW; px++) { if (wy < sf[px] + 10) continue; let n = 0; for (let r = py * cy; r < (py + 1) * cy && !n; r++) for (let q = px * cx; q < (px + 1) * cx; q++) if (m[r * MCOLS + q]) { n = 1; break; } if (!n) continue; const o = (((k - kmin) * PB + py) * PW + px) * 4; d[o] = 28; d[o + 1] = 14; d[o + 2] = 8; d[o + 3] = 158; any = 1; } } }
-  const pcs = new Set(); for (const k of ks) pcs.add(Math.floor((k - kmin) / 16)); x.putImageData(id, 0, 0); E = { c: any ? c : null, sv, lv, t: now, kmin, kmax, pcs }; DCOL.set(ci, E); return E; }
+  for (const k of ks) { let m = null, pd = null; if (ch && ch.dug && ch.dug[k]) { const a = k * RPT * MCOLS, b = Math.min(MROWS, (k + 1) * RPT) * MCOLS; m = ch.mask.subarray(a, b); if (ch.pd) pd = ch.pd.subarray(a, b); } else { if (towerPad(ci, k)) continue; const v = WSB.get(ci + ':' + k); if (v) { if (!v.x) openMigrate(v, ci, k); m = v.m; pd = v.p || null; } } if (!m) continue;
+    const y0 = Y0 + k * TH, cx = MCOLS / PW, cy = RPT / PB; for (let py = 0; py < PB; py++) { const wy = y0 + (py + 0.5) * TH / PB; for (let px = 0; px < PW; px++) { if (wy < sf[px] + 10) continue; let n = 0, op = 0; for (let r = py * cy; r < (py + 1) * cy; r++) for (let q = px * cx; q < (px + 1) * cx; q++) { const i = r * MCOLS + q; if (m[i]) { if (pd && pd[i] === 2 && m[i] === 1) op++; else n = 1; } } const o = (((k - kmin) * PB + py) * PW + px) * 4;
+      if (op * 2 >= cx * cy * 0.5) { od[o + 3] = 255; anyO = 1; opcs.add(Math.floor((k - kmin) / 16)); } else if (n || op) { d[o] = 28; d[o + 1] = 14; d[o + 2] = 8; d[o + 3] = 158; any = 1; } } } }
+  const pcs = new Set(); for (const k of ks) pcs.add(Math.floor((k - kmin) / 16)); x.putImageData(id, 0, 0); if (anyO) ox.putImageData(oid, 0, 0); E = { c: any ? c : null, c0: c, oc: anyO ? oc : null, oc0: oc, sv, lv, t: now, kmin, kmax, pcs, opcs }; DCOL.set(ci, E); return E; }
+/* blasted-open ground in the far view: the sky (copied right after it was drawn) shows through it */
+let SKYC = null, SKYX = null, SKYOK = false, OPENF = 0, MKC = null, MKX = null;
+function skySnap(cvs) { if (!OPENF) { SKYOK = false; return; } if (!SKYC) { SKYC = document.createElement('canvas'); SKYX = SKYC.getContext('2d'); } if (SKYC.width !== cvs.width || SKYC.height !== cvs.height) { SKYC.width = cvs.width; SKYC.height = cvs.height; } SKYX.setTransform(1, 0, 0, 1, 0, 0); SKYX.globalCompositeOperation = 'copy'; SKYX.drawImage(cvs, 0, 0); SKYX.globalCompositeOperation = 'source-over'; SKYOK = true; }
+function drawOpenSky(x, left, right, vtop, vbot) { if (OPENF > 0) OPENF--; const WI = wsbIndex(); let n = 0; const cvs = x.canvas;
+  for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci), k2 = WI.get(ci); if (!k2 && !(ch && ch.dug)) continue; let E = DCOL.get(ci);
+    if (!E) { let ks = k2 || []; if (ch && ch.dug) { const kd = Object.keys(ch.dug); if (kd.length) ks = [...new Set([...ks, ...kd.map(Number)])]; } if (!ks.length) continue; DCOLB = Math.max(DCOLB, 2); E = dugColImg(ci, ch, ks); }
+    if (!E || !E.oc) continue; OPENF = 30; if (!SKYOK) continue;
+    if (!MKC) { MKC = document.createElement('canvas'); MKX = MKC.getContext('2d'); } if (!n) { if (MKC.width !== cvs.width || MKC.height !== cvs.height) { MKC.width = cvs.width; MKC.height = cvs.height; } MKX.setTransform(1, 0, 0, 1, 0, 0); MKX.globalCompositeOperation = 'source-over'; MKX.clearRect(0, 0, MKC.width, MKC.height); MKX.imageSmoothingEnabled = true; }
+    for (const pi of E.opcs) { const k0 = E.kmin + pi * 16, k1 = Math.min(E.kmax + 1, k0 + 16), t = Y0 + k0 * TH, b = Y0 + k1 * TH; if (t > vbot || b < vtop) continue; tileImg(MKX, E.oc, ci * CW + CW / 2, t, b - t, (k0 - E.kmin) * 4, (k1 - k0) * 4, true); n++; } }
+  if (n) { MKX.setTransform(1, 0, 0, 1, 0, 0); MKX.globalCompositeOperation = 'source-in'; MKX.drawImage(SKYC, 0, 0); MKX.globalCompositeOperation = 'source-over'; x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.drawImage(MKC, 0, 0); x.restore(); } }
 function drawDugCols(x, left, right, vtop, vbot, skipLoaded) { const WI = wsbIndex(); DCOLB = 6; const sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = true;
   for (let ci = Math.floor(left / CW); ci <= Math.floor(right / CW); ci++) { const ch = chunks.get(ci); if (skipLoaded && ch && ch.far) continue; const k2 = WI.get(ci); if (!k2 && !(ch && ch.dug)) continue;
     let ks = k2 || []; if (ch && ch.dug) { const kd = Object.keys(ch.dug); if (kd.length) ks = [...new Set([...ks, ...kd.map(Number)])]; } if (!ks.length) continue;
@@ -2416,7 +2437,7 @@ function render() {
   const hsl = Math.abs(surf(cam.x + VW * 0.5 / s) - surf(cam.x - VW * 0.5 / s)) * s / VH; x.globalAlpha = clamp((s - 0.1) / 0.1, 0, 1) * clamp(1 - (hsl - 0.25) / 0.3, 0, 1); for (const [p, col, base, amp] of [[0.15, hc(0), -260, 160], [0.35, hc(1), -150, 120]]) { if (x.globalAlpha < 0.02) break; x.fillStyle = col; x.beginPath(); x.moveTo(0, VH); for (let sx = 0; sx <= VW + 20; sx += 20) { const wx = (sx - VW / 2) / s / 1 + cam.x * p; const hy = base + amp * (vn(wx / 600 + p * 50) - 0.5) * 2 + 40 * Math.sin(wx / 230); const syy = Math.max(VH / 2 + (hy - cam.y * p - 200 * (1 - p)) * s * (0.5 + p), gYh + (hy - 40) * s * (0.5 + p)); x.lineTo(sx, syy); } x.lineTo(VW, VH); x.closePath(); x.fill(); }
   x.globalAlpha = clamp((s - 0.1) / 0.1, 0, 1); for (const c of CLOUDS) { if (x.globalAlpha < 0.02) break; const wx = c.x - cam.x * c.p; const sx = ((wx % 4000) + 4000) % 4000 - 400, sy = VH / 2 + (c.y - cam.y * 0.3) * s; x.fillStyle = PL().cloud || (PL().ash ? 'rgba(74,52,52,0.62)' : 'rgba(255,255,255,0.85)'); for (let k = 0; k < 4; k++) { x.beginPath(); x.ellipse(sx + k * c.s * 0.5, sy + Math.sin(k * 2) * 6, c.s * 0.5, c.s * 0.32, 0, 0, TAU); x.fill(); } }
   x.globalAlpha = 1; }
-  x.globalAlpha = 1; if (PL().wx && !isMoon(cam.x)) drawWx(x, spF, PL().wx); drawSpace(x, spF); PF.t('sky');
+  x.globalAlpha = 1; if (PL().wx && !isMoon(cam.x)) drawWx(x, spF, PL().wx); drawSpace(x, spF); if (!SV.set.flat && SV.set.rend !== 'gl') skySnap(cv); else SKYOK = false; PF.t('sky');
   FAST = !SV.set.flat && SV.set.rend !== 'gl'; SHX = FAST ? shx : 0; SHY = FAST ? shy : 0; const sX = GV.sx, sY = GV.sy;
   if (FAST) { if (Fcv.width > 1) { Fcv.width = Fcv.height = 1; } }
   else { // ---- old engine: the world goes into F (flat), then a WebGL pass bends it round ----
