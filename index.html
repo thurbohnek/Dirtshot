@@ -225,6 +225,19 @@ span.nchip { cursor: default; } .nchip .g { color: #ffd84a; } .nchip.nrk { font:
 .nbs.nad { background: #2e9a3a; color: #fff; box-shadow: 0 4px 0 #1f6a28; }
 .nrow { display: flex; gap: 10px; } .nrow > * { flex: 1; } .nrow[hidden] { display: none; }
 .ngoalc { cursor: pointer; display: flex; flex-direction: column; gap: 5px; } .ngoalc:empty, .ngoalc[hidden] { display: none; }
+/* the main goal on the start menu: build the rocket to reach the next planet */
+.nrkc { cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: linear-gradient(180deg, #1d3a66, #12264a); color: #fff; box-shadow: 0 3px 0 #0b1830; }
+.nrkc[hidden] { display: none; }
+.nrkc svg { flex: none; width: 30px; height: 30px; }
+.nrkc .rt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.nrkc .rt small { font: 900 9.5px var(--f-b); letter-spacing: .14em; text-transform: uppercase; color: #9fd8ff; }
+.nrkc .rt b { font: 800 13px/1.2 var(--f-b); }
+.nrkc .segs { display: flex; gap: 3px; }
+.nrkc .segs i { flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,.2); overflow: hidden; }
+.nrkc .segs i u { display: block; height: 100%; background: #ffb02e; }
+.nrkc .segs i.ok u { background: #7ee05a; }
+.nrkc > em { font-style: normal; font: 900 18px var(--f-b); color: #9fd8ff; }
+.gHow { font: 700 11px/1.3 var(--f-b); color: #cfe6ff; margin: 2px 0 0; }
 .ngoalc .nl { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .nprog { height: 8px; border-radius: 4px; background: #eadccb; overflow: hidden; } .nprog i { display: block; height: 100%; border-radius: 4px; background: #ff9a2e; } .nprog.ok i { background: #2e9a3a; }
 .nok { color: #1f7a2c !important; font-weight: 900; }
@@ -292,6 +305,7 @@ span.nchip { cursor: default; } .nchip .g { color: #ffd84a; } .nchip.nrk { font:
     <div class="nbest"><span>Best <b id="sBest">0 m</b></span><span id="nPlanet"></span><span>Deepest <b id="sDeep">0 m</b></span></div>
     <button class="btn" id="bGo">DRILL!</button>
     <button class="nbs nwide" id="bDaily"><span>Daily run</span><small id="dailyS"></small></button>
+    <button class="ncard nrkc" id="nRk" hidden></button>
     <button class="ncard ngoalc" id="nNext" hidden></button>
     <div class="nnav">
       <button class="nnb" id="bShop"><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5a5 5 0 0 0 6 6l-9 9a2.5 2.5 0 0 1-4-4l9-9a5 5 0 0 0-2-2z"></path></svg>Workshop<span class="ndot" id="shopDot"></span></button>
@@ -401,6 +415,12 @@ function umaxSet() { UMAX = (SV.pmax || 0) >= 3 ? 15 : 10; } umaxSet(); /* level
 const COSTK = (k, l) => nice(UBASE[k] * Math.pow(1.45, l)); const U = k => (SV.up[k] || 0) / 2;
 if (SV.eco !== 2) { SV.eco = 2; if (Object.keys(SV.up).length || SV.bank > 0) SV.ecoMsg = 1; SV.up = {}; SV.bank = 0; saveSV(); }
 const fmtG = n => n.toLocaleString('en-US');
+/* start menu: one card that says what the game is about – collect parts, build the rocket, fly to the next planet */
+function rocketCardHTML() { const icon = '<svg viewBox="0 0 26 26" fill="none" stroke="#ffcf3d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3c4 3 5 8 4 13H9C8 11 9 6 13 3z"></path><path d="M9 16l-3 4h4M17 16l3 4h-4M11 21h4"></path></svg>';
+  if (!canFly()) { const last = (SV.planet || 0) === PLANETS.length - 1; return `${icon}<span class="rt"><small>Final goal</small><b>${last && SV.won ? 'You reached the heart of the Sun!' : 'Dig to the core of the Sun'}</b></span><em>›</em>`; }
+  const mk = MK(), b = rkBuilt(), ps = RP(), nb = ps.filter(p => b[p.k]).length, to = PLANETS[(SV.pmax || 0) + 1].n;
+  const segs = ps.map(p => { let f = 1; if (!b[p.k]) { const r = partReqs(p, mk); f = r.length ? r.reduce((a, [st, n]) => a + Math.min(1, statOf(st) / n), 0) / r.length * 0.9 : 0; } return `<i class="${b[p.k] ? 'ok' : ''}"><u style="width:${Math.round(f * 100)}%"></u></i>`; }).join('');
+  return `${icon}<span class="rt"><small>Next planet: ${to}</small><b>${nb === ps.length ? 'Rocket ready – launch!' : `Build the rocket · ${nb}/${ps.length} parts`}</b><span class="segs">${segs}</span></span><em>›</em>`; }
 function goalCardHTML() { const g = nextGoal(); if (!g) return '<div class="nct" style="font-size:16px">Every upgrade maxed!</div>'; const ok = SV.bank >= g.c, pct = Math.min(1, SV.bank / g.c);
   return `<div class="nl"><span class="nct" style="font-size:16px">Next: ${g.u.n} Lv ${g.l + 1}</span><span class="ncs">◆ ${fmtG(g.c)}</span></div><div class="nprog${ok ? ' ok' : ''}"><i style="width:${Math.round(pct * 100)}%"></i></div><div class="ncs${ok ? ' nok' : ''}">${ok ? 'Ready to buy in the Workshop' : '◆ ' + fmtG(g.c - SV.bank) + ' to go'}</div>`; }
 function nextGoal() { let best = null; for (const u of UPS) { const l = SV.up[u.k] || 0; if (l >= UMAX) continue; const c = COSTK(u.k, l); if (!best || c < best.c) best = { u, l, c }; } return best; }
@@ -2179,7 +2199,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v257';
+const VER = 'v258';
 /* ================= ANONYMOUS PLAY STATS (Supabase) =================
    A random player id (no name, no account) and short events: session start, a heartbeat each minute (play time, fps),
    one row per run, upgrades bought, progress snapshots, tutorial and errors. Sent in small batches; off in automated
@@ -2958,7 +2978,7 @@ function renderGoal() { $('goalBank').textContent = fmtG(SV.bank); const mk = MK
   $('gPlanet').innerHTML = `Planet <b>${PL().n}</b> – ${PL().d}${(SV.pmax || 0) > 0 ? `<div class="planets" style="margin-top:6px">${PLANETS.slice(0, (SV.pmax || 0) + 1).map((q, i) => `<button data-pl="${i}" class="${i === (SV.planet || 0) ? 'on' : ''}">${q.n}</button>`).join('')}</div>` : ''}`;
   const P = PL(), last = (SV.planet || 0) === PLANETS.length - 1; $('gRocket').innerHTML = canFly() ? rocketSVG() : `<div class="nfinal"><canvas id="gPlCv" width="960" height="960"></canvas><div class="nct">${last ? (SV.won ? 'You reached the heart of the Sun!' : 'Final goal: the core of the Sun') : P.n}</div><div class="ncs">${last ? (SV.won ? `Done ${SV.won} time${SV.won > 1 ? 's' : ''}. Keep diving for big gem hauls.` : 'Dig all the way down through Sol. It gets hotter with every metre – get cooling to Lv 15 and a strong hull before you try.') : `${(P.moons || []).filter(id => MOONDEFS[id].twin).map(id => 'Twin planet: ' + MOONDEFS[id].n + ' · ').join('')}Moon${(P.moons || []).filter(id => !MOONDEFS[id].twin).length > 1 ? 's' : ''}: ${(P.moons || []).filter(id => !MOONDEFS[id].twin).map(id => MOONDEFS[id].n).join(', ')} · gems ×${P.gem}<br>Final goal: the core of the Sun – pick Sol above to go there.`}</div></div>`; if (!canFly()) drawPlanetPic($('gPlCv'));
   $('gParts').parentElement.style.display = canFly() ? '' : 'none';
-  $('gParts').innerHTML = !canFly() ? '' : `<div class="sub2" style="margin:-4px 0 2px">Rocket ${ROCKETS[mk].n} → ${PLANETS[(SV.pmax || 0) + 1].n}${here ? '' : ` · build it on ${PLANETS[SV.pmax || 0].n}`}</div>` + RP().map(p => { const ok = partOK(p, mk), done = b[p.k], c = nOf(p.c, mk);
+  $('gParts').innerHTML = !canFly() ? '' : `<div class="sub2" style="margin:-4px 0 2px">Rocket ${ROCKETS[mk].n} → ${PLANETS[(SV.pmax || 0) + 1].n}${here ? '' : ` · build it on ${PLANETS[SV.pmax || 0].n}`}</div><div style="font:700 11px/1.3 var(--f-b);color:#7a5a40;margin:0 0 4px">Bring finds up to the surface → build every part → fly on.</div>` + RP().map(p => { const ok = partOK(p, mk), done = b[p.k], c = nOf(p.c, mk);
     return `<div class="up"><b>${p.n}</b><button data-rp="${p.k}" ${done || !ok || SV.bank < c || !here ? 'disabled' : ''}>${done ? 'BUILT' : '◆ ' + fmtG(c)}</button><small>${p.d}${!done && !ok && hintFor((partReqs(p, mk).find(([st, n]) => statOf(st) < n) || [''])[0]) && hintLv(p) < 2 ? ` <button class="hintB" data-hint="${p.k}" aria-label="Hint">?</button>` : ''}</small>${reqBars(p, mk)}${done ? '' : hintHTML(p)}</div>`; }).join('');
   $('gLaunch').innerHTML = canFly() && RP().every(p => b[p.k]) ? `<button class="btn" id="bLaunch">LAUNCH TO ${PLANETS[(SV.pmax || 0) + 1].n.toUpperCase()}!</button>` : '';
   $('gRank').innerHTML = rankHTML(true); }
@@ -2980,7 +3000,7 @@ function navBack() { if (!$('ovLaunch').hidden) { navGuard(); return; } const v 
   if (v === 'ovEnd') { $('bMenu').click(); return; } if (v === 'ovWin') { $('bWinGo').click(); return; }
   const bk = { ovHow: 'bHowOk', ovGoal: 'bGoalOk', ovProg: 'bProgOk', ovDrills: 'bDrOk' }[v]; if (bk) $(bk).click(); else showMenu(); }
 addEventListener('popstate', () => { try { navBack(); } catch (e) {} });
-function showMenu() { endPending = null; $('nDType').textContent = DTY().n; drChip(); fillMissions(); $('sBest').textContent = SV.best + ' m'; $('sDeep').textContent = SV.deep + ' m'; $('sBank').textContent = fmtG(SV.bank); rankCheck(true); $('nRank').textContent = `Rank ${(SV.rank || 0) + 1} · ${RANKS[SV.rank || 0][0]}`; $('nPlanet').innerHTML = (SV.planet || 0) ? `<b>${PL().n}</b> ×${PL().gem}` : ''; $('nNext').innerHTML = goalCardHTML(); { const g = nextGoal(); $('shopDot').className = 'ndot' + (g && SV.bank >= g.c ? ' on' : ''); } rankCheck(true); SV.rankUp = []; $('rankS').innerHTML = rankHTML(false) + ((SV.planet || 0) ? `<div style="margin-top:3px;opacity:.85">Planet ${PL().n} · gems ×${PL().gem}</div>` : ''); $('goalDot').className = 'ndot' + (goalReady() ? ' on' : ''); if (SV.ecoMsg) { SV.ecoMsg = 0; saveSV(); const n = document.createElement('div'); n.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;background:rgba(255,255,255,.96);color:#3a2414;border-radius:16px;padding:14px 16px;font:600 14px Nunito,sans-serif;box-shadow:0 6px 0 rgba(80,40,20,.35);text-align:center'; n.innerHTML = '<b style="font-size:17px">Upgrades rebalanced</b><br>Each upgrade now has 10 levels and takes real play to earn. Your upgrades and gem bank were reset – records, badges and skins are kept.<br><button style="margin-top:10px;padding:8px 22px;border:0;border-radius:12px;background:#ffb02e;font:800 14px Nunito,sans-serif;color:#3a2414">OK</button>'; n.querySelector('button').onclick = () => n.remove(); document.body.appendChild(n); } $('misS').innerHTML = misHTML(); menuSubs(); $('pz').hidden = true; show('ovStart'); }
+function showMenu() { endPending = null; $('nDType').textContent = DTY().n; drChip(); fillMissions(); $('sBest').textContent = SV.best + ' m'; $('sDeep').textContent = SV.deep + ' m'; $('sBank').textContent = fmtG(SV.bank); rankCheck(true); $('nRank').textContent = `Rank ${(SV.rank || 0) + 1} · ${RANKS[SV.rank || 0][0]}`; $('nPlanet').innerHTML = (SV.planet || 0) ? `<b>${PL().n}</b> ×${PL().gem}` : ''; $('nNext').innerHTML = goalCardHTML(); try { const h = rocketCardHTML(); $('nRk').innerHTML = h; $('nRk').hidden = !h; } catch (e) { $('nRk').hidden = true; } { const g = nextGoal(); $('shopDot').className = 'ndot' + (g && SV.bank >= g.c ? ' on' : ''); } rankCheck(true); SV.rankUp = []; $('rankS').innerHTML = rankHTML(false) + ((SV.planet || 0) ? `<div style="margin-top:3px;opacity:.85">Planet ${PL().n} · gems ×${PL().gem}</div>` : ''); $('goalDot').className = 'ndot' + (goalReady() ? ' on' : ''); if (SV.ecoMsg) { SV.ecoMsg = 0; saveSV(); const n = document.createElement('div'); n.style.cssText = 'position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;background:rgba(255,255,255,.96);color:#3a2414;border-radius:16px;padding:14px 16px;font:600 14px Nunito,sans-serif;box-shadow:0 6px 0 rgba(80,40,20,.35);text-align:center'; n.innerHTML = '<b style="font-size:17px">Upgrades rebalanced</b><br>Each upgrade now has 10 levels and takes real play to earn. Your upgrades and gem bank were reset – records, badges and skins are kept.<br><button style="margin-top:10px;padding:8px 22px;border:0;border-radius:12px;background:#ffb02e;font:800 14px Nunito,sans-serif;color:#3a2414">OK</button>'; n.querySelector('button').onclick = () => n.remove(); document.body.appendChild(n); } $('misS').innerHTML = misHTML(); menuSubs(); $('pz').hidden = true; show('ovStart'); }
 /* ===== BLUEPRINT: a technical drawing of the drill that changes with every upgrade level ===== */
 const BP_PARTS = { tip: [338, 92, 'DIAMOND TIP'], eng: [112, 104, 'ENGINE'], cool: [172, 70, 'COOLING'], hull: [232, 80, 'HULL'], frame: [214, 104, 'CRASH FRAME'], fin: [215, 150, 'WINGS'], lamp: [288, 82, 'LAMP'], boost: [196, 124, 'BOOST'], rep: [252, 70, 'AUTO REPAIR'], sbrk: [292, 126, 'RETRO THRUSTERS'] };
 const BP_LBL = { tip: [392, 34, 'end'], eng: [40, 30, 'start'], cool: [150, 6, 'middle'], hull: [262, 14, 'middle'], frame: [300, 186, 'middle'], fin: [176, 200, 'middle'], lamp: [380, 6, 'end'], boost: [40, 186, 'start'], rep: [396, 150, 'end'], sbrk: [396, 200, 'end'] };
@@ -3176,7 +3196,7 @@ $('bNewW').onclick = async () => { const b = $('bNewW'); if (!b.dataset.arm) { b
 $('bDrOk').onclick = () => showMenu(); $('bPlayDr').onclick = () => startFree();
 $('bDaily').onclick = () => { audio(); hold = false; reset(true); };
 $('bAgain').onclick = () => { if (MODE === 'daily') { audio(); hold = false; reset(true); } else startFree(); };
-$('bGoal').onclick = () => { renderGoal(); show('ovGoal'); }; $('bGoalOk').onclick = () => showMenu();
+$('nRk').onclick = () => $('bGoal').click(); $('bGoal').onclick = () => { renderGoal(); show('ovGoal'); }; $('bGoalOk').onclick = () => showMenu();
 $('ovGoal').addEventListener('click', e => { const t = e.target.closest('button'); if (!t) return; if (t.id === 'bLaunch') { launchRocket(); return; }
   if (t.dataset.pl !== undefined) { try { worldSave(); } catch (e) {} SV.planet = +t.dataset.pl; saveSV(); applyPlanet(); worldLoad(); renderGoal(); return; }
   if (t.dataset.hint) { const q = RP().find(z => z.k === t.dataset.hint); if (q) { (SV.hint || (SV.hint = {}))[hintKey(q)] = Math.min(2, hintLv(q) + 1); saveSV(); audio(); renderGoal(); } return; }
