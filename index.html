@@ -1098,14 +1098,19 @@ function stepPiece(p, dt) { p.life += dt; p.vy = Math.min(p.vy + G * 0.9 * dt, 1
   // traff gulvet? sjekk punkter langs undersiden
   let hit = false; const [a0, a1] = [p.pts[0], p.pts[1]]; for (let k = 0; k <= 4; k++) { const lx = a0[0] + (a1[0] - a0[0]) * k / 4, ly = a0[1] + (a1[1] - a0[1]) * k / 4; const wx = p.x + lx * c - ly * s, wy = p.y + lx * s + ly * c + 3; if (p.life > 0.05 && wy > surf(wx) + 2 && !cellOpen(wx, wy) && !cellOpen(wx, wy + 5)) { hit = true; break; } }
   if (!hit && p.y < Y1 + 100) return;
-  p.dead = true; p.rot += (rnd() - 0.5) * 0.4; const spd = p.vy; if (spd > 650 && p.w > 34) { crumble(p, 0.5); } stamp(p);
+  p.dead = true; p.rot += (rnd() - 0.5) * 0.4; const spd = p.vy; crumble(p, 1); /* a fallen lump breaks up on the floor instead of setting as a block: old tunnels stay tunnels, not a lattice of holes */
   for (let i = 0; i < 5; i++) parts.push({ k: 'smoke', x: p.x + (rnd() - 0.5) * p.w, y: p.y + p.h * 0.3, vx: (rnd() - 0.5) * 50, vy: -20 - rnd() * 20, t: 0, life: 1.1, s: 8 + rnd() * 8 });
   rumble(Math.min(0.8, p.w / 60), p.x, p.y); const nd = nearD(p.x, p.y); if (p.w > 30 && nd > 0.5 && thr('land', 0.45)) noise({ f0: 380, f1: 70, dur: 0.35, gain: 0.08 * nd });
   if (Math.hypot(p.x - cam.x, p.y - cam.y) < 700) shake = Math.max(shake, Math.min(5, p.w / 14));
-  fallEv.push({ x: p.sx, y: p.ceilTop + 4, t: T + 0.25 + rnd() * 0.6, gen: p.gen + 1 }); }
-function stamp(p) { const c = Math.cos(p.rot), s = Math.sin(p.rot); const R0 = Math.hypot(p.bw, p.bh) / 2 + 2;
+  if (p.gen < 1) fallEv.push({ x: p.sx, y: p.ceilTop + 4, t: T + 0.25 + rnd() * 0.6, gen: p.gen + 1 }); } /* one follow-up at most: long chains ate chimneys up into the ground */
+function stamp(p) { const c = Math.cos(p.rot), s = Math.sin(p.rot); const R0 = Math.hypot(p.bw, p.bh) / 2 + 2; const cnt = new Map();
   forTiles(p.x - R0, p.x + R0, p.y - R0, p.y + R0, (x, ox, oy) => { x.save(); x.translate(p.x - ox, p.y - oy); x.rotate(p.rot); x.drawImage(p.cv, p.ox, p.oy); x.restore(); });
-  for (let gy = Math.floor((p.y - R0 - Y0) / CELL); gy <= Math.floor((p.y + R0 - Y0) / CELL); gy++) for (let gx = Math.floor((p.x - R0) / CELL); gx <= Math.floor((p.x + R0) / CELL); gx++) { const cc = cellAt(gx, gy); if (!cc || cc.ch.mask[cc.i] !== 1) continue; const wx = gx * CELL + 4, wy = Y0 + gy * CELL + 4; if (wy < surf(wx)) continue; const dx = wx - p.x, dy = wy - p.y; const lx = dx * c + dy * s, ly = -dx * s + dy * c; if (inPoly(p.pts, lx, ly)) { (cc.ch.mask[cc.i] = 0, markDug(cc.ch, cc.i)); cc.ch.cm[cc.i] = p.m; } } }
+  for (let gy = Math.floor((p.y - R0 - Y0) / CELL); gy <= Math.floor((p.y + R0 - Y0) / CELL); gy++) for (let gx = Math.floor((p.x - R0) / CELL); gx <= Math.floor((p.x + R0) / CELL); gx++) { const cc = cellAt(gx, gy); if (!cc || cc.ch.mask[cc.i] !== 1) continue; const wx = gx * CELL + 4, wy = Y0 + gy * CELL + 4; if (wy < surf(wx)) continue; const dx = wx - p.x, dy = wy - p.y; const lx = dx * c + dy * s, ly = -dx * s + dy * c; if (inPoly(p.pts, lx, ly)) cnt.set(gx, (cnt.get(gx) || 0) + 1); }
+  /* the fallen lump settles as a flat layer on the tunnel floor (column by column, from the bottom up), not as a block hanging mid-tunnel:
+     rebuilt from its cells later, an old tunnel then reads as a tunnel with rubble on its floor instead of a lattice of holes */
+  for (const [gx, n] of cnt) { let gy = Math.floor((p.y - Y0) / CELL), g = 0; const op = y => { const c = cellAt(gx, y); return c && c.ch.mask[c.i] === 1; };
+    while (op(gy + 1) && g++ < 40) gy++; if (!op(gy)) { g = 0; while (!op(gy) && g++ < 6) gy--; if (!op(gy)) continue; }
+    for (let k = 0; k < n; k++) { const cc = cellAt(gx, gy - k); if (!cc || cc.ch.mask[cc.i] !== 1 || Y0 + (gy - k) * CELL + 4 < surf(gx * CELL + 4)) break; cc.ch.mask[cc.i] = 0; markDug(cc.ch, cc.i); cc.ch.cm[cc.i] = p.m; } } }
 function crumble(p, frac) { const C = colOf(p.m); dust(p.x, p.y, 3, C[2], 60); const n = Math.round((p.w * p.h) / 50 * (frac || 1)); for (let i = 0; i < Math.min(n, 30); i++) parts.push({ k: 'rock', x: p.x + (rnd() - 0.5) * p.w, y: p.y + (rnd() - 0.5) * p.h, vx: (rnd() - 0.5) * 160, vy: -rnd() * 120, t: 0, life: 0.7 + rnd() * 0.5, s: 2 + rnd() * 4, c: C[rnd() < 0.5 ? 0 : 2], rot: rnd() * 6, vr: (rnd() - 0.5) * 10, g: 1500 }); }
 function drawPieces(x) { for (const p of pieces) { x.save(); x.translate(p.x, p.y); x.rotate(p.rot); x.drawImage(p.cv, p.ox, p.oy); x.restore(); } }
 function segDist(px, py, ax, ay, bx, by) { const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy || 1; const t = clamp(((px - ax) * dx + (py - ay) * dy) / L, 0, 1); return Math.hypot(px - ax - dx * t, py - ay - dy * t); }
@@ -2213,7 +2218,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v259';
+const VER = 'v260';
 /* ================= ANONYMOUS PLAY STATS (Supabase) =================
    A random player id (no name, no account) and short events: session start, a heartbeat each minute (play time, fps),
    one row per run, upgrades bought, progress snapshots, tutorial and errors. Sent in small batches; off in automated
