@@ -1649,8 +1649,8 @@ function clearIn(cx, cy, rx, ry) { const inside = (px, py, pr) => { const dx = (
 let ISW = null; function queueIslands(x0, x1, y0, y1) { if (ISW) { ISW = [Math.min(ISW[0], x0), Math.max(ISW[1], x1), Math.min(ISW[2], y0), Math.max(ISW[3], y1)]; return; } ISW = [x0, x1, y0, y1]; at(0.4, () => { const r = ISW; ISW = null; try { islandSweep(r[0], r[1], r[2], r[3]); } catch (e) {} }); }
 /* hanging ground: lumps left above blasted-away ground, too big for the sweep box above. Each seed is ground next to a blast; it is followed
    outwards (one search per frame, at most ISCAP cells). A search that runs out of ground before the cap is a loose lump: it crumbles and falls */
-const ISQ = [], ISA = new Set(); let ISH = 0; const ISCAP = 12000; const isK = (x, y) => x * 1048576 + y;
-const isSolid = (gx, gy) => { if (gy < 0 || gy >= MROWS) return false; if (Y0 + gy * CELL + 4 < surfC(gx) + 4) return false; const c = cellAt(gx, gy); return !!c && c.ch.mask[c.i] !== 1 && c.ch.cm[c.i] !== AIR && !(c.ch.pd && c.ch.pd[c.i] >= 2); }; /* a crater's cut outline is gone even where it was not carved */
+const ISQ = [], ISA = new Set(); let ISH = 0; const ISCAP = 6000; const isK = (x, y) => x * 1048576 + y;
+const isSolid = (gx, gy) => { if (gy < 0 || gy >= MROWS) return false; if (Y0 + gy * CELL + 4 < surfC(gx) + 4) return false; const c = cellAt(gx, gy); if (!c || (c.ch.pd && c.ch.pd[c.i] >= 2)) return false; return c.ch.mask[c.i] === 1 ? true : c.ch.cm[c.i] !== AIR; /* drilled tunnels and caves do not cut ground loose (they were cutting whole hillsides free, which then vanished): only blasted ground and open air do */ }; /* a crater's cut outline is gone even where it was not carved */
 function islandSeedRing(wx, wy, r) { ISA.clear(); if (ISS && !ISS.big) ISQ.push(ISS.list[0], ISS.list[1]); ISS = null; /* new holes: what was joined before may not be any more */ const n = Math.min(48, Math.max(12, Math.round(r / 12))); for (let i = 0; i < n; i++) { const a = i / n * TAU; for (const f of [1.2, 1.5]) ISQ.push(Math.floor((wx + Math.cos(a) * r * f) / CELL), Math.floor((wy + Math.sin(a) * r * f - Y0) / CELL)); } }
 let ISS = null; /* the search in progress: it is spread over frames, a few ms each */
 function islandWork(ms) { const tEnd = performance.now() + ms; let it = 0;
@@ -1668,7 +1668,7 @@ function collapseCells(list) { let mnx = 1e9, mxx = -1e9, mny = 1e9, mxy = -1e9,
   for (let i = 0; i < 14; i++) dust(mnx + rnd() * (mxx - mnx), mny + rnd() * (mxy - mny), 2, '#8a7a6a', 140); if (N > 40) rumble(Math.min(1, 0.4 + N / 6000), (mnx + mxx) / 2, mxy); }
 function islandSweep(x0, x1, y0, y1) { const gx0 = Math.floor(x0 / CELL), gx1 = Math.floor(x1 / CELL), gy0 = Math.max(0, Math.floor((y0 - Y0) / CELL)), gy1 = Math.min(MROWS - 1, Math.floor((y1 - Y0) / CELL)), W = gx1 - gx0 + 1, H = gy1 - gy0 + 1; if (W < 3 || H < 3 || W * H > 400000) return;
   const solid = new Uint8Array(W * H), seen = new Uint8Array(W * H), q = new Int32Array(W * H), sc = new Int32Array(W); for (let i = 0; i < W; i++) sc[i] = surfC(gx0 + i);
-  for (let j = 0; j < H; j++) { const gy = gy0 + j, wy = Y0 + gy * CELL + 4; for (let i = 0; i < W; i++) { if (wy < sc[i] + 4) continue; const c = cellAt(gx0 + i, gy); if (c && c.ch.mask[c.i] !== 1 && c.ch.cm[c.i] !== AIR) solid[j * W + i] = 1; } }
+  for (let j = 0; j < H; j++) { const gy = gy0 + j, wy = Y0 + gy * CELL + 4; for (let i = 0; i < W; i++) { if (wy < sc[i] + 4) continue; const c = cellAt(gx0 + i, gy); if (c && !(c.ch.pd && c.ch.pd[c.i] >= 2) && (c.ch.mask[c.i] === 1 || c.ch.cm[c.i] !== AIR)) solid[j * W + i] = 1; } } /* tunnels hold ground together; only blasts cut it loose */
   let qh = 0, qt = 0; const push = k => { if (solid[k] && !seen[k]) { seen[k] = 1; q[qt++] = k; } };
   for (let i = 0; i < W; i++) { push(i); push((H - 1) * W + i); } for (let j = 0; j < H; j++) { push(j * W); push(j * W + W - 1); }
   while (qh < qt) { const k = q[qh++], i = k % W, j = (k / W) | 0; if (i > 0) push(k - 1); if (i < W - 1) push(k + 1); if (j > 0) push(k - W); if (j < H - 1) push(k + W); }
@@ -2252,7 +2252,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v266';
+const VER = 'v267';
 /* ================= ANONYMOUS PLAY STATS (Supabase) =================
    A random player id (no name, no account) and short events: session start, a heartbeat each minute (play time, fps),
    one row per run, upgrades bought, progress snapshots, tutorial and errors. Sent in small batches; off in automated
