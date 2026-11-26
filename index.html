@@ -1876,7 +1876,7 @@ const VIG = (() => { const c = document.createElement('canvas'); c.width = 64; c
 const SOFT = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gg = g.createRadialGradient(32, 32, 0, 32, 32, 32); gg.addColorStop(0, 'rgba(255,255,255,1)'); gg.addColorStop(0.55, 'rgba(255,255,255,0.6)'); gg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gg; g.fillRect(0, 0, 64, 64); return c; })();
 const easeBack = a => { const c = 1.9; return 1 + (c + 1) * Math.pow(a - 1, 3) + c * Math.pow(a - 1, 2); };
 // ===== drill skins (bought with diamonds in the workshop); each leaves its own trail =====
-const SKINS = [{ k: 'classic', n: 'Classic', c: 0, d: 'The original striped digger', b: ['#ffd45a', '#ffad2e', '#d9761a'], s: '#2b2f38' },
+const SKINS = [{ k: 'classic', n: 'Factory paint', c: 0, d: 'Each drill type comes in its own colours', b: ['#ffd45a', '#ffad2e', '#d9761a'], s: '#2b2f38' },
   { k: 'chrome', n: 'Chrome', c: 2500, d: 'Mirror finish. Leaves cold blue sparks', b: ['#ffffff', '#c8d0dc', '#6a7484'], s: '#2a2f38', tr: '#bfe8ff' },
   { k: 'gold', n: 'Gold', c: 4500, d: 'Solid gold. Sheds glitter as it goes', b: ['#fff3a0', '#ffd23a', '#a8780b'], s: '#6a4a08', tr: '#ffe066' },
   { k: 'rocket', n: 'Rocket', c: 6500, d: 'White and red, with a fat exhaust plume', b: ['#ffffff', '#eceff3', '#b8bec8'], s: '#e8402a', tr: 'fire' },
@@ -1902,19 +1902,19 @@ function lkCollar(x, spin, top) { x.fillStyle = lkMetal(x, -top, top, ['#eef1f6'
 const LOOKB = {
   borer(x, SK, bc, spin) { x.fillStyle = lkMetal(x, -9, 9, ['#c9ced8', '#8b93a2', '#5a6170', '#3a3f4b', '#23272f']); x.beginPath(); x.moveTo(-41, -7); x.lineTo(-50, -9.5); x.lineTo(-50, 9.5); x.lineTo(-41, 7); x.closePath(); x.fill(); x.fillStyle = '#1b1e24'; x.fillRect(-51, -9, 2, 18);
     x.beginPath(); x.moveTo(-40, -13); x.lineTo(-8, -14); x.lineTo(-8, 14); x.lineTo(-40, 13); x.quadraticCurveTo(-45, 0, -40, -13); x.closePath(); x.save(); x.clip(); x.fillStyle = lkMetal(x, -14, 14, lkPaint(bc)); x.fillRect(-46, -15, 40, 30);
-    for (let i = 0; i < 3; i++) { const sx = -36 + i * 9; x.fillStyle = SK.s; x.fillRect(sx, -15, 4, 30); x.fillStyle = 'rgba(255,255,255,0.25)'; x.fillRect(sx, -15, 0.8, 30); x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(sx + 3.2, -15, 0.8, 30); }
+    for (const [sx, sw] of SBANDS(SK)) { x.fillStyle = SK.s; x.fillRect(sx, -15, sw, 30); x.fillStyle = 'rgba(255,255,255,0.25)'; x.fillRect(sx, -15, 0.8, 30); x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(sx + sw - 0.8, -15, 0.8, 30); }
     x.strokeStyle = 'rgba(0,0,0,0.35)'; x.lineWidth = 0.7; x.beginPath(); x.moveTo(-41, -6.5); x.lineTo(-8, -7); x.moveTo(-41, 6.5); x.lineTo(-8, 7); x.stroke(); x.fillStyle = lkSheen(x, -14, 14); x.fillRect(-46, -15, 40, 30); x.restore();
     lkRivets(x, [-38, -29, -20, -11], -11.6, 0.9); lkRivets(x, [-38, -29, -20, -11], 11.6, 0.9);
     x.strokeStyle = '#2a2e36'; x.lineWidth = 2.2; x.beginPath(); x.moveTo(-40, -13.5); x.quadraticCurveTo(-26, -18.5, -11, -15.5); x.stroke(); x.strokeStyle = 'rgba(255,255,255,0.35)'; x.lineWidth = 0.7; x.beginPath(); x.moveTo(-40, -14.2); x.quadraticCurveTo(-26, -19.2, -11, -16.2); x.stroke();
     lkCollar(x, spin, 17.5); },
   rig(x, SK, bc, spin) { x.fillStyle = lkMetal(x, -11, 11, ['#a9b0bc', '#7b8393', '#555d6b', '#3a404c', '#262a32']); x.fillRect(-50, -10, 10, 20); x.fillStyle = 'rgba(0,0,0,0.5)'; for (let i = 0; i < 4; i++) x.fillRect(-49 + i * 2.5, -10, 1, 20);
     for (let sg = 0; sg < 3; sg++) { const a = -40 + sg * 10.7, b = a + 9.7, hh = 14 + sg * 0.6; x.save(); x.beginPath(); x.roundRect(a, -hh, b - a, 2 * hh, 2); x.clip(); x.fillStyle = lkMetal(x, -hh, hh, lkPaint(bc)); x.fillRect(a, -hh, b - a, 2 * hh);
-      if (sg === 1) { x.fillStyle = SK.s; for (let k = -4; k < 6; k++) { x.beginPath(); x.moveTo(a + k * 6, hh); x.lineTo(a + k * 6 + 3, hh); x.lineTo(a + k * 6 + 11, -hh); x.lineTo(a + k * 6 + 8, -hh); x.closePath(); x.fill(); } }
+      if (sg === 1 && SK.pat !== 'none') { x.fillStyle = SK.s; for (let k = -4; k < 6; k++) { x.beginPath(); x.moveTo(a + k * 6, hh); x.lineTo(a + k * 6 + 3, hh); x.lineTo(a + k * 6 + 11, -hh); x.lineTo(a + k * 6 + 8, -hh); x.closePath(); x.fill(); } }
       x.fillStyle = lkSheen(x, -hh, hh); x.fillRect(a, -hh, b - a, 2 * hh); x.restore(); lkRivets(x, [a + 2, b - 2], -hh + 2, 0.8); lkRivets(x, [a + 2, b - 2], hh - 2, 0.8); }
     x.fillStyle = lkMetal(x, -18, 18, ['#dfe4ec', '#9ea6b4', '#636c7b', '#3f4653', '#262a33']); x.fillRect(-9.5, -16.5, 4.5, 33); x.fillStyle = '#2a2f38'; const ph = (spin % 1) * 5; for (let i = -4; i < 4; i++) { const gy = i * 5 + ph; if (gy < -16 || gy > 15) continue; x.fillRect(-10.5, gy, 6.5, 2.2); } },
   metal(x, SK, bc, spin) { x.fillStyle = lkMetal(x, -8, 8, ['#b8bfcb', '#858d9c', '#5a6271', '#3c424e', '#262a32']); x.fillRect(-47, -8, 9, 16); x.fillStyle = 'rgba(0,0,0,0.5)'; x.fillRect(-47, -8, 1.2, 16);
     const sh = () => { x.beginPath(); x.moveTo(-40, -13); x.lineTo(-6, -15); x.lineTo(-6, 15); x.lineTo(-40, 13); x.quadraticCurveTo(-46, 0, -40, -13); }; sh(); x.save(); x.clip(); x.fillStyle = lkMetal(x, -15, 15, lkPaint(bc)); x.fillRect(-46, -16, 42, 32);
-    for (let i = 0; i < 3; i++) { x.fillStyle = SK.s; x.fillRect(-36 + i * 9, -16, 4, 32); } x.fillStyle = lkSheen(x, -15, 15); x.fillRect(-46, -16, 42, 32); x.restore(); x.strokeStyle = 'rgba(0,0,0,0.45)'; x.lineWidth = 1; sh(); x.stroke();
+    for (const [sx, sw] of SBANDS(SK)) { x.fillStyle = SK.s; x.fillRect(sx, -16, sw, 32); } x.fillStyle = lkSheen(x, -15, 15); x.fillRect(-46, -16, 42, 32); x.restore(); x.strokeStyle = 'rgba(0,0,0,0.45)'; x.lineWidth = 1; sh(); x.stroke();
     lkRivets(x, [-37, -31, -25, -19, -13], -11.3, 0.8); lkRivets(x, [-37, -31, -25, -19, -13], 11.3, 0.8); x.fillStyle = lkMetal(x, -16.5, 16.5, ['#e5e9f0', '#a6aebb', '#6a7382', '#424956', '#282c35']); x.fillRect(-8.5, -16.5, 3.5, 33); } };
 /* cone bit with helical cutting edges: the cone stays; the cutting edge winds round it, the teeth sit ON that edge and turn with it */
 function coneBit(x, spin, o) { o = o || {}; const X0 = -7, X1 = 30, h = o.h || 16, starts = o.starts || 2, k = TAU / (o.pitch || 22), stepped = o.stepped, st = 4.6;
@@ -1998,7 +1998,7 @@ const LOOKBIT = {
 
 /* the drill on the start menu: drawn with the same code as in game, in the chosen look and skin, bit slowly turning */
 function lkClassic(x, SK, bc, spin) { x.fillStyle = '#3a3f4a'; x.fillRect(-46, -8, 8, 16); const bg = x.createLinearGradient(0, -14, 0, 14); bg.addColorStop(0, bc[0]); bg.addColorStop(0.5, bc[1]); bg.addColorStop(1, bc[2]); x.fillStyle = bg; x.beginPath(); x.moveTo(-40, -13); x.lineTo(-6, -15); x.lineTo(-6, 15); x.lineTo(-40, 13); x.quadraticCurveTo(-46, 0, -40, -13); x.fill();
-  x.fillStyle = SK.s; for (let i = 0; i < 3; i++) x.fillRect(-36 + i * 9, -13, 4, 26); x.fillStyle = '#9be7ff'; x.beginPath(); x.ellipse(-20, -6, 7, 5, 0, 0, TAU); x.fill(); x.fillStyle = 'rgba(255,255,255,0.8)'; x.beginPath(); x.ellipse(-22, -8, 3, 1.6, -0.3, 0, TAU); x.fill();
+  x.fillStyle = SK.s; for (const [sx, sw] of SBANDS(SK)) x.fillRect(sx, -13, sw, 26); x.fillStyle = '#9be7ff'; x.beginPath(); x.ellipse(-20, -6, 7, 5, 0, 0, TAU); x.fill(); x.fillStyle = 'rgba(255,255,255,0.8)'; x.beginPath(); x.ellipse(-22, -8, 3, 1.6, -0.3, 0, TAU); x.fill();
   const cg = x.createLinearGradient(0, -15, 0, 15); cg.addColorStop(0, '#e9eef5'); cg.addColorStop(0.5, '#9aa4b4'); cg.addColorStop(1, '#5d6676'); x.fillStyle = cg; x.beginPath(); x.moveTo(-7, -16); x.lineTo(30, 0); x.lineTo(-7, 16); x.closePath(); x.fill();
   x.save(); x.clip(); x.strokeStyle = 'rgba(60,66,80,0.8)'; x.lineWidth = 3; const ph = (spin % 1) * 9; for (let k = -2; k < 6; k++) { const bx = -7 + k * 9 + ph; x.beginPath(); x.moveTo(bx, -16); x.lineTo(bx + 7, 16); x.stroke(); } x.restore(); }
 let menuSpin = 0;
@@ -2007,7 +2007,16 @@ function drawMenuDrill() { const c = document.getElementById('menuDrill'); if (!
   x.translate(112, 58); x.rotate(0.49); x.scale(1.7, 1.7); x.shadowColor = 'rgba(0,0,0,0.35)'; x.shadowBlur = 6; x.shadowOffsetY = 3;
   if (LK) { LOOKB[LK](x, SK, bc, menuSpin); x.shadowColor = 'transparent'; LOOKBIT[LK](x, menuSpin); } else lkClassic(x, SK, bc, menuSpin); }
 setInterval(() => { menuSpin += 0.04; try { drawMenuDrill(); } catch (e) {} }, 50);
-function skin() { return SKINS.find(q => q.k === (SV.skin || 'classic')) || SKINS[0]; }
+/* every drill type has its own factory paint; it is used while the skin is "Factory paint" (bought skins still override it) */
+const LIVERY = { heavy: { b: ['#9aa2ae', '#6a7280', '#3a404a'], s: '#ffb02e', pat: 'two' }, light: { b: ['#ffffff', '#e2ebf3', '#9fb0c2'], s: '#18b8d8', pat: 'thin' }, bomb: { b: ['#9aaa62', '#6b7a40', '#46512a'], s: '#e8d89a', pat: 'one' },
+  scrap: { b: ['#c09468', '#8a6440', '#5a3e26'], s: '#4a4038', pat: 'two' }, scan: { b: ['#8fe8a8', '#3fae6a', '#1f6e44'], s: '#eef8f0', pat: 'thin' }, magnet: { b: ['#ff8a7a', '#e0402e', '#8e1e14'], s: '#f2f4f8', pat: 'one' },
+  glider: { b: ['#d0ecff', '#6cb8f0', '#2a6aa8'], s: '#ffffff', pat: 'rear' }, twin: { b: ['#8ff4e6', '#2cc0b0', '#147068'], s: '#1d2a30', pat: 'two' }, mole: { b: ['#d4a474', '#9a6a40', '#5e3e22'], s: '#e8c27a', pat: 'none' },
+  laser: { b: ['#6a707c', '#353a44', '#16181d'], s: '#ff3a2a', pat: 'thin' }, split: { b: ['#e0b8ff', '#9a5ae0', '#5a2a90'], s: '#ffd030', pat: 'bands' }, rail: { b: ['#b8cce8', '#5878a8', '#28406a'], s: '#4ad8ff', pat: 'two' },
+  comet: { b: ['#e8fbff', '#9ff0ff', '#3a8ab0'], s: '#0e2a44', pat: 'rear', tr: '#bff6ff' } };
+const SBAND = { bands: [[-36, 4], [-27, 4], [-18, 4]], one: [[-31, 11]], none: [], two: [[-38, 3], [-15, 3]], thin: [[-37, 1.6], [-32, 1.6], [-27, 1.6], [-22, 1.6], [-17, 1.6]], rear: [[-40, 10]] };
+const SBANDS = SK => SBAND[SK.pat] || SBAND.bands, LIVC = {};
+function skinFor(sk, dt) { sk = sk || 'classic'; if (sk === 'classic' && LIVERY[dt]) return LIVC[dt] || (LIVC[dt] = Object.assign({}, SKINS[0], LIVERY[dt])); return SKINS.find(q => q.k === sk) || SKINS[0]; }
+function skin() { return skinFor(SV.skin, SV.dt || 'std'); }
 function skinTrail(dt) { const sk = skin(); if (!sk.tr || !D || D.dead || D.tower) return; const sp = D.air ? Math.hypot(D.vx, D.vy) : D.s; if (sp < 250) return; skinTrail.a = (skinTrail.a || 0) + dt * Math.min(40, 10 + sp / 120);
   while (skinTrail.a > 1) { skinTrail.a--; const c = Math.cos(D.ang), sn = Math.sin(D.ang), bx = D.x - c * 50 / kAt(D.x, D.y), by = D.y - sn * 50;
     if (sk.tr === 'fire') parts.push({ k: 'fire', x: bx, y: by, vx: -c * 120 + (rnd() - 0.5) * 60, vy: -sn * 120 + (rnd() - 0.5) * 60, t: 0, life: 0.35 + rnd() * 0.2, s: 9 + rnd() * 8 });
@@ -2044,7 +2053,7 @@ function drawDrill(x, t) { const heat = clamp(D.heat, 0, 1.1), SK = skin(), DT =
   const LK = SV.look === 'classic' ? null : LOOKB[SV.look] ? SV.look : 'borer'; /* the industrial borer is the default look */ if (LK) LOOKB[LK](x, SK, SK.b || [`hsl(${(t * 90) % 360},95%,72%)`, `hsl(${(t * 90 + 60) % 360},95%,58%)`, `hsl(${(t * 90 + 120) % 360},90%,42%)`], D.spin || 0); else {
   x.fillStyle = '#3a3f4a'; x.fillRect(-46, -8, 8, 16);
   const bc = SK.b || [`hsl(${(t * 90) % 360},95%,72%)`, `hsl(${(t * 90 + 60) % 360},95%,58%)`, `hsl(${(t * 90 + 120) % 360},90%,42%)`], bg = x.createLinearGradient(0, -14, 0, 14); bg.addColorStop(0, bc[0]); bg.addColorStop(0.5, bc[1]); bg.addColorStop(1, bc[2]); x.fillStyle = bg; x.beginPath(); x.moveTo(-40, -13); x.lineTo(-6, -15); x.lineTo(-6, 15); x.lineTo(-40, 13); x.quadraticCurveTo(-46, 0, -40, -13); x.fill();
-  x.fillStyle = SK.s; if (SK.k === 'neon') { x.shadowColor = '#ff3cf0'; x.shadowBlur = 8; } for (let i = 0; i < 3; i++) x.fillRect(-36 + i * 9, -13, 4, 26); x.shadowBlur = 0;
+  x.fillStyle = SK.s; if (SK.k === 'neon') { x.shadowColor = '#ff3cf0'; x.shadowBlur = 8; } for (const [sx, sw] of SBANDS(SK)) x.fillRect(sx, -13, sw, 26); x.shadowBlur = 0;
   }
   if (DT === 'heavy') { x.fillStyle = '#4a5060'; x.fillRect(-40, -16, 33, 5); x.fillRect(-40, 11, 33, 5); x.fillStyle = '#c8ccd4'; for (let i = 0; i < 4; i++) { x.fillRect(-37 + i * 8, -15, 2, 2); x.fillRect(-37 + i * 8, 13, 2, 2); } }
   if (DT === 'bomb') { x.fillStyle = '#1e1e24'; x.fillRect(-12, -15, 6, 30); x.fillStyle = '#ffd030'; for (let i = 0; i < 3; i++) x.fillRect(-12, -15 + i * 11, 6, 5); x.fillStyle = '#e8402a'; x.beginPath(); x.arc(-26, 0, 3.5 + Math.sin(t * 10), 0, TAU); x.fill(); }
@@ -2339,7 +2348,7 @@ function drawExhaust(x) { if (!D || D.dead || D.tower) return; if (FAST) setAff(
   x.restore(); drawExhaust.pts = pts; }
 function xDraw(x, left, right, t, s) { exposeSweep(left, right); drawExhaust(x); drawCrystalCaves(x, left, right); drawDams(x, left, right); drawVolcanoes(x); drawTraffic(x); drawAir(x); drawAvalanche(x); if (FAST) setAff(x, cam.x, cam.y); }
 
-const VER = 'v283';
+const VER = 'v284';
 /* ================= ANONYMOUS PLAY STATS (Supabase) =================
    A random player id (no name, no account) and short events: session start, a heartbeat each minute (play time, fps),
    one row per run, upgrades bought, progress snapshots, tutorial and errors. Sent in small batches; off in automated
@@ -3322,7 +3331,7 @@ function dsBuild(o) { const P = [], LK = o.look === 'classic' ? 'classic' : LOOK
   const slab = (pts, h, m, mEdge) => { const c = pts.reduce((s, p) => [s[0] + p[0] / pts.length, s[1] + p[1] / pts.length], [0, 0]);
     quad(pts.map(p => [p[0], p[1], -h]), m, [0, 0, -1]); quad(pts.map(p => [p[0], p[1], h]).reverse(), m, [0, 0, 1]);
     for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; let nx = b[1] - a[1], ny = -(b[0] - a[0]); const L = Math.hypot(nx, ny) || 1; nx /= L; ny /= L; if (nx * ((a[0] + b[0]) / 2 - c[0]) + ny * ((a[1] + b[1]) / 2 - c[1]) < 0) { nx = -nx; ny = -ny; } quad([[a[0], a[1], -h], [b[0], b[1], -h], [b[0], b[1], h], [a[0], a[1], h]], mEdge || m, [nx, ny, 0]); } };
-  const SX = [[-36, -32], [-27, -23], [-18, -14]], inS = x => SX.some(([a, b]) => x > a && x < b), grid = []; for (let v = -40; v <= -6; v += 1.2) grid.push(v); const xs = [...new Set([...grid, ...SX.flat()])].sort((a, b) => a - b);
+  const SX = SBANDS({ pat: o.pat }).map(([a, w]) => [a, a + w]), inS = x => SX.some(([a, b]) => x > a && x < b), grid = []; for (let v = -40; v <= -6; v += 1.2) grid.push(v); const xs = [...new Set([...grid, ...SX.flat()])].sort((a, b) => a - b);
   const bodyM = (x, a, r) => { const y = Math.cos(a) * r; if (o.dt === 'light' && Math.abs(Math.cos(a)) < 0.16 && x > -40 && x < -8) return 'cyan';
     return inS(x) ? 'stripe' : 'paint'; };
   /* a smooth oval patch lying on the body on both sides (cockpit window, warning light) */
@@ -3342,7 +3351,7 @@ function dsBuild(o) { const P = [], LK = o.look === 'classic' ? 'classic' : LOOK
   if (LK === 'rig') { const gx = [], blk = x => { for (let i = 0; i < 4; i++) if (x > -49 + i * 2.5 && x < -48 + i * 2.5) return 'black'; return 'steelD'; }; for (let i = 0; i < 4; i++) gx.push(-49 + i * 2.5, -48 + i * 2.5);
     lathe(cut([[-50.5, 0], [-50.5, 9], [-50, 10], [-40, 10]], gx), blk); lathe([[-41, 11.5], [-7, 11.5]], 'dark');
     for (let sg = 0; sg < 3; sg++) { const a = -40 + sg * 10.7, b = a + 9.7, hh = 14 + sg * 0.6, sx2 = []; for (let v = a + 1; v < b - 0.8; v += sg === 1 ? 0.6 : 2) sx2.push(v);
-      lathe(cut([[a, 11.5], [a, hh - 1], [a + 0.8, hh], [b - 0.8, hh], [b, hh - 1], [b, 11.5]], sx2), (x, an, r) => { const m = bodyM(x, an, r); if (m !== 'paint' && m !== 'stripe') return m; return sg === 1 && fr((x - an / TAU * 16) / 6) < 0.45 ? 'stripe' : 'paint'; }, 0, sg === 1 ? 56 : 36);
+      lathe(cut([[a, 11.5], [a, hh - 1], [a + 0.8, hh], [b - 0.8, hh], [b, hh - 1], [b, 11.5]], sx2), (x, an, r) => { const m = bodyM(x, an, r); if (m !== 'paint' && m !== 'stripe') return m; return sg === 1 && o.pat !== 'none' && fr((x - an / TAU * 16) / 6) < 0.45 ? 'stripe' : 'paint'; }, 0, sg === 1 ? 56 : 36);
       for (const x of [a + 2, b - 2]) for (let i = 0; i < 8; i++) { const an = i / 8 * TAU + 0.2; dot(x, Math.cos(an) * (hh + 0.1), Math.sin(an) * (hh + 0.1), 0.8); } }
     lathe([[-10.5, 12], [-10.5, 16.5], [-5, 16.5], [-5, 12]], (x, a) => fr(a / TAU * 24) < 0.38 ? 'black' : 'steelL', 1, 48); }
   const Rb0 = LK === 'borer' ? (x => 13 + (x + 40) / 32) : LK === 'rig' ? (x => 14.6) : (x => 13 + (x + 40) / 17);
@@ -3392,8 +3401,8 @@ function DShow(cv) { const me = { yaw: -0.62, pitch: 0.34, zoom: 1, idle: 0, dea
   cv.onpointerup = cv.onpointercancel = e => { ptr.delete(e.pointerId); pinch0 = 0; };
   cv.onwheel = e => { e.preventDefault(); me.zoom = clamp(me.zoom * Math.exp(-e.deltaY * 0.0015), 0.6, 3); me.idle = 0; };
   const Lv = (() => { const v = [-0.45, -0.78, -0.55], l = Math.hypot(...v); return v.map(q => q / l); })(), Hv = (() => { const v = [Lv[0], Lv[1], Lv[2] - 1], l = Math.hypot(...v); return v.map(q => q / l); })();
-  me.render = (x, W, H, t) => { const o = dshowSel(), fin = (SV.up.fin || 0) > 0 || o.dt === 'glider', k = o.dt + '|' + (o.look || '') + '|' + fin; if (k !== key) { key = k; MESH = dsBuild({ dt: o.dt, look: o.look, fin }); }
-    const SK = SKINS.find(q => q.k === (o.skin || 'classic')) || SKINS[0], bc = (SK.b || [`hsl(${(t * 90) % 360},95%,72%)`, `hsl(${(t * 90 + 60) % 360},95%,58%)`, `hsl(${(t * 90 + 120) % 360},90%,42%)`]).map(dsCol), stc = dsCol(SK.s);
+  me.render = (x, W, H, t) => { const o = dshowSel(), fin = (SV.up.fin || 0) > 0 || o.dt === 'glider', SK = skinFor(o.skin, o.dt), k = o.dt + '|' + (o.look || '') + '|' + fin + '|' + (SK.pat || ''); if (k !== key) { key = k; MESH = dsBuild({ dt: o.dt, look: o.look, fin, pat: SK.pat }); }
+    const bc = (SK.b || [`hsl(${(t * 90) % 360},95%,72%)`, `hsl(${(t * 90 + 60) % 360},95%,58%)`, `hsl(${(t * 90 + 120) % 360},90%,42%)`]).map(dsCol), stc = dsCol(SK.s);
     const ys = o.dt === 'light' ? 0.8 : o.dt === 'heavy' ? 1.15 : o.dt === 'rail' ? 0.88 : o.dt === 'mole' ? 1.1 : 1, sa = t * TAU * 0.45, cs = Math.cos(sa), ss = Math.sin(sa), cy = Math.cos(me.yaw), sy = Math.sin(me.yaw), cp = Math.cos(me.pitch), sp = Math.sin(me.pitch), F = 340, sc = Math.min(W / 118, H / 78) * me.zoom, ox = W / 2, oy = H * 0.47;
     const tf = (X, Y, Z, spn) => { if (spn) { const y2 = Y * cs - Z * ss; Z = Y * ss + Z * cs; Y = y2; } X += 13; Y *= ys; Z *= ys; const x1 = X * cy - Z * sy, z1 = X * sy + Z * cy, y2 = Y * cp - z1 * sp, z2 = Y * sp + z1 * cp; return [x1, y2, z2]; };
     const pj = q => { const f = F / (F + q[2]); return [ox + q[0] * f * sc, oy + q[1] * f * sc, f]; };
